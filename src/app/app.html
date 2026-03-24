@@ -1,12 +1,12 @@
-<main class="main">
-  <div class="fixed w-full h-10 bg-amber-50">
-    TopBar
-  </div>
-  <div class="fixed top-10 h-990 w-40 bg-amber-100">
-    <app-navbar></app-navbar>
-  </div>
-  <div class="fixed top-10 left-40 w-960 h-990 bg-amber-300">
-    Mein content
+<main class="main flex flex-col h-full">
+  <app-topbar></app-topbar>
+  <div class="flex-1 flex items-stretch">
+    <div>
+      <app-navbar></app-navbar>
+    </div>
+    <div class="bg-white flex-1">
+      <div>test</div>
+    </div>
   </div>
 </main>
 
