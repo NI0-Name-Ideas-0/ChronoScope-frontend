@@ -31,7 +31,7 @@ jobs:
         run: pnpm install
 
       - name: Run tests
-        run: pnpm test -- --watch=false
+        run: pnpm test --watch=false
 
   deploy:
     name: Deploy to Production
