@@ -18,6 +18,6 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, ChronoScope-frontend');
+    expect(compiled.querySelector('div.bg-white.flex-1')?.textContent).toContain('test');
   });
 });
