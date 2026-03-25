@@ -10,7 +10,7 @@
     "serve:ssr:ChronoScope-frontend": "node dist/ChronoScope-frontend/server/server.mjs"
   },
   "private": true,
-  "packageManager": "npm@11.12.0",
+  "packageManager": "pnpm@10.33.0",
   "dependencies": {
     "@angular/common": "^21.2.5",
     "@angular/compiler": "^21.2.5",
