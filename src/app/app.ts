@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Navbar } from './components/navbar/navbar';
 import { Topbar } from './components/topbar/topbar';
+import { Auth } from '@services/auth'
 
 @Component({
   selector: 'app-root',
@@ -9,6 +10,16 @@ import { Topbar } from './components/topbar/topbar';
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
-export class App {
+export class App implements OnInit {
   protected readonly title = signal('ChronoScope-frontend');
+
+  private authService: Auth = inject(Auth);
+
+  ngOnInit() {
+    this.login();
+  }
+
+  login() {
+	this.authService.login();
+  }
 }
