@@ -1,11 +1,21 @@
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { App } from './app';
+import { Auth } from '@services/auth';
+
+const mockAuthService = {
+  login: vi.fn(),
+};
 
 describe('App', () => {
   beforeEach(async () => {
+    vi.clearAllMocks();
+
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [
+        { provide: Auth, useValue: mockAuthService }
+      ]
     })
     .overrideComponent(App, {
       set: {
