@@ -2,12 +2,14 @@
   <app-topbar></app-topbar>
   <div class="flex-1 flex items-stretch">
     <div>
-      <app-navbar></app-navbar>
+      <app-navbar (settingsRequested)="openSettings()"></app-navbar>
     </div>
     <div class="bg-white flex-1">
       <app-calendar-view></app-calendar-view>
     </div>
   </div>
 </main>
+
+<app-settings-modal [open]="isSettingsOpen()" (closed)="closeSettings()" />
 
 <router-outlet />

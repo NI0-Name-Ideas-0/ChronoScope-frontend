@@ -1,0 +1,84 @@
+import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+interface Organization {
+  id: string;
+  name: string;
+  role: string;
+  avatarInitials: string;
+  memberCount: number;
+}
+
+@Component({
+  selector: 'app-settings-organizations',
+  imports: [FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <div class="space-y-6">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Organizations &amp; Profiles</h2>
+        <p class="text-sm text-base-content/60 mt-0.5">Manage your organization memberships and linked accounts.</p>
+      </div>
+
+      <!-- Organizations list -->
+      <div class="settings-card">
+        <h3 class="settings-card-title">Your Organizations</h3>
+        <p class="settings-card-desc">Organizations you are currently a member of.</p>
+        <ul class="mt-4 space-y-3" aria-label="Organization list">
+          @for (org of organizations; track org.id) {
+            <li class="flex items-center gap-4 p-3 rounded-xl bg-base-200/60 border border-base-300">
+              <div
+                class="w-10 h-10 rounded-lg bg-primary/15 text-primary font-bold text-sm flex items-center justify-center shrink-0"
+                aria-hidden="true"
+              >
+                {{ org.avatarInitials }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-medium text-base-content text-sm truncate">{{ org.name }}</p>
+                <p class="text-xs text-base-content/50">{{ org.memberCount }} members</p>
+              </div>
+              <span class="badge badge-sm" [class]="roleBadgeClass(org.role)">
+                {{ org.role }}
+              </span>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Merge accounts -->
+      <div class="settings-card">
+        <h3 class="settings-card-title">Merge Accounts</h3>
+        <p class="settings-card-desc">Link another account by entering its email address. Both accounts will be merged.</p>
+        <div class="mt-4 flex flex-col sm:flex-row gap-3">
+          <input
+            type="email"
+            [(ngModel)]="mergeEmail"
+            class="input input-bordered flex-1 bg-base-100"
+            placeholder="account@example.com"
+            aria-label="Email address to merge"
+          />
+          <button class="btn btn-outline btn-sm self-start sm:self-auto" type="button">
+            Send Merge Request
+          </button>
+        </div>
+      </div>
+    </div>
+  `,
+})
+export class OrganizationsSection {
+  mergeEmail = '';
+
+  readonly organizations: Organization[] = [
+    { id: '1', name: 'Acme Corporation', role: 'Admin', avatarInitials: 'AC', memberCount: 24 },
+    { id: '2', name: 'Design Studio', role: 'Member', avatarInitials: 'DS', memberCount: 8 },
+    { id: '3', name: 'Open Source Collective', role: 'Viewer', avatarInitials: 'OS', memberCount: 142 },
+  ];
+
+  roleBadgeClass(role: string): string {
+    switch (role) {
+      case 'Admin': return 'badge-primary';
+      case 'Member': return 'badge-neutral';
+      default: return 'badge-ghost';
+    }
+  }
+}
