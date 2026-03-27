@@ -65,56 +65,9 @@ This is not a simple prototype - the frontend should resemble a modern, clean Sa
 
 ---
 
-## UI / UX Vision
-
-The UI should follow a **clean, minimalistic, modern design** with a slight “fancy” touch.
-
-### Layout Concept
-The current layout concept (subject to iteration):
-
-- **Left Sidebar**
-  - Icon-based navigation
-  - Example sections:
-    - Calendar View
-    - Task List View
-    - Profile
-  - Keep it compact and intuitive
-
-- **Top Bar**
-  - Content not fully defined yet
-  - Should be flexible and extensible
-
-- **Main Content Area**
-  - Split view:
-    - Left: Task List
-    - Right: Calendar View
-
-This structure may evolve, so keep components modular and adaptable.
-
----
-
-## Features (Evolving)
-
-The application is expected to include:
-- Task management (create, edit, complete tasks)
-- Calendar-based planning
-- Task dependencies
-- Possibly more features (not fully defined yet)
-
----
-
-## Design Principles
-
-- Minimalistic UI with clear structure
-- Avoid visual clutter
-- Maintain consistency across components
-- Subtle modern styling (not overly decorative)
-
----
-
 ## Tech Stack (Frontend Context)
 
-- Angular
+- Angular 21
 - TypeScript
 - Tailwind CSS
 - DaisyUI (optional, may be used but not required)
@@ -130,41 +83,15 @@ If you don't know much about DaisyUI or find it not suitable for a component, pr
 - Avoid monolithic components
 - Keep logic and UI separated where reasonable
 
-### State & Structure
-- Keep state handling simple and readable
-- Avoid unnecessary abstraction or overengineering
-- Use clear data flow
-
-### Naming & Readability
-- Use descriptive names for variables, components, and functions
-- Prioritize readability over cleverness
-
----
-
-## Copilot Behavior Guidelines
-
-When generating code, you should:
-
-### DO:
+## UI / UX Vision
+- The UI should follow a **clean, minimalistic, modern design** with a slight “fancy” touch.
+- Think about UX when building UI elements
+- Always include both a light and dark variant of colors.
+- Use Tailwind effectively for styling
 - Suggest clean and modern UI implementations
-- Create reusable and modular components
+
+### Code guidelines
+- Follow Angular 21 and TypeScript best practices (see above)
+- Use the latest Angular 21 features and APIs where appropriate
 - Follow consistent structure and naming
 - Keep code simple and maintainable
-- Think about UX when building UI elements
-- Use Tailwind effectively for styling
-
-### DO NOT:
-- Overengineer solutions
-- Introduce unnecessary abstractions
-- Generate overly complex or bloated code
-- Create inconsistent or messy UI
-
----
-
-## Flexibility & Iteration
-
-This project is developed iteratively. Some aspects (features, UI details, top bar content, etc.) are not fully defined yet.
-
-- Keep implementations flexible
-- Avoid hardcoding assumptions
-- Make it easy to extend or modify components later
