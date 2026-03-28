@@ -1,0 +1,138 @@
+@if (isOpen) {
+  <div class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center" (click)="close()">
+    <div
+      class="bg-base-100 rounded-2xl shadow-xl w-full max-w-lg mx-4 z-50 p-6 flex flex-col gap-4 max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Header -->
+      <div class="flex justify-between items-center">
+        <h2 class="text-lg font-bold">New Task</h2>
+        <button class="btn btn-ghost btn-sm btn-circle" (click)="close()">✕</button>
+      </div>
+
+      <!-- Title -->
+      <div class="form-control">
+        <label class="label"
+          ><span class="label-text font-medium"
+            >Title <span class="text-error">*</span></span
+          ></label
+        >
+        <input
+          type="text"
+          class="input input-bordered w-full"
+          placeholder="Task title"
+          [(ngModel)]="task.title"
+        />
+      </div>
+
+      <!-- Description -->
+      <div class="form-control">
+        <label class="label"><span class="label-text font-medium">Description</span></label>
+        <textarea
+          class="textarea textarea-bordered w-full resize-none"
+          rows="3"
+          placeholder="Add a description..."
+          [(ngModel)]="task.description"
+        ></textarea>
+      </div>
+
+      <!-- Start & Due Date -->
+      <div class="flex gap-3">
+        <div class="form-control flex-1">
+          <label class="label"><span class="label-text font-medium">Start Date</span></label>
+          <input type="date" class="input input-bordered w-full" [(ngModel)]="task.startDate" />
+        </div>
+        <div class="form-control flex-1">
+          <label class="label"
+            ><span class="label-text font-medium"
+              >Due Date <span class="text-error">*</span></span
+            ></label
+          >
+          <input type="date" class="input input-bordered w-full" [(ngModel)]="task.dueDate" />
+        </div>
+      </div>
+
+      <!-- Labels -->
+      <div class="form-control">
+        <label class="label"><span class="label-text font-medium">Labels</span></label>
+        <div class="flex flex-wrap gap-2 mb-2">
+          @for (label of task.labels; track label) {
+            <span class="badge badge-neutral gap-1">
+              {{ label }}
+              <button class="hover:text-error" (click)="removeLabel(label)">✕</button>
+            </span>
+          }
+        </div>
+        <input
+          type="text"
+          class="input input-bordered w-full"
+          placeholder="Type a label and press Enter"
+          [(ngModel)]="labelInput"
+          (keydown)="onLabelKeydown($event)"
+          (blur)="addLabel()"
+        />
+      </div>
+
+      <!-- Scopes -->
+      <div class="form-control">
+        <div class="flex justify-between items-center">
+          <label class="label"><span class="label-text font-medium">Scopes</span></label>
+          <button class="btn btn-ghost btn-xs" (click)="addScope()">+ Add Scope</button>
+        </div>
+        @if (task.scopes.length === 0) {
+          <p class="text-sm text-base-content/50">No scopes — task will appear on its due date.</p>
+        }
+        @for (scope of task.scopes; track $index; let i = $index) {
+          <div class="border border-base-300 rounded-xl p-3 flex flex-col gap-2 mb-2">
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium">Scope {{ i + 1 }}</span>
+              <button class="btn btn-ghost btn-xs text-error" (click)="removeScope(i)">
+                Remove
+              </button>
+            </div>
+            <div class="flex gap-2">
+              <div class="form-control flex-1">
+                <label class="label py-0"><span class="label-text text-xs">Start</span></label>
+                <input
+                  type="date"
+                  class="input input-bordered input-sm w-full"
+                  [(ngModel)]="scope.startDate"
+                />
+                <input
+                  type="time"
+                  class="input input-bordered input-sm w-full mt-1"
+                  [(ngModel)]="scope.startTime"
+                />
+              </div>
+              <div class="form-control flex-1">
+                <label class="label py-0"><span class="label-text text-xs">End</span></label>
+                <input
+                  type="date"
+                  class="input input-bordered input-sm w-full"
+                  [(ngModel)]="scope.endDate"
+                />
+                <input
+                  type="time"
+                  class="input input-bordered input-sm w-full mt-1"
+                  [(ngModel)]="scope.endTime"
+                />
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-2 pt-2">
+        <button class="btn btn-ghost" (click)="close()">Cancel</button>
+        <button
+          class="btn btn-primary"
+          (click)="submit()"
+          [disabled]="!task.title.trim() || !task.dueDate"
+        >
+          Create Task
+        </button>
+      </div>
+    </div>
+  </div>
+}

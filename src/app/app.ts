@@ -3,13 +3,14 @@ import { RouterOutlet } from '@angular/router';
 import { Navbar } from './components/navbar/navbar';
 import { Topbar } from './components/topbar/topbar';
 import { CalendarView } from './components/calendar-view/calendar-view';
-import { Auth } from '@services/auth'
+import { Auth } from '@services/auth';
+import { TaskModal } from './components/task-modal/task-modal';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, Topbar, CalendarView],
+  imports: [RouterOutlet, Navbar, Topbar, CalendarView, TaskModal],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrl: './app.css',
 })
 export class App implements OnInit {
   protected readonly title = signal('ChronoScope-frontend');
@@ -21,6 +22,6 @@ export class App implements OnInit {
   }
 
   login() {
-	  this.authService.login();
+    this.authService.login();
   }
 }
