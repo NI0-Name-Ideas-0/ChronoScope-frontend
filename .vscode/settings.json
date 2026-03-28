@@ -1,7 +1,6 @@
 {
   "chat.useClaudeMdFile": false,
   "files.associations": {
-    "*.css": "tailwindcss",
-    "*.scss": "tailwindcss"
+    "*.css": "tailwindcss"
   }
 }
