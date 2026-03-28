@@ -1,0 +1,11 @@
+@reference "#styles.css";
+
+.org-profile-card {
+  @apply relative flex items-center gap-3 p-3 rounded-xl bg-base-200/60 border-2 border-base-300
+         cursor-pointer transition-all duration-150 hover:border-primary/50 focus-visible:outline-none
+         focus-visible:ring-2 focus-visible:ring-primary min-w-3xs flex-1;
+}
+
+.org-profile-card-selected {
+  @apply border-primary bg-primary/5;
+}
