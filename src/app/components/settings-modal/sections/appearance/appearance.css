@@ -1,4 +1,4 @@
-@reference "../../../../../styles.css";
+@reference "#styles.css";
 
 .theme-option-btn {
   @apply flex flex-col items-center p-3 rounded-xl border-2 border-base-300 cursor-pointer
