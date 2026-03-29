@@ -6,6 +6,11 @@ import { EventInput } from '@fullcalendar/core';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
+  /**
+   * Provides Tasks to subscribers
+   *
+   * @remarks should later be connected to the backend.
+   */
   private tasks: Task[] = [];
   private tasksSubject = new BehaviorSubject<Task[]>([]);
   tasks$ = this.tasksSubject.asObservable();
