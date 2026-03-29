@@ -61,6 +61,17 @@ ChronoScope is a browser-based task planning system developed as part of a softw
 
 The goal of the application is to support structured task management and planning. The system will include features such as task organization, scheduling, and handling dependencies between tasks. Some features are still being defined and may evolve over time.
 
+About Organizations:
+- The concept of organizations is central to ChronoScope. Users can belong to multiple organizations.
+- Organizations are only relevant for licensing and planning purposes.
+  - The organization a user belongs to provides them with a license that grants access to the application.
+  - The user can configure exact time slots to an organization. (Something like "I want to spend 4 hours per week on organization X, and 2 hours per week on organization Y")
+  - An organization does not assign tasks to users. Users create tasks themselves and assign them to those organizations so the algorithm can take the organizational time slot preferences into account when scheduling.
+
+General:
+- There is no user to user or user to organization interaction in the application. I.e. no messaging, no sharing of tasks, no team features, no organization management features, etc.
+
+
 This is not a simple prototype - the frontend should resemble a modern, clean SaaS-style application.
 
 ---
