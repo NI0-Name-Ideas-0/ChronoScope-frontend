@@ -8,8 +8,8 @@
       <app-calendar-view></app-calendar-view>
     </div>
   </div>
+
+  <router-outlet />
 </main>
-
+<app-task-modal></app-task-modal>
 <app-settings-modal [open]="isSettingsOpen()" (closed)="closeSettings()" />
-
-<router-outlet />

@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, output } from '@angular/core';
-import { Auth } from '@services/auth';
+import { Auth } from '@services/auth'
+import { TaskModalService } from '@services/task-modal.service';
 
 @Component({
   selector: 'app-navbar',
@@ -9,6 +10,7 @@ import { Auth } from '@services/auth';
   styleUrl: './navbar.css',
 })
 export class Navbar {
+  constructor(private taskModalService: TaskModalService) { }
   private authService = inject(Auth);
 
   settingsRequested = output<void>();
@@ -17,6 +19,10 @@ export class Navbar {
     this.authService.logout();
   }
 
+  openNewTask() {
+    this.taskModalService.open();
+  }
+  
   openSettings() {
     this.settingsRequested.emit();
   }

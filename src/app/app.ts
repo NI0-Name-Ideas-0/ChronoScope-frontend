@@ -3,12 +3,13 @@ import { RouterOutlet } from '@angular/router';
 import { Navbar } from './components/navbar/navbar';
 import { Topbar } from './components/topbar/topbar';
 import { CalendarView } from './components/calendar-view/calendar-view';
-import { SettingsModal } from './components/settings-modal/settings-modal';
 import { Auth } from '@services/auth';
+import { SettingsModal } from './components/settings-modal/settings-modal';
+import { TaskModal } from './components/task-modal/task-modal';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, Topbar, CalendarView, SettingsModal],
+  imports: [RouterOutlet, Navbar, Topbar, CalendarView, SettingsModal, TaskModal],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
   styleUrl: './app.css',
