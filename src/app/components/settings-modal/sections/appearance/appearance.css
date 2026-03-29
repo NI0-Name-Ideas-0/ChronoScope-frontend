@@ -1,0 +1,50 @@
+@reference "#styles.css";
+
+.theme-option-btn {
+  @apply flex flex-col items-center p-3 rounded-xl border-2 border-base-300 cursor-pointer
+          transition-all duration-150 hover:border-primary/50 focus-visible:outline-none
+          focus-visible:ring-2 focus-visible:ring-primary;
+}
+.theme-option-btn--active {
+  @apply border-primary bg-primary/5;
+}
+.theme-preview {
+  @apply w-full rounded-lg overflow-hidden h-16 flex flex-col;
+}
+.theme-preview-bar {
+  @apply h-3 w-full;
+}
+.theme-preview-content {
+  @apply flex-1 p-1.5 flex flex-col gap-1;
+}
+.theme-preview-block {
+  @apply h-2 rounded w-full;
+}
+.theme-preview-block--sm {
+  @apply w-2/3;
+}
+
+/* Light preview */
+.preview-light {
+  @apply bg-white;
+}
+.preview-light .theme-preview-bar { @apply bg-slate-200; }
+.preview-light .theme-preview-block { @apply bg-slate-200; }
+
+/* Dark preview */
+.preview-dark {
+  @apply bg-slate-900;
+}
+.preview-dark .theme-preview-bar { @apply bg-slate-700; }
+.preview-dark .theme-preview-block { @apply bg-slate-700; }
+
+/* System preview */
+.preview-system {
+  background: linear-gradient(135deg, white 50%, #0f172a 50%);
+}
+.preview-system .theme-preview-bar {
+  background: linear-gradient(135deg, #e2e8f0 50%, #334155 50%);
+}
+.preview-system .theme-preview-block {
+  background: linear-gradient(135deg, #e2e8f0 50%, #334155 50%);
+}

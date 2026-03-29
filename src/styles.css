@@ -1,5 +1,7 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+   themes: light --default, dark --prefersdark;
+}
 
 html, body {
   height: 100%;
@@ -13,4 +15,20 @@ app-root {
 
 @theme {
   --color-chrono: #112f43;
+}
+
+/* ── Settings modal shared utilities ─────────────────────────────────────── */
+@layer components {
+  .settings-card {
+    @apply p-5 rounded-xl border border-base-300 bg-base-100
+           shadow-sm transition-shadow duration-150;
+  }
+
+  .settings-card-title {
+    @apply text-sm font-semibold text-base-content;
+  }
+
+  .settings-card-desc {
+    @apply text-xs text-base-content/55 mt-0.5 leading-relaxed;
+  }
 }
