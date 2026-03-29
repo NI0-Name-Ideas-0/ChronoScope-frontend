@@ -8,6 +8,5 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './account-security.html',
 })
 export class AccountSecuritySection {
-  email = 'user@example.com';
   twoFactorEnabled = false;
 }
