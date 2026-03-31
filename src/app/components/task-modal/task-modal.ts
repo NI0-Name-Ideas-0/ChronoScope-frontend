@@ -5,7 +5,7 @@ import { TaskModalService } from '../../../services/task-modal.service';
 import { TaskService } from '../../../services/task.service';
 import { Scope } from '../../model/scope';
 import { StaticTask } from '../../model/static-task';
-import { PlannedTask, Priority, Difficulty } from '../../model/algo-task';
+import { AlgoTask, Priority, Difficulty } from '../../model/algo-task';
 
 interface ScopeForm {
   startDate: string;
@@ -26,7 +26,7 @@ interface StaticTaskForm extends BaseTaskForm {
   scopes: ScopeForm[];
 }
 
-interface PlannedTaskForm extends BaseTaskForm {
+interface AlgoTaskForm extends BaseTaskForm {
   minScopeMinutes: number;
   maxScopeMinutes: number;
   priority: Priority;
@@ -47,7 +47,7 @@ export class TaskModal {
   mode: TaskMode = 'static';
 
   staticTask: StaticTaskForm = this.emptyStaticTask();
-  plannedTask: PlannedTaskForm = this.emptyPlannedTask();
+  algoTask: AlgoTaskForm = this.emptyAlgoTask();
 
   constructor(
     private taskModalService: TaskModalService,
@@ -55,7 +55,7 @@ export class TaskModal {
   ) {
     this.taskModalService.open$.subscribe(() => {
       this.staticTask = this.emptyStaticTask();
-      this.plannedTask = this.emptyPlannedTask();
+      this.algoTask = this.emptyAlgoTask();
       this.labelInput = '';
       this.mode = 'static';
       this.isOpen = true;
@@ -73,7 +73,7 @@ export class TaskModal {
     };
   }
 
-  emptyPlannedTask(): PlannedTaskForm {
+  emptyAlgoTask(): AlgoTaskForm {
     return {
       title: '',
       description: '',
@@ -88,7 +88,7 @@ export class TaskModal {
   }
 
   get currentTask(): BaseTaskForm {
-    return this.mode === 'static' ? this.staticTask : this.plannedTask;
+    return this.mode === 'static' ? this.staticTask : this.algoTask;
   }
 
   setMode(mode: TaskMode) {
@@ -149,7 +149,7 @@ export class TaskModal {
   get isValid(): boolean {
     if (!this.currentTask.title.trim() || !this.currentTask.dueDate) return false;
     if (this.mode === 'planned') {
-      const p = this.plannedTask;
+      const p = this.algoTask;
       return !!p.startDate && p.minScopeMinutes > 0 && p.maxScopeMinutes >= p.minScopeMinutes;
     }
     return true;
@@ -173,9 +173,9 @@ export class TaskModal {
         ),
       );
     } else {
-      const t = this.plannedTask;
+      const t = this.algoTask;
       this.taskService.addTask(
-        new PlannedTask(
+        new AlgoTask(
           t.title.trim(),
           t.description.trim(),
           this.toDate(t.startDate),
