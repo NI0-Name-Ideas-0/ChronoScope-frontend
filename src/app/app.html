@@ -2,7 +2,7 @@
   <app-topbar></app-topbar>
   <div class="flex-1 flex items-stretch">
     <div>
-      <app-navbar></app-navbar>
+      <app-navbar (settingsRequested)="openSettings()"></app-navbar>
     </div>
     <div class="bg-white flex-1">
       <app-calendar-view></app-calendar-view>
@@ -10,6 +10,6 @@
   </div>
 
   <router-outlet />
-
-  <app-task-modal></app-task-modal>
 </main>
+<app-task-modal></app-task-modal>
+<app-settings-modal [open]="isSettingsOpen()" (closed)="closeSettings()" />
