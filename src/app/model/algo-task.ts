@@ -1,10 +1,9 @@
 import { Task } from './task';
-import { Scope } from './scope';
 
 export type Priority = 'low' | 'medium' | 'high' | 'urgent';
 export type Difficulty = 'trivial' | 'easy' | 'medium' | 'hard';
 
-export class PlannedTask extends Task {
+export class AlgoTask extends Task {
   minScopeMinutes: number;
   maxScopeMinutes: number;
   priority: Priority;
