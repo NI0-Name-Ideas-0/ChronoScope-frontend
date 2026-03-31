@@ -31,8 +31,8 @@ export class TaskService {
     return [
       {
         title: task.title as string,
-        start: task.startDate ?? task.dueDate,
-        end: task.dueDate,
+        start: task.dueDate,
+        allDay: true,
       },
     ];
   }

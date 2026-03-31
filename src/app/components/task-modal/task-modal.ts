@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskModalService } from '../../../services/task-modal.service';
 import { TaskService } from '../../../services/task.service';
-import { Task } from '../../model/task';
 import { Scope } from '../../model/scope';
+import { Task } from '../../model/task';
+import { StaticTask } from '../../model/static-task';
+import { PlannedTask, Priority, Difficulty } from '../../model/algo-task';
 
 interface ScopeForm {
   startDate: string;
@@ -13,14 +15,26 @@ interface ScopeForm {
   endTime: string;
 }
 
-interface TaskForm {
+interface BaseTaskForm {
   title: string;
   description: string;
   startDate: string;
   dueDate: string;
   labels: string[];
+}
+
+interface StaticTaskForm extends BaseTaskForm {
   scopes: ScopeForm[];
 }
+
+interface PlannedTaskForm extends BaseTaskForm {
+  minScopeMinutes: number;
+  maxScopeMinutes: number;
+  priority: Priority;
+  difficulty: Difficulty;
+}
+
+type TaskMode = 'static' | 'planned';
 
 @Component({
   selector: 'app-task-modal',
@@ -31,20 +45,25 @@ interface TaskForm {
 export class TaskModal {
   isOpen = false;
   labelInput = '';
-  task: TaskForm = this.emptyTask();
+  mode: TaskMode = 'static';
+
+  staticTask: StaticTaskForm = this.emptyStaticTask();
+  plannedTask: PlannedTaskForm = this.emptyPlannedTask();
 
   constructor(
     private taskModalService: TaskModalService,
     private taskService: TaskService,
   ) {
     this.taskModalService.open$.subscribe(() => {
-      this.task = this.emptyTask();
+      this.staticTask = this.emptyStaticTask();
+      this.plannedTask = this.emptyPlannedTask();
       this.labelInput = '';
+      this.mode = 'static';
       this.isOpen = true;
     });
   }
 
-  emptyTask(): TaskForm {
+  emptyStaticTask(): StaticTaskForm {
     return {
       title: '',
       description: '',
@@ -55,17 +74,49 @@ export class TaskModal {
     };
   }
 
+  emptyPlannedTask(): PlannedTaskForm {
+    return {
+      title: '',
+      description: '',
+      startDate: '',
+      dueDate: '',
+      labels: [],
+      minScopeMinutes: 30,
+      maxScopeMinutes: 120,
+      priority: 'medium',
+      difficulty: 'medium',
+    };
+  }
+
+  get currentTask(): BaseTaskForm {
+    return this.mode === 'static' ? this.staticTask : this.plannedTask;
+  }
+
+  setMode(mode: TaskMode) {
+    // Carry over shared fields when switching
+    const from = this.currentTask;
+    this.mode = mode;
+    const to = this.currentTask;
+    to.title = from.title;
+    to.description = from.description;
+    to.startDate = from.startDate;
+    to.dueDate = from.dueDate;
+    to.labels = [...from.labels];
+    this.labelInput = '';
+  }
+
   // Labels
   addLabel() {
     const label = this.labelInput.trim();
-    if (label && !this.task.labels.includes(label)) {
-      this.task.labels.push(label);
+    const target = this.currentTask;
+    if (label && !target.labels.includes(label)) {
+      target.labels.push(label);
     }
     this.labelInput = '';
   }
 
   removeLabel(label: string) {
-    this.task.labels = this.task.labels.filter((l) => l !== label);
+    this.currentTask.labels = this.currentTask.labels.filter((l) => l !== label);
   }
 
   onLabelKeydown(event: KeyboardEvent) {
@@ -75,41 +126,72 @@ export class TaskModal {
     }
   }
 
-  // Scopes
+  // Scopes (static only)
   addScope() {
-    this.task.scopes.push({ startDate: '', startTime: '', endDate: '', endTime: '' });
+    this.staticTask.scopes.push({ startDate: '', startTime: '', endDate: '', endTime: '' });
   }
 
   removeScope(index: number) {
-    this.task.scopes.splice(index, 1);
+    this.staticTask.scopes.splice(index, 1);
   }
 
-  private toDate(date: string, time: string): Date {
+  private toDate(date: string, time: string = '00:00'): Date {
     return new Date(`${date}T${time || '00:00'}`);
   }
 
   private buildScopes(): Scope[] {
-    return this.task.scopes
+    return this.staticTask.scopes
       .filter((s) => s.startDate && s.endDate)
       .map(
         (s) => new Scope(this.toDate(s.startDate, s.startTime), this.toDate(s.endDate, s.endTime)),
       );
   }
 
+  get isValid(): boolean {
+    if (!this.currentTask.title.trim() || !this.currentTask.dueDate) return false;
+    if (this.mode === 'planned') {
+      const p = this.plannedTask;
+      return !!p.startDate && p.minScopeMinutes > 0 && p.maxScopeMinutes >= p.minScopeMinutes;
+    }
+    return true;
+  }
+
   submit() {
-    if (!this.task.title.trim() || !this.task.dueDate) return;
+    if (!this.isValid) return;
 
-    const task = new Task(
-      this.task.title.trim(),
-      this.task.description.trim(),
-      this.task.startDate ? this.toDate(this.task.startDate, '') : undefined,
-      this.toDate(this.task.dueDate, ''),
-      [],
-      this.task.labels,
-      this.buildScopes(),
-    );
+    if (this.mode === 'static') {
+      const t = this.staticTask;
+      this.taskService.addTask(
+        new StaticTask(
+          t.title.trim(),
+          t.description.trim(),
+          t.startDate ? this.toDate(t.startDate) : undefined,
+          this.toDate(t.dueDate),
+          [],
+          t.labels,
+          this.buildScopes(),
+          false,
+        ),
+      );
+    } else {
+      const t = this.plannedTask;
+      this.taskService.addTask(
+        new PlannedTask(
+          t.title.trim(),
+          t.description.trim(),
+          this.toDate(t.startDate),
+          this.toDate(t.dueDate),
+          [],
+          t.labels,
+          false,
+          t.minScopeMinutes,
+          t.maxScopeMinutes,
+          t.priority,
+          t.difficulty,
+        ),
+      );
+    }
 
-    this.taskService.addTask(task);
     this.close();
   }
 
