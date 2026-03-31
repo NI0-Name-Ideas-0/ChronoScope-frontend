@@ -1,0 +1,76 @@
+@reference "#styles.css";
+
+/* ── Backdrop ─────────────────────────────────────────────────────────────── */
+.task-backdrop {
+  @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40;
+  animation: task-backdrop-in 150ms ease-out;
+}
+
+.task-backdrop--leaving {
+  animation: task-backdrop-out 150ms ease-in forwards;
+}
+
+/* ── Panel ────────────────────────────────────────────────────────────────── */
+.task-panel {
+  @apply relative flex flex-col w-full max-w-lg bg-base-100 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh];
+  animation: task-panel-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.task-panel--leaving {
+  animation: task-panel-out 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.task-header {
+  @apply flex items-center justify-between px-5 py-3.5 border-b border-base-300 shrink-0;
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+.task-body {
+  @apply flex flex-col gap-4 overflow-y-auto p-5;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+.task-footer {
+  @apply flex justify-end gap-2 px-5 py-3.5 border-t border-base-300 shrink-0;
+}
+
+/* ── Mode Toggle ──────────────────────────────────────────────────────────── */
+.task-mode-toggle {
+  @apply flex rounded-xl overflow-hidden border border-base-300;
+}
+
+.task-mode-btn {
+  @apply flex-1 py-2 text-sm font-medium transition-colors duration-150 cursor-pointer
+         text-base-content/60 hover:text-base-content hover:bg-base-200/80;
+}
+
+.task-mode-btn--active {
+  @apply bg-primary text-primary-content hover:bg-primary hover:text-primary-content;
+}
+
+/* ── Field label ──────────────────────────────────────────────────────────── */
+.task-field-label {
+  @apply inline-flex items-center gap-1.5 text-sm font-medium;
+}
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@keyframes task-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes task-backdrop-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes task-panel-in {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes task-panel-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.97) translateY(8px); }
+}
