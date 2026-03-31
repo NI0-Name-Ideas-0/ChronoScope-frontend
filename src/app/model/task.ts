@@ -1,6 +1,6 @@
 import { Scope } from './scope';
 
-export class Task {
+export abstract class Task {
   /**
    * Task Model.
    *
