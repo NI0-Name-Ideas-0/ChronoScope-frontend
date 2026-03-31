@@ -16,7 +16,7 @@
       <!-- Mode Toggle -->
       <div class="flex rounded-xl overflow-hidden border border-base-300">
         <button
-          class="flex-1 py-2 text-sm font-medium transition-colors"
+          class="flex-1 py-2 text-sm font-medium transition-colors cursor-pointer"
           [class.bg-primary]="mode === 'static'"
           [class.text-primary-content]="mode === 'static'"
           [class.bg-base-200]="mode !== 'static'"
@@ -25,7 +25,7 @@
           Static
         </button>
         <button
-          class="flex-1 py-2 text-sm font-medium transition-colors"
+          class="flex-1 py-2 text-sm font-medium transition-colors cursor-pointer"
           [class.bg-primary]="mode === 'planned'"
           [class.text-primary-content]="mode === 'planned'"
           [class.bg-base-200]="mode !== 'planned'"
