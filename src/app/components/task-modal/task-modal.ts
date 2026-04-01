@@ -4,7 +4,6 @@ import { ChangeDetectorRef } from '@angular/core';
 import { TaskModalService } from '../../../services/task-modal.service';
 import { TaskService } from '../../../services/task.service';
 import { Scope } from '../../model/scope';
-import { Task } from '../../model/task';
 import { StaticTask } from '../../model/static-task';
 import { AlgoTask, Priority, Difficulty } from '../../model/algo-task';
 

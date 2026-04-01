@@ -49,21 +49,20 @@
         }
 
         <!-- Mode Toggle -->
-        <div class="flex rounded-xl overflow-hidden border border-base-300">
+        <div class="task-mode-toggle" role="group" aria-label="Task type">
           <button
-            class="flex-1 py-2 text-sm font-medium transition-colors"
-            [class.bg-primary]="mode === 'static'"
+            type="button"
+            class="task-mode-btn"
+            [class.task-mode-btn--active]="mode === 'static'"
             [class.text-primary-content]="mode === 'static'"
-            [class.bg-base-200]="mode !== 'static'"
             (click)="requestSetMode('static')"
           >
             Static
           </button>
           <button
-            class="flex-1 py-2 text-sm font-medium transition-colors"
-            [class.bg-primary]="mode === 'planned'"
-            [class.text-primary-content]="mode === 'planned'"
-            [class.bg-base-200]="mode !== 'planned'"
+            type="button"
+            class="task-mode-btn"
+            [class.task-mode-btn--active]="mode === 'planned'"
             (click)="requestSetMode('planned')"
           >
             Planned
@@ -303,8 +302,6 @@
 
       <!-- Footer -->
       <div class="task-footer">
-        <!-- Footer -->
-        <div class="task-footer">
           <button type="button" class="btn btn-ghost" (click)="close()">Cancel</button>
           <button
             type="button"
@@ -315,7 +312,6 @@
             Create Task
           </button>
         </div>
-      </div>
     </div>
   </div>
 }
