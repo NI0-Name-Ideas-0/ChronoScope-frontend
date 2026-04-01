@@ -12,7 +12,7 @@ export class TaskService {
    *
    * @remarks should later be connected to the backend.
    */
-  private tasks: Task[] = [];
+  private tasks: Map<string, Task> = new Map();
   private tasksSubject = new BehaviorSubject<Task[]>([]);
   tasks$ = this.tasksSubject.asObservable();
 
@@ -43,34 +43,35 @@ export class TaskService {
   }
 
   addTask(task: Task): void {
-    this.tasks = [...this.tasks, task];
-    this.tasksSubject.next(this.tasks);
+    this.tasks.set(task.id, task);
+    this.tasksSubject.next([...this.tasks.values()]);
   }
 
-  updateTask(index: number, task: Task): void {
-    this.tasks = this.tasks.map((t, i) => (i === index ? task : t));
-    this.tasksSubject.next(this.tasks);
+  updateTask(task: Task): void {
+    this.tasks.set(task.id, task);
+    this.tasksSubject.next([...this.tasks.values()]);
   }
 
-  getTaskIndex(task: Task): number {
-    return this.tasks.indexOf(task);
+  getTask(id: string): Task | undefined {
+    return this.tasks.get(id);
   }
 
   getTasks(): Task[] {
-    return this.tasks;
+    return [...this.tasks.values()];
   }
 
   toCalendarEvents(task: Task): EventInput[] {
     if (task.scopes.length > 0) {
       return task.scopes.map((scope: Scope) => ({
-        title: task.title as string,
+        id: task.id,
         start: scope.start,
         end: scope.end,
       }));
     }
     return [
       {
-        title: task.title as string,
+        id: task.id,
+        title: task.title,
         start: task.dueDate,
         allDay: true,
       },
@@ -78,6 +79,6 @@ export class TaskService {
   }
 
   getAllCalendarEvents(): EventInput[] {
-    return this.tasks.flatMap((task) => this.toCalendarEvents(task));
+    return this.getTasks().flatMap((task) => this.toCalendarEvents(task));
   }
 }

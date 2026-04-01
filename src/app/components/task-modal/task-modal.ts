@@ -51,9 +51,9 @@ export class TaskModal {
   showScopeWarning = false;
   pendingMode: TaskMode | null = null;
 
-  editingIndex: number | null = null;
+  editingTask: Task | null = null;
   get isEditing(): boolean {
-    return this.editingIndex !== null;
+    return this.editingTask !== null;
   }
 
   staticTask: StaticTaskForm = this.emptyStaticTask();
@@ -64,16 +64,16 @@ export class TaskModal {
     private taskService: TaskService,
     private cdr: ChangeDetectorRef,
   ) {
-    this.taskModalService.open$.subscribe(({ task, taskIndex }) => {
+    this.taskModalService.open$.subscribe(({ task }) => {
       this.labelInput = '';
       this.showScopeWarning = false;
       this.pendingMode = null;
 
-      if (task !== undefined && taskIndex !== undefined) {
-        this.editingIndex = taskIndex;
+      if (task !== undefined) {
+        this.editingTask = task;
         this.populateFromTask(task);
       } else {
-        this.editingIndex = null;
+        this.editingTask = null;
         this.staticTask = this.emptyStaticTask();
         this.algoTask = this.emptyAlgoTask();
         this.mode = 'static';
@@ -84,11 +84,16 @@ export class TaskModal {
   }
 
   private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   private formatTime(date: Date): string {
-    return date.toTimeString().slice(0, 5);
+    const h = String(date.getHours()).padStart(2, '0');
+    const m = String(date.getMinutes()).padStart(2, '0');
+    return `${h}:${m}`;
   }
 
   private populateFromTask(task: Task): void {
@@ -244,37 +249,42 @@ export class TaskModal {
   submit() {
     if (!this.isValid) return;
 
+    let task: Task;
+
     if (this.mode === 'static') {
       const t = this.staticTask;
-      this.taskService.addTask(
-        new StaticTask(
-          t.title.trim(),
-          t.description.trim(),
-          t.startDate ? this.toDate(t.startDate) : undefined,
-          this.toDate(t.dueDate),
-          [],
-          t.labels,
-          this.buildScopes(),
-          false,
-        ),
+      task = new StaticTask(
+        t.title.trim(),
+        t.description.trim(),
+        t.startDate ? this.toDate(t.startDate) : undefined,
+        this.toDate(t.dueDate),
+        [],
+        t.labels,
+        this.buildScopes(),
+        false,
       );
     } else {
       const t = this.algoTask;
-      this.taskService.addTask(
-        new AlgoTask(
-          t.title.trim(),
-          t.description.trim(),
-          this.toDate(t.startDate),
-          this.toDate(t.dueDate),
-          [],
-          t.labels,
-          false,
-          t.minScopeMinutes,
-          t.maxScopeMinutes,
-          t.priority,
-          t.difficulty,
-        ),
+      task = new AlgoTask(
+        t.title.trim(),
+        t.description.trim(),
+        this.toDate(t.startDate),
+        this.toDate(t.dueDate),
+        [],
+        t.labels,
+        false,
+        t.minScopeMinutes,
+        t.maxScopeMinutes,
+        t.priority,
+        t.difficulty,
       );
+    }
+
+    if (this.isEditing) {
+      task.id = this.editingTask!.id; // 👈 preserve the original ID when editing
+      this.taskService.updateTask(task);
+    } else {
+      this.taskService.addTask(task);
     }
 
     this.close();

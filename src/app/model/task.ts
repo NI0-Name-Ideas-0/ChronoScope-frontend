@@ -17,6 +17,7 @@ export abstract class Task {
    * @param isFinished - Boolean to set when the task gets done (optional)
    *
    */
+  id: string;
   title: string;
   description: string;
   startDate: Date | undefined;
@@ -36,6 +37,7 @@ export abstract class Task {
     scopes: Scope[] = [],
     isFinished: boolean = false,
   ) {
+    this.id = crypto.randomUUID(); //TODO This will change once the backend is connected
     ((this.title = title),
       (this.description = description),
       (this.startDate = startDate),

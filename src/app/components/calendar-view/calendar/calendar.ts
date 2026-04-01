@@ -39,9 +39,8 @@ export class Calendar {
     const api = this.calendarRef.getApi();
 
     api.setOption('eventClick', (info: EventClickArg) => {
-      const index = Number(info.event.id);
-      const task = this.taskService.getTasks()[index];
-      if (task) this.taskModalService.openForEdit(task, index);
+      const task = this.taskService.getTask(info.event.id);
+      if (task) this.taskModalService.openForEdit(task);
     });
     this.taskService.tasks$.subscribe(() => {
       api.getEvents().forEach((e) => e.remove());
