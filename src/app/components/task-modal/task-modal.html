@@ -21,7 +21,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-base-content/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
           </svg>
-          <h2 class="text-base font-semibold text-base-content">New Task</h2>
+          <h2 class="text-base font-semibold text-base-content">{{ isEditing ? 'Edit Task' : 'New Task' }}</h2>
         </div>
         <button
           class="btn btn-ghost btn-sm btn-circle"
@@ -37,6 +37,16 @@
 
       <!-- Body -->
       <div class="task-body">
+        <!-- Scope deletion warning -->
+        @if (showScopeWarning) {
+        <div class="alert alert-warning flex flex-col items-start gap-2">
+          <p class="text-sm font-medium">⚠️ Switching to Planned will delete all existing scopes. Continue?</p>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-error" (click)="confirmModeSwitch()">Yes, delete scopes</button>
+            <button class="btn btn-sm btn-ghost" (click)="cancelModeSwitch()">Cancel</button>
+          </div>
+        </div>
+        }
 
         <!-- Mode Toggle -->
         <div class="task-mode-toggle" role="group" aria-label="Task type">
@@ -44,7 +54,8 @@
             type="button"
             class="task-mode-btn"
             [class.task-mode-btn--active]="mode === 'static'"
-            (click)="setMode('static')"
+            [class.text-primary-content]="mode === 'static'"
+            (click)="requestSetMode('static')"
           >
             Static
           </button>
@@ -52,7 +63,7 @@
             type="button"
             class="task-mode-btn"
             [class.task-mode-btn--active]="mode === 'planned'"
-            (click)="setMode('planned')"
+            (click)="requestSetMode('planned')"
           >
             Planned
           </button>
@@ -298,7 +309,6 @@
           Create Task
         </button>
       </div>
-
     </div>
   </div>
 }
