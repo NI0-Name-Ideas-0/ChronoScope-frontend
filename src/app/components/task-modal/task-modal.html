@@ -1,35 +1,43 @@
 @if (isOpen) {
-  <div
-    class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center"
-    (click)="close()"
-  >
+  <div class="fixed inset-0 bg-black/50 z-40 flex items-center justify-center" (click)="close()">
     <div
       class="bg-base-100 rounded-2xl shadow-xl w-full max-w-lg mx-4 z-50 p-6 flex flex-col gap-4 max-h-[90vh] overflow-y-auto"
       (click)="$event.stopPropagation()"
     >
       <!-- Header -->
       <div class="flex justify-between items-center">
-        <h2 class="text-lg font-bold">New Task</h2>
+        <h2 class="text-lg font-bold">{{ isEditing ? 'Edit Task' : 'New Task' }}</h2>
         <button class="btn btn-ghost btn-sm btn-circle" (click)="close()">✕</button>
       </div>
+
+      <!-- Scope deletion warning -->
+      @if (showScopeWarning) {
+        <div class="alert alert-warning flex flex-col items-start gap-2">
+          <p class="text-sm font-medium">⚠️ Switching to Planned will delete all existing scopes. Continue?</p>
+          <div class="flex gap-2">
+            <button class="btn btn-sm btn-error" (click)="confirmModeSwitch()">Yes, delete scopes</button>
+            <button class="btn btn-sm btn-ghost" (click)="cancelModeSwitch()">Cancel</button>
+          </div>
+        </div>
+      }
 
       <!-- Mode Toggle -->
       <div class="flex rounded-xl overflow-hidden border border-base-300">
         <button
-          class="flex-1 py-2 text-sm font-medium transition-colors cursor-pointer"
+          class="flex-1 py-2 text-sm font-medium transition-colors"
           [class.bg-primary]="mode === 'static'"
           [class.text-primary-content]="mode === 'static'"
           [class.bg-base-200]="mode !== 'static'"
-          (click)="setMode('static')"
+          (click)="requestSetMode('static')"
         >
           Static
         </button>
         <button
-          class="flex-1 py-2 text-sm font-medium transition-colors cursor-pointer"
+          class="flex-1 py-2 text-sm font-medium transition-colors"
           [class.bg-primary]="mode === 'planned'"
           [class.text-primary-content]="mode === 'planned'"
           [class.bg-base-200]="mode !== 'planned'"
-          (click)="setMode('planned')"
+          (click)="requestSetMode('planned')"
         >
           Planned
         </button>
@@ -38,23 +46,13 @@
       <!-- Title -->
       <div class="form-control">
         <label class="label"><span class="label-text font-medium">Title <span class="text-error">*</span></span></label>
-        <input
-          type="text"
-          class="input input-bordered w-full"
-          placeholder="Task title"
-          [(ngModel)]="currentTask.title"
-        />
+        <input type="text" class="input input-bordered w-full" placeholder="Task title" [(ngModel)]="currentTask.title" />
       </div>
 
       <!-- Description -->
       <div class="form-control">
         <label class="label"><span class="label-text font-medium">Description</span></label>
-        <textarea
-          class="textarea textarea-bordered w-full resize-none"
-          rows="3"
-          placeholder="Add a description..."
-          [(ngModel)]="currentTask.description"
-        ></textarea>
+        <textarea class="textarea textarea-bordered w-full resize-none" rows="3" placeholder="Add a description..." [(ngModel)]="currentTask.description"></textarea>
       </div>
 
       <!-- Dates -->
@@ -86,12 +84,8 @@
           }
         </div>
         <input
-          type="text"
-          class="input input-bordered w-full"
-          placeholder="Type a label and press Enter"
-          [(ngModel)]="labelInput"
-          (keydown)="onLabelKeydown($event)"
-          (blur)="addLabel()"
+          type="text" class="input input-bordered w-full" placeholder="Type a label and press Enter"
+          [(ngModel)]="labelInput" (keydown)="onLabelKeydown($event)" (blur)="addLabel()"
         />
       </div>
 
@@ -130,7 +124,6 @@
 
       <!-- Planned: Extra Fields -->
       @if (mode === 'planned') {
-        <!-- Priority & Difficulty -->
         <div class="flex gap-3">
           <div class="form-control flex-1">
             <label class="label"><span class="label-text font-medium">Priority</span></label>
@@ -152,26 +145,14 @@
             </select>
           </div>
         </div>
-
-        <!-- Scope Duration -->
         <div class="flex gap-3">
           <div class="form-control flex-1">
             <label class="label"><span class="label-text font-medium">Min Session (min)</span></label>
-            <input
-              type="number"
-              class="input input-bordered w-full"
-              min="1"
-              [(ngModel)]="algoTask.minScopeMinutes"
-            />
+            <input type="number" class="input input-bordered w-full" min="1" [(ngModel)]="algoTask.minScopeMinutes" />
           </div>
           <div class="form-control flex-1">
             <label class="label"><span class="label-text font-medium">Max Session (min)</span></label>
-            <input
-              type="number"
-              class="input input-bordered w-full"
-              [min]="algoTask.minScopeMinutes"
-              [(ngModel)]="algoTask.maxScopeMinutes"
-            />
+            <input type="number" class="input input-bordered w-full" [min]="algoTask.minScopeMinutes" [(ngModel)]="algoTask.maxScopeMinutes" />
           </div>
         </div>
       }
@@ -179,15 +160,10 @@
       <!-- Actions -->
       <div class="flex justify-end gap-2 pt-2">
         <button class="btn btn-ghost" (click)="close()">Cancel</button>
-        <button
-          class="btn btn-primary"
-          (click)="submit()"
-          [disabled]="!isValid"
-        >
-          Create Task
+        <button class="btn btn-primary" (click)="submit()" [disabled]="!isValid">
+          {{ isEditing ? 'Save Changes' : 'Create Task' }}
         </button>
       </div>
-
     </div>
   </div>
 }

@@ -1,9 +1,11 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ChangeDetectorRef } from '@angular/core';
 import { TaskModalService } from '../../../services/task-modal.service';
 import { TaskService } from '../../../services/task.service';
 import { Scope } from '../../model/scope';
+import { Task } from '../../model/task';
 import { StaticTask } from '../../model/static-task';
 import { AlgoTask, Priority, Difficulty } from '../../model/algo-task';
 
@@ -45,6 +47,13 @@ export class TaskModal {
   isOpen = false;
   labelInput = '';
   mode: TaskMode = 'static';
+  showScopeWarning = false;
+  pendingMode: TaskMode | null = null;
+
+  editingIndex: number | null = null;
+  get isEditing(): boolean {
+    return this.editingIndex !== null;
+  }
 
   staticTask: StaticTaskForm = this.emptyStaticTask();
   algoTask: AlgoTaskForm = this.emptyAlgoTask();
@@ -52,6 +61,7 @@ export class TaskModal {
   constructor(
     private taskModalService: TaskModalService,
     private taskService: TaskService,
+    private cdr: ChangeDetectorRef,
   ) {
     this.taskModalService.open$.subscribe(() => {
       this.staticTask = this.emptyStaticTask();
@@ -59,6 +69,7 @@ export class TaskModal {
       this.labelInput = '';
       this.mode = 'static';
       this.isOpen = true;
+      this.cdr.markForCheck();
     });
   }
 
@@ -91,8 +102,31 @@ export class TaskModal {
     return this.mode === 'static' ? this.staticTask : this.algoTask;
   }
 
-  setMode(mode: TaskMode) {
-    // Carry over shared fields when switching
+  requestSetMode(mode: TaskMode) {
+    if (mode === this.mode) return;
+    if (this.mode === 'static' && this.staticTask.scopes.length > 0) {
+      this.pendingMode = mode;
+      this.showScopeWarning = true;
+    } else {
+      this.applySetMode(mode);
+    }
+  }
+
+  confirmModeSwitch() {
+    if (this.pendingMode) {
+      this.staticTask.scopes = [];
+      this.applySetMode(this.pendingMode);
+    }
+    this.showScopeWarning = false;
+    this.pendingMode = null;
+  }
+
+  cancelModeSwitch() {
+    this.showScopeWarning = false;
+    this.pendingMode = null;
+  }
+
+  private applySetMode(mode: TaskMode) {
     const from = this.currentTask;
     this.mode = mode;
     const to = this.currentTask;

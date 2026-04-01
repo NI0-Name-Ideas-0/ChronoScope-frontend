@@ -28,6 +28,10 @@ export class App implements OnInit {
     this.authService.login();
   }
 
-  openSettings() { this.isSettingsOpen.set(true); }
-  closeSettings() { this.isSettingsOpen.set(false); }
+  openSettings() {
+    this.isSettingsOpen.set(true);
+  }
+  closeSettings() {
+    this.isSettingsOpen.set(false);
+  }
 }
