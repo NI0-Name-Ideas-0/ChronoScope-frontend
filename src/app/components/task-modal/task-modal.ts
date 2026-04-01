@@ -5,6 +5,7 @@ import { TaskModalService } from '../../../services/task-modal.service';
 import { TaskService } from '../../../services/task.service';
 import { Scope } from '../../model/scope';
 import { StaticTask } from '../../model/static-task';
+import { Task } from '../../model/task';
 import { AlgoTask, Priority, Difficulty } from '../../model/algo-task';
 
 interface ScopeForm {
@@ -50,9 +51,9 @@ export class TaskModal {
   showScopeWarning = false;
   pendingMode: TaskMode | null = null;
 
-  editingIndex: number | null = null;
+  editingTask: Task | null = null;
   get isEditing(): boolean {
-    return this.editingIndex !== null;
+    return this.editingTask !== null;
   }
 
   staticTask: StaticTaskForm = this.emptyStaticTask();
@@ -63,14 +64,70 @@ export class TaskModal {
     private taskService: TaskService,
     private cdr: ChangeDetectorRef,
   ) {
-    this.taskModalService.open$.subscribe(() => {
-      this.staticTask = this.emptyStaticTask();
-      this.algoTask = this.emptyAlgoTask();
+    this.taskModalService.open$.subscribe(({ task }) => {
       this.labelInput = '';
-      this.mode = 'static';
+      this.showScopeWarning = false;
+      this.pendingMode = null;
+
+      if (task !== undefined) {
+        this.editingTask = task;
+        this.populateFromTask(task);
+      } else {
+        this.editingTask = null;
+        this.staticTask = this.emptyStaticTask();
+        this.algoTask = this.emptyAlgoTask();
+        this.mode = 'static';
+      }
       this.isOpen.set(true);
       this.cdr.markForCheck();
     });
+  }
+
+  private formatDate(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  private formatTime(date: Date): string {
+    const h = String(date.getHours()).padStart(2, '0');
+    const m = String(date.getMinutes()).padStart(2, '0');
+    return `${h}:${m}`;
+  }
+
+  private populateFromTask(task: Task): void {
+    if (task instanceof AlgoTask) {
+      this.mode = 'planned';
+      this.algoTask = {
+        title: task.title,
+        description: task.description,
+        startDate: task.startDate ? this.formatDate(task.startDate) : '',
+        dueDate: this.formatDate(task.dueDate),
+        labels: [...task.labels],
+        minScopeMinutes: task.minScopeMinutes,
+        maxScopeMinutes: task.maxScopeMinutes,
+        priority: task.priority,
+        difficulty: task.difficulty,
+      };
+      this.staticTask = this.emptyStaticTask();
+    } else {
+      this.mode = 'static';
+      this.staticTask = {
+        title: task.title,
+        description: task.description,
+        startDate: task.startDate ? this.formatDate(task.startDate) : '',
+        dueDate: this.formatDate(task.dueDate),
+        labels: [...task.labels],
+        scopes: task.scopes.map((s) => ({
+          startDate: this.formatDate(s.start),
+          startTime: this.formatTime(s.start),
+          endDate: this.formatDate(s.end),
+          endTime: this.formatTime(s.end),
+        })),
+      };
+      this.algoTask = this.emptyAlgoTask();
+    }
   }
 
   emptyStaticTask(): StaticTaskForm {
@@ -192,37 +249,42 @@ export class TaskModal {
   submit() {
     if (!this.isValid) return;
 
+    let task: Task;
+
     if (this.mode === 'static') {
       const t = this.staticTask;
-      this.taskService.addTask(
-        new StaticTask(
-          t.title.trim(),
-          t.description.trim(),
-          t.startDate ? this.toDate(t.startDate) : undefined,
-          this.toDate(t.dueDate),
-          [],
-          t.labels,
-          this.buildScopes(),
-          false,
-        ),
+      task = new StaticTask(
+        t.title.trim(),
+        t.description.trim(),
+        t.startDate ? this.toDate(t.startDate) : undefined,
+        this.toDate(t.dueDate),
+        [],
+        t.labels,
+        this.buildScopes(),
+        false,
       );
     } else {
       const t = this.algoTask;
-      this.taskService.addTask(
-        new AlgoTask(
-          t.title.trim(),
-          t.description.trim(),
-          this.toDate(t.startDate),
-          this.toDate(t.dueDate),
-          [],
-          t.labels,
-          false,
-          t.minScopeMinutes,
-          t.maxScopeMinutes,
-          t.priority,
-          t.difficulty,
-        ),
+      task = new AlgoTask(
+        t.title.trim(),
+        t.description.trim(),
+        this.toDate(t.startDate),
+        this.toDate(t.dueDate),
+        [],
+        t.labels,
+        false,
+        t.minScopeMinutes,
+        t.maxScopeMinutes,
+        t.priority,
+        t.difficulty,
       );
+    }
+
+    if (this.isEditing) {
+      task.id = this.editingTask!.id; // 👈 preserve the original ID when editing
+      this.taskService.updateTask(task);
+    } else {
+      this.taskService.addTask(task);
     }
 
     this.close();

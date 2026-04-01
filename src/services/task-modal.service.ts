@@ -4,7 +4,6 @@ import { Task } from '../app/model/task';
 
 export interface ModalOpenEvent {
   task?: Task;
-  taskIndex?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -19,7 +18,7 @@ export class TaskModalService {
     this.openSubject.next({});
   }
 
-  openForEdit(task: Task, taskIndex: number) {
-    this.openSubject.next({ task, taskIndex });
+  openForEdit(task: Task) {
+    this.openSubject.next({ task });
   }
 }
