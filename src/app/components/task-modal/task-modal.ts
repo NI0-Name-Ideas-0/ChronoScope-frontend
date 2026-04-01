@@ -1,5 +1,4 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChangeDetectorRef } from '@angular/core';
 import { TaskModalService } from '../../../services/task-modal.service';
@@ -39,12 +38,14 @@ type TaskMode = 'static' | 'planned';
 
 @Component({
   selector: 'app-task-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './task-modal.html',
+  styleUrl: './task-modal.css',
 })
 export class TaskModal {
-  isOpen = false;
+  isOpen = signal(false);
+  isLeaving = signal(false);
   labelInput = '';
   mode: TaskMode = 'static';
   showScopeWarning = false;
@@ -68,7 +69,7 @@ export class TaskModal {
       this.algoTask = this.emptyAlgoTask();
       this.labelInput = '';
       this.mode = 'static';
-      this.isOpen = true;
+      this.isOpen.set(true);
       this.cdr.markForCheck();
     });
   }
@@ -229,6 +230,10 @@ export class TaskModal {
   }
 
   close() {
-    this.isOpen = false;
+    this.isLeaving.set(true);
+    setTimeout(() => {
+      this.isOpen.set(false);
+      this.isLeaving.set(false);
+    }, 200);
   }
 }

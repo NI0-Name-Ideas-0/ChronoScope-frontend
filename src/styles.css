@@ -17,6 +17,31 @@ app-root {
   --color-chrono: #112f43;
 }
 
+/* ── Modal shared utilities ───────────────────────────────────────────────── */
+:root {
+  --modal-max-height: 95vh;
+}
+
+@keyframes modal-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-backdrop-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes modal-panel-in {
+  from { opacity: 0; transform: scale(0.97) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes modal-panel-out {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.97) translateY(8px); }
+}
+
 /* ── Settings modal shared utilities ─────────────────────────────────────── */
 @layer components {
   .settings-card {

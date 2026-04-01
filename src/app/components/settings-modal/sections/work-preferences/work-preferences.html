@@ -1,98 +1,137 @@
 <div class="space-y-6">
   <div>
     <h2 class="text-lg font-semibold text-base-content">Work Preferences</h2>
-    <p class="text-sm text-base-content/60 mt-0.5">Configure your working hours and scheduling defaults.</p>
+    <p class="text-sm text-base-content/60 mt-0.5">Configure your personal work profile for optimal task scheduling.</p>
   </div>
 
-  <!-- Working hours -->
+  <!-- Available Work Time -->
   <div class="settings-card">
-    <h3 class="settings-card-title">Working Hours</h3>
-    <p class="settings-card-desc">Set your standard working time to help ChronoScope schedule tasks effectively.</p>
-    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <label class="form-control">
-        <span class="label-text text-xs font-medium text-base-content/70 mb-1.5 block">Hours per day</span>
-        <div class="input input-bordered flex items-center gap-2 bg-base-100">
-          <input
-            type="number"
-            [(ngModel)]="hoursPerDay"
-            min="1"
-            max="24"
-            class="grow"
-            aria-label="Working hours per day"
-          />
-          <span class="text-base-content/40 text-sm">hrs</span>
+    <h3 class="settings-card-title">Available Work Time</h3>
+    <p class="settings-card-desc">Specify how much time you have available for work.</p>
+    <div class="mt-4 flex flex-col gap-4">
+      <!-- Mode toggle: Daily / Weekly -->
+      <div
+        class="inline-flex self-start rounded-lg border border-base-300 bg-base-200/50 p-0.5"
+        role="group"
+        aria-label="Work time mode"
+      >
+        <button
+          type="button"
+          (click)="workTimeMode.set('daily')"
+          [class]="workTimeMode() === 'daily'
+            ? 'px-4 py-1.5 rounded-md text-sm font-medium bg-base-100 shadow-sm text-base-content transition-all'
+            : 'px-4 py-1.5 rounded-md text-sm font-medium text-base-content/50 hover:text-base-content/80 transition-all'"
+          [attr.aria-pressed]="workTimeMode() === 'daily'"
+        >Per Day</button>
+        <button
+          type="button"
+          (click)="workTimeMode.set('weekly')"
+          [class]="workTimeMode() === 'weekly'
+            ? 'px-4 py-1.5 rounded-md text-sm font-medium bg-base-100 shadow-sm text-base-content transition-all'
+            : 'px-4 py-1.5 rounded-md text-sm font-medium text-base-content/50 hover:text-base-content/80 transition-all'"
+          [attr.aria-pressed]="workTimeMode() === 'weekly'"
+        >Per Week</button>
+      </div>
+
+      <!-- Input for selected mode -->
+      @if (workTimeMode() === 'daily') {
+        <div class="max-w-xs">
+          <label class="form-control">
+            <span class="label-text text-xs font-medium text-base-content/70 mb-1.5 block">Hours available per day</span>
+            <div class="input input-bordered flex items-center gap-2 bg-base-100">
+              <input
+                type="number"
+                [ngModel]="hoursPerDay()"
+                (ngModelChange)="hoursPerDay.set(+$event)"
+                min="0.5"
+                max="24"
+                step="0.5"
+                class="grow"
+                aria-label="Hours available per day"
+              />
+              <span class="text-base-content/40 text-sm">hrs</span>
+            </div>
+          </label>
         </div>
-      </label>
-      <label class="form-control">
-        <span class="label-text text-xs font-medium text-base-content/70 mb-1.5 block">Hours per week</span>
-        <div class="input input-bordered flex items-center gap-2 bg-base-100">
-          <input
-            type="number"
-            [(ngModel)]="hoursPerWeek"
-            min="1"
-            max="168"
-            class="grow"
-            aria-label="Working hours per week"
-          />
-          <span class="text-base-content/40 text-sm">hrs</span>
+      } @else {
+        <div class="max-w-xs">
+          <label class="form-control">
+            <span class="label-text text-xs font-medium text-base-content/70 mb-1.5 block">Hours available per week</span>
+            <div class="input input-bordered flex items-center gap-2 bg-base-100">
+              <input
+                type="number"
+                [ngModel]="hoursPerWeek()"
+                (ngModelChange)="hoursPerWeek.set(+$event)"
+                min="1"
+                max="168"
+                step="1"
+                class="grow"
+                aria-label="Hours available per week"
+              />
+              <span class="text-base-content/40 text-sm">hrs</span>
+            </div>
+          </label>
         </div>
-      </label>
+      }
     </div>
   </div>
 
-  <!-- Max working time -->
+  <!-- Continuous Work Phases -->
   <div class="settings-card">
-    <h3 class="settings-card-title">Maximum Working Time</h3>
-    <p class="settings-card-desc">ChronoScope will warn you when scheduled tasks exceed this limit.</p>
+    <h3 class="settings-card-title">Continuous Work Phases</h3>
+    <p class="settings-card-desc">Maximum duration of uninterrupted work before a break is scheduled.</p>
     <div class="mt-4 max-w-xs">
       <label class="form-control">
-        <span class="label-text text-xs font-medium text-base-content/70 mb-1.5 block">Max hours per day</span>
+        <span class="label-text text-xs font-medium text-base-content/70 mb-1.5 block">Max phase duration</span>
         <div class="input input-bordered flex items-center gap-2 bg-base-100">
           <input
             type="number"
-            [(ngModel)]="maxHoursPerDay"
-            min="1"
-            max="24"
+            [ngModel]="maxContinuousWorkMinutes()"
+            (ngModelChange)="maxContinuousWorkMinutes.set(+$event)"
+            min="15"
+            max="480"
+            step="15"
             class="grow"
-            aria-label="Maximum working hours per day"
+            aria-label="Maximum continuous work duration in minutes"
           />
-          <span class="text-base-content/40 text-sm">hrs</span>
+          <span class="text-base-content/40 text-sm">min</span>
         </div>
       </label>
     </div>
   </div>
 
-  <!-- Break settings -->
+  <!-- Breaks -->
   <div class="settings-card">
-    <h3 class="settings-card-title">Break Settings</h3>
-    <p class="settings-card-desc">Define how breaks are scheduled between tasks.</p>
+    <h3 class="settings-card-title">Breaks</h3>
+    <p class="settings-card-desc">Define how many breaks you take and how long each one lasts.</p>
     <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
       <label class="form-control">
-        <span class="label-text text-xs font-medium text-base-content/70 mb-1.5 block">Break duration</span>
+        <span class="label-text text-xs font-medium text-base-content/70 mb-1.5 block">Number of breaks</span>
         <div class="input input-bordered flex items-center gap-2 bg-base-100">
           <input
             type="number"
-            [(ngModel)]="breakDuration"
+            [ngModel]="breakCount()"
+            (ngModelChange)="breakCount.set(+$event)"
+            min="0"
+            max="10"
+            step="1"
+            class="grow"
+            aria-label="Number of breaks per work session"
+          />
+        </div>
+      </label>
+      <label class="form-control">
+        <span class="label-text text-xs font-medium text-base-content/70 mb-1.5 block">Duration per break</span>
+        <div class="input input-bordered flex items-center gap-2 bg-base-100">
+          <input
+            type="number"
+            [ngModel]="breakDurationMinutes()"
+            (ngModelChange)="breakDurationMinutes.set(+$event)"
             min="5"
             max="120"
             step="5"
             class="grow"
-            aria-label="Break duration in minutes"
-          />
-          <span class="text-base-content/40 text-sm">min</span>
-        </div>
-      </label>
-      <label class="form-control">
-        <span class="label-text text-xs font-medium text-base-content/70 mb-1.5 block">Break every</span>
-        <div class="input input-bordered flex items-center gap-2 bg-base-100">
-          <input
-            type="number"
-            [(ngModel)]="breakInterval"
-            min="30"
-            max="240"
-            step="15"
-            class="grow"
-            aria-label="Break interval in minutes"
+            aria-label="Duration of each break in minutes"
           />
           <span class="text-base-content/40 text-sm">min</span>
         </div>
@@ -100,31 +139,18 @@
     </div>
   </div>
 
-  <!-- Per-organization preferences -->
-  <div class="settings-card">
-    <div class="flex items-start justify-between gap-4">
-      <div>
-        <h3 class="settings-card-title">Per-Organization Preferences</h3>
-        <p class="settings-card-desc">Override these settings individually for each organization.</p>
-      </div>
-      <label class="flex items-center cursor-pointer gap-2 shrink-0" aria-label="Toggle per-organization preferences">
-        <input
-          type="checkbox"
-          [(ngModel)]="perOrgEnabled"
-          class="toggle toggle-primary"
-          role="switch"
-          [attr.aria-checked]="perOrgEnabled"
-        />
-      </label>
-    </div>
-    @if (perOrgEnabled) {
-      <div class="mt-4 p-3 rounded-lg bg-primary/10 text-primary text-sm">
-        Per-organization overrides are <strong>enabled</strong>. Visit each organization's settings to configure them.
-      </div>
-    }
-  </div>
-
-  <div class="flex justify-end">
-    <button class="btn btn-primary btn-sm" type="button">Save Preferences</button>
+  <!-- Restore defaults -->
+  <div class="flex items-center justify-between gap-4">
+    <p class="text-xs text-base-content/50">ChronoScope provides preset optimal values for all settings.</p>
+    <button
+      type="button"
+      (click)="resetToDefaults()"
+      class="btn btn-ghost btn-sm gap-1.5 shrink-0"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      Restore Defaults
+    </button>
   </div>
 </div>

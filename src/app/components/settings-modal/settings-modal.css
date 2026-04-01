@@ -4,22 +4,23 @@
 .settings-backdrop {
   @apply fixed inset-0 z-50 flex items-center justify-center p-4
          bg-black/40;
-  animation: backdrop-in 150ms ease-out;
+  animation: modal-backdrop-in 150ms ease-out;
 }
 
 .settings-backdrop--leaving {
-  animation: backdrop-out 150ms ease-in forwards;
+  animation: modal-backdrop-out 150ms ease-in forwards;
 }
 
 /* ── Panel ────────────────────────────────────────────────────────────────── */
 .settings-panel {
-  @apply relative flex flex-col w-full max-w-4xl h-[70vh]
+  @apply relative flex flex-col w-full max-w-4xl h-[650px]
          bg-base-100 rounded-2xl shadow-2xl overflow-hidden;
-  animation: panel-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: var(--modal-max-height);
+  animation: modal-panel-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .settings-panel--leaving {
-  animation: panel-out 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modal-panel-out 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* ── Header ───────────────────────────────────────────────────────────────── */
@@ -60,23 +61,4 @@
   /* These are global so child section components can use them */
 }
 
-/* ── Animations ───────────────────────────────────────────────────────────── */
-@keyframes backdrop-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
 
-@keyframes backdrop-out {
-  from { opacity: 1; }
-  to   { opacity: 0; }
-}
-
-@keyframes panel-in {
-  from { opacity: 0; transform: scale(0.97) translateY(8px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-@keyframes panel-out {
-  from { opacity: 1; transform: scale(1) translateY(0); }
-  to   { opacity: 0; transform: scale(0.97) translateY(8px); }
-}
