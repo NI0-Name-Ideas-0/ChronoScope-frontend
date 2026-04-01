@@ -1,5 +1,4 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TaskModalService } from '../../../services/task-modal.service';
 import { TaskService } from '../../../services/task.service';
@@ -37,28 +36,30 @@ type TaskMode = 'static' | 'planned';
 
 @Component({
   selector: 'app-task-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './task-modal.html',
+  styleUrl: './task-modal.css',
 })
 export class TaskModal {
-  isOpen = false;
+  private readonly taskModalService = inject(TaskModalService);
+  private readonly taskService = inject(TaskService);
+
+  isOpen = signal(false);
+  isLeaving = signal(false);
   labelInput = '';
   mode: TaskMode = 'static';
 
   staticTask: StaticTaskForm = this.emptyStaticTask();
   algoTask: AlgoTaskForm = this.emptyAlgoTask();
 
-  constructor(
-    private taskModalService: TaskModalService,
-    private taskService: TaskService,
-  ) {
+  constructor() {
     this.taskModalService.open$.subscribe(() => {
       this.staticTask = this.emptyStaticTask();
       this.algoTask = this.emptyAlgoTask();
       this.labelInput = '';
       this.mode = 'static';
-      this.isOpen = true;
+      this.isOpen.set(true);
     });
   }
 
@@ -195,6 +196,10 @@ export class TaskModal {
   }
 
   close() {
-    this.isOpen = false;
+    this.isLeaving.set(true);
+    setTimeout(() => {
+      this.isOpen.set(false);
+      this.isLeaving.set(false);
+    }, 200);
   }
 }
