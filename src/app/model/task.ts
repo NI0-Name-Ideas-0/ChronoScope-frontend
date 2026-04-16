@@ -17,23 +17,25 @@ export abstract class Task {
    * @param isFinished - Boolean to set when the task gets done (optional)
    *
    */
-  id: number;
+  id: number | null;
   title: string;
   description: string;
   dependencies: Task[];
   labels: string[];
   scopes: Scope[];
   account: Account;
+  difficulty: number;
   isFinished: boolean;
 
   constructor(
-    id: number,
+    id: number | null,
     title: string,
     description: string = '',
     dependencies: Task[] = [],
     labels: string[] = [],
     scopes: Scope[] = [],
     account: Account,
+    difficulty: number,
     isFinished: boolean = false,
   ) {
     ((this.id = id), //TODO This will change once the backend is connected
@@ -43,6 +45,7 @@ export abstract class Task {
       (this.labels = labels),
       (this.scopes = scopes),
       (this.account = account),
+      (this.difficulty = difficulty),
       (this.isFinished = isFinished));
   }
 }

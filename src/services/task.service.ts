@@ -3,6 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Task } from '../app/model/task';
 import { StaticTask } from '../app/model/static-task';
 import { Scope } from '../app/model/scope';
+import { Account } from '../app/model/account';
 import { EventInput } from '@fullcalendar/core';
 
 @Injectable({ providedIn: 'root' })
@@ -25,30 +26,31 @@ export class TaskService {
 
     this.addTask(
       new StaticTask(
+        null,
         'Mock Event',
         'This is a mocked static task',
-        undefined,
-        new Date(now.getTime() + 3 * 60 * 60 * 24), // due in 3 days
         [],
-        ['mock', 'test'],
+        [],
         [
           new Scope(
             new Date(now.getTime() + 1 * 60 * 60 * 1000), // starts in 1 hour
             new Date(now.getTime() + 3 * 60 * 60 * 1000), // ends in 3 hours
           ),
         ],
+        new Account(),
+        1,
         false,
       ),
     );
   }
 
   addTask(task: Task): void {
-    this.tasks.set(task.id, task);
+    this.tasks.set(task.id.toString(), task);
     this.tasksSubject.next([...this.tasks.values()]);
   }
 
   updateTask(task: Task): void {
-    this.tasks.set(task.id, task);
+    this.tasks.set(task.id.toString(), task);
     this.tasksSubject.next([...this.tasks.values()]);
   }
 
@@ -61,21 +63,11 @@ export class TaskService {
   }
 
   toCalendarEvents(task: Task): EventInput[] {
-    if (task.scopes.length > 0) {
-      return task.scopes.map((scope: Scope) => ({
-        id: task.id,
-        start: scope.start,
-        end: scope.end,
-      }));
-    }
-    return [
-      {
-        id: task.id,
-        title: task.title,
-        start: task.dueDate,
-        allDay: true,
-      },
-    ];
+    return task.scopes.map((scope: Scope) => ({
+      id: task.id.toString(),
+      start: scope.start,
+      end: scope.end,
+    }));
   }
 
   getAllCalendarEvents(): EventInput[] {
