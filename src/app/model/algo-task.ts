@@ -1,32 +1,33 @@
 import { Task } from './task';
-
-export type Priority = 'low' | 'medium' | 'high' | 'urgent';
-export type Difficulty = 'trivial' | 'easy' | 'medium' | 'hard';
+import { Account } from './account';
 
 export class AlgoTask extends Task {
+  startDate: Date;
+  dueDate: Date;
   minScopeMinutes: number;
   maxScopeMinutes: number;
-  priority: Priority;
-  difficulty: Difficulty;
+  difficulty: number;
 
   constructor(
+    id: number,
     title: string,
     description: string = '',
     startDate: Date,
     dueDate: Date,
     dependencies: Task[] = [],
     labels: string[] = [],
+    account: Account,
     isFinished: boolean = false,
     minScopeMinutes: number,
     maxScopeMinutes: number,
-    priority: Priority = 'medium',
-    difficulty: Difficulty = 'medium',
+    difficulty: number,
   ) {
     // PlannedTask scopes are set by the algorithm, not the user
-    super(title, description, startDate, dueDate, dependencies, labels, [], isFinished);
+    super(id, title, description, dependencies, labels, [], account, isFinished);
+    this.startDate = startDate;
+    this.dueDate = dueDate;
     this.minScopeMinutes = minScopeMinutes;
     this.maxScopeMinutes = maxScopeMinutes;
-    this.priority = priority;
     this.difficulty = difficulty;
   }
 }
