@@ -3,17 +3,19 @@ import { Scope } from './scope';
 import { Account } from './account';
 
 export class StaticTask extends Task {
+  scope: Scope;
   constructor(
-    id: number | null,
+    id: number,
     title: string,
     description: string = '',
     dependencies: Task[] = [],
     labels: string[] = [],
-    scopes: Scope[] = [],
+    scope: Scope,
     account: Account,
     difficulty: number,
     isFinished: boolean = false,
   ) {
-    super(id, title, description, dependencies, labels, scopes, account, difficulty, isFinished);
+    super(id, title, description, dependencies, labels, account, difficulty, isFinished);
+    this.scope = scope;
   }
 }

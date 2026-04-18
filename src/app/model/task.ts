@@ -1,4 +1,3 @@
-import { Scope } from './scope';
 import { Account } from './account';
 
 export abstract class Task {
@@ -17,23 +16,21 @@ export abstract class Task {
    * @param isFinished - Boolean to set when the task gets done (optional)
    *
    */
-  id: number | null;
+  id: number;
   title: string;
   description: string;
   dependencies: Task[];
   labels: string[];
-  scopes: Scope[];
   account: Account;
   difficulty: number;
   isFinished: boolean;
 
   constructor(
-    id: number | null,
+    id: number,
     title: string,
     description: string = '',
     dependencies: Task[] = [],
     labels: string[] = [],
-    scopes: Scope[] = [],
     account: Account,
     difficulty: number,
     isFinished: boolean = false,
@@ -43,7 +40,6 @@ export abstract class Task {
       (this.description = description),
       (this.dependencies = dependencies),
       (this.labels = labels),
-      (this.scopes = scopes),
       (this.account = account),
       (this.difficulty = difficulty),
       (this.isFinished = isFinished));
