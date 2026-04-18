@@ -5,6 +5,7 @@ import { StaticTask } from '../app/model/static-task';
 import { Scope } from '../app/model/scope';
 import { Account } from '../app/model/account';
 import { EventInput } from '@fullcalendar/core';
+import { AlgoTask } from '@app/model/algo-task';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -13,7 +14,7 @@ export class TaskService {
    *
    * @remarks should later be connected to the backend.
    */
-  private tasks: Map<string, Task> = new Map();
+  private tasks: Map<number, Task> = new Map();
   private tasksSubject = new BehaviorSubject<Task[]>([]);
   tasks$ = this.tasksSubject.asObservable();
 
@@ -26,17 +27,15 @@ export class TaskService {
 
     this.addTask(
       new StaticTask(
-        null,
+        0,
         'Mock Event',
         'This is a mocked static task',
         [],
         [],
-        [
-          new Scope(
-            new Date(now.getTime() + 1 * 60 * 60 * 1000), // starts in 1 hour
-            new Date(now.getTime() + 3 * 60 * 60 * 1000), // ends in 3 hours
-          ),
-        ],
+        new Scope(
+          new Date(now.getTime() + 1 * 60 * 60 * 1000), // starts in 1 hour
+          new Date(now.getTime() + 3 * 60 * 60 * 1000), // ends in 3 hours
+        ),
         new Account(),
         1,
         false,
@@ -45,16 +44,16 @@ export class TaskService {
   }
 
   addTask(task: Task): void {
-    this.tasks.set(task.id.toString(), task);
+    this.tasks.set(task.id, task);
     this.tasksSubject.next([...this.tasks.values()]);
   }
 
   updateTask(task: Task): void {
-    this.tasks.set(task.id.toString(), task);
+    this.tasks.set(task.id, task);
     this.tasksSubject.next([...this.tasks.values()]);
   }
 
-  getTask(id: string): Task | undefined {
+  getTask(id: number): Task | undefined {
     return this.tasks.get(id);
   }
 
@@ -63,11 +62,23 @@ export class TaskService {
   }
 
   toCalendarEvents(task: Task): EventInput[] {
-    return task.scopes.map((scope: Scope) => ({
-      id: task.id.toString(),
-      start: scope.start,
-      end: scope.end,
-    }));
+    if (task instanceof StaticTask) {
+      return [
+        {
+          id: task.id.toString(),
+          start: task.scope.start,
+          end: task.scope.end,
+        },
+      ];
+    } else if (task instanceof AlgoTask) {
+      return task.scopes.map((scope: Scope) => ({
+        id: task.id.toString(),
+        start: scope.start,
+        end: scope.end,
+      }));
+    } else {
+      throw console.error('Unexpected calendar event received from service');
+    }
   }
 
   getAllCalendarEvents(): EventInput[] {
