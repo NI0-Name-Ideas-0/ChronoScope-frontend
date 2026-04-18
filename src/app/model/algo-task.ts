@@ -4,6 +4,7 @@ import { Scope } from './scope';
 export class AlgoTask extends Task {
   startDate: Date;
   dueDate: Date;
+  duration: number;
   scopes: Scope[];
   minScopeMinutes: number;
   maxScopeMinutes: number;
@@ -14,6 +15,7 @@ export class AlgoTask extends Task {
     description: string = '',
     startDate: Date,
     dueDate: Date,
+    duration: number,
     dependencies: Task[] = [],
     labels: string[] = [],
     accountId: number,
@@ -27,6 +29,7 @@ export class AlgoTask extends Task {
     super(id, title, description, dependencies, labels, accountId, difficulty, isFinished);
     this.startDate = startDate;
     this.dueDate = dueDate;
+    this.duration = duration;
     this.scopes = scopes;
     this.minScopeMinutes = minScopeMinutes;
     this.maxScopeMinutes = maxScopeMinutes;
