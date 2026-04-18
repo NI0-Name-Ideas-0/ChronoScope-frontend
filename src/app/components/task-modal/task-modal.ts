@@ -3,35 +3,42 @@ import { FormsModule } from '@angular/forms';
 import { ChangeDetectorRef } from '@angular/core';
 import { TaskModalService } from '../../../services/task-modal.service';
 import { TaskService } from '../../../services/task.service';
-import { Scope } from '../../model/scope';
-import { StaticTask } from '../../model/static-task';
-import { Task } from '../../model/task';
-import { AlgoTask } from '../../model/algo-task';
+import { Auth } from '../../../services/auth';
+import { formatAccountsForDropdown } from '../../../services/account.utils';
+import {
+  StaticTaskCreateRequest,
+  DynamicTaskCreateRequest,
+  StaticTaskUpdateRequest,
+  DynamicTaskUpdateRequest,
+  StaticTaskResponse,
+  DynamicTaskResponse,
+  LabelCreateRequest,
+  LabelResponse,
+} from '../../../api/models';
 
-interface ScopeForm {
+interface StaticTaskForm {
+  title: string;
+  description: string;
+  labels: string[];
+  accountId: number;
+  difficulty: number;
   startDate: string;
   startTime: string;
   endDate: string;
   endTime: string;
 }
 
-interface BaseTaskForm {
+interface DynamicTaskForm {
   title: string;
   description: string;
   labels: string[];
   accountId: number;
   difficulty: number;
-}
-
-interface StaticTaskForm extends BaseTaskForm {
-  scopes: ScopeForm[];
-}
-
-interface AlgoTaskForm extends BaseTaskForm {
   startDate: string;
   dueDate: string;
-  minScopeMinutes: number;
-  maxScopeMinutes: number;
+  duration: number;
+  minScopeDuration: number;
+  maxScopeDuration: number;
 }
 
 type TaskMode = 'static' | 'planned';
@@ -46,36 +53,30 @@ type TaskMode = 'static' | 'planned';
 export class TaskModal {
   isOpen = signal(false);
   isLeaving = signal(false);
-  labelInput = '';
   mode: TaskMode = 'static';
-  showScopeWarning = false;
-  pendingMode: TaskMode | null = null;
 
-  editingTask: Task | null = null;
+  editingTask: StaticTaskResponse | DynamicTaskResponse | null = null;
   get isEditing(): boolean {
     return this.editingTask !== null;
   }
 
   staticTask: StaticTaskForm = this.emptyStaticTask();
-  algoTask: AlgoTaskForm = this.emptyAlgoTask();
+  dynamicTask: DynamicTaskForm = this.emptyDynamicTask();
 
   constructor(
     private taskModalService: TaskModalService,
     private taskService: TaskService,
+    private auth: Auth,
     private cdr: ChangeDetectorRef,
   ) {
     this.taskModalService.open$.subscribe(({ task }) => {
-      this.labelInput = '';
-      this.showScopeWarning = false;
-      this.pendingMode = null;
-
       if (task !== undefined) {
         this.editingTask = task;
         this.populateFromTask(task);
       } else {
         this.editingTask = null;
         this.staticTask = this.emptyStaticTask();
-        this.algoTask = this.emptyAlgoTask();
+        this.dynamicTask = this.emptyDynamicTask();
         this.mode = 'static';
       }
       this.isOpen.set(true);
@@ -83,51 +84,9 @@ export class TaskModal {
     });
   }
 
-  private formatDate(date: Date): string {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-
-  private formatTime(date: Date): string {
-    const h = String(date.getHours()).padStart(2, '0');
-    const m = String(date.getMinutes()).padStart(2, '0');
-    return `${h}:${m}`;
-  }
-
-  private populateFromTask(task: Task): void {
-    if (task instanceof AlgoTask) {
-      this.mode = 'planned';
-      this.algoTask = {
-        title: task.title,
-        description: task.description,
-        startDate: task.startDate ? this.formatDate(task.startDate) : '',
-        dueDate: this.formatDate(task.dueDate),
-        labels: [...task.labels],
-        account: task.account,
-        difficulty: task.difficulty,
-        minScopeMinutes: task.minScopeMinutes,
-        maxScopeMinutes: task.maxScopeMinutes,
-      };
-      this.staticTask = this.emptyStaticTask();
-    } else {
-      this.mode = 'static';
-      this.staticTask = {
-        title: task.title,
-        description: task.description,
-        labels: [...task.labels],
-        account: task.account,
-        difficulty: task.difficulty,
-        scopes: task.scopes.map((s) => ({
-          startDate: this.formatDate(s.start),
-          startTime: this.formatTime(s.start),
-          endDate: this.formatDate(s.end),
-          endTime: this.formatTime(s.end),
-        })),
-      };
-      this.algoTask = this.emptyAlgoTask();
-    }
+  private getDefaultAccountId(): number {
+    const accounts = this.auth.getAccounts();
+    return accounts.length > 0 ? accounts[0].id! : 0;
   }
 
   emptyStaticTask(): StaticTaskForm {
@@ -135,166 +94,214 @@ export class TaskModal {
       title: '',
       description: '',
       labels: [],
-      account: Account,
+      accountId: this.getDefaultAccountId(),
       difficulty: 0,
-      scopes: [],
+      startDate: '',
+      startTime: '09:00',
+      endDate: '',
+      endTime: '10:00',
     };
   }
 
-  emptyAlgoTask(): AlgoTaskForm {
+  emptyDynamicTask(): DynamicTaskForm {
     return {
       title: '',
       description: '',
+      labels: [],
+      accountId: this.getDefaultAccountId(),
+      difficulty: 0,
       startDate: '',
       dueDate: '',
-      labels: [],
-      account: Account,
-      minScopeMinutes: 30,
-      maxScopeMinutes: 120,
-      difficulty: 0,
+      duration: 3600,
+      minScopeDuration: 30,
+      maxScopeDuration: 120,
     };
   }
 
-  get currentTask(): BaseTaskForm {
-    return this.mode === 'static' ? this.staticTask : this.algoTask;
+  // Helper: Convert string array of labels to LabelCreateRequest format
+  private convertLabelsToRequest(labels: string[]): LabelCreateRequest[] {
+    return labels.map((name) => ({ name }));
   }
 
-  requestSetMode(mode: TaskMode) {
-    if (mode === this.mode) return;
-    if (this.mode === 'static' && this.staticTask.scopes.length > 0) {
-      this.pendingMode = mode;
-      this.showScopeWarning = true;
+  // Helper: Convert Date object to ISO 8601 string with timezone
+  private dateToISOString(date: Date): string {
+    return date.toISOString();
+  }
+
+  // Helper: Combine date and time strings into a Date object
+  private stringDateToDate(dateStr: string, timeStr: string = '00:00'): Date {
+    return new Date(`${dateStr}T${timeStr}`);
+  }
+
+  // Helper: Extract labels from LabelResponse array
+  private labelResponseToString(labels?: LabelResponse[]): string[] {
+    return (labels || []).map((l) => l.name || '').filter((name) => name);
+  }
+
+  // Helper: Determine if a task response is dynamic (by checking for dynamic-specific fields)
+  private isDynamicTask(
+    task: StaticTaskResponse | DynamicTaskResponse,
+  ): task is DynamicTaskResponse {
+    return 'duration' in task || 'minScopeDuration' in task;
+  }
+
+  private populateFromTask(task: StaticTaskResponse | DynamicTaskResponse): void {
+    const baseData = {
+      title: task.name || '',
+      description: task.description || '',
+      labels: this.labelResponseToString(task.labels as LabelResponse[] | undefined),
+      accountId: task.accountId || this.getDefaultAccountId(),
+      difficulty: task.difficulty || 0,
+    };
+
+    if (this.isDynamicTask(task)) {
+      this.mode = 'planned';
+      const startDate = task.startAt ? task.startAt.split('T')[0] : '';
+      const endDate = task.endAt ? task.endAt.split('T')[0] : '';
+
+      this.dynamicTask = {
+        ...baseData,
+        startDate,
+        dueDate: endDate,
+        duration: task.duration || 3600,
+        minScopeDuration: task.minScopeDuration || 30,
+        maxScopeDuration: task.maxScopeDuration || 120,
+      } as DynamicTaskForm;
+      this.staticTask = this.emptyStaticTask();
     } else {
-      this.applySetMode(mode);
+      this.mode = 'static';
+      const startDate = task.startAt ? task.startAt.split('T')[0] : '';
+      const startTime = task.startAt
+        ? task.startAt.split('T')[1]?.substring(0, 5) || '00:00'
+        : '00:00';
+      const endDate = task.endAt ? task.endAt.split('T')[0] : '';
+      const endTime = task.endAt ? task.endAt.split('T')[1]?.substring(0, 5) || '00:00' : '00:00';
+
+      this.staticTask = {
+        ...baseData,
+        startDate,
+        startTime,
+        endDate,
+        endTime,
+      } as StaticTaskForm;
+      this.dynamicTask = this.emptyDynamicTask();
     }
   }
 
-  confirmModeSwitch() {
-    if (this.pendingMode) {
-      this.staticTask.scopes = [];
-      this.applySetMode(this.pendingMode);
-    }
-    this.showScopeWarning = false;
-    this.pendingMode = null;
-  }
-
-  cancelModeSwitch() {
-    this.showScopeWarning = false;
-    this.pendingMode = null;
-  }
-
-  private applySetMode(mode: TaskMode) {
-    const from = this.currentTask;
-    this.mode = mode;
-    const to = this.currentTask;
-    to.title = from.title;
-    to.description = from.description;
-    to.labels = [...from.labels];
-    this.labelInput = '';
+  get currentTask(): StaticTaskForm | DynamicTaskForm {
+    return this.mode === 'static' ? this.staticTask : this.dynamicTask;
   }
 
   // Labels
-  addLabel() {
-    const label = this.labelInput.trim();
+  addLabel(label: string) {
+    const trimmed = label.trim();
     const target = this.currentTask;
-    if (label && !target.labels.includes(label)) {
-      target.labels.push(label);
+    if (trimmed && !target.labels.includes(trimmed)) {
+      target.labels.push(trimmed);
+      this.cdr.markForCheck();
     }
-    this.labelInput = '';
   }
 
   removeLabel(label: string) {
     this.currentTask.labels = this.currentTask.labels.filter((l) => l !== label);
-  }
-
-  onLabelKeydown(event: KeyboardEvent) {
-    if (event.key === 'Enter' || event.key === ',') {
-      event.preventDefault();
-      this.addLabel();
-    }
-  }
-
-  // Scopes (static only)
-  addScope() {
-    this.staticTask.scopes.push({ startDate: '', startTime: '', endDate: '', endTime: '' });
-  }
-
-  removeScope(index: number) {
-    this.staticTask.scopes.splice(index, 1);
-  }
-
-  private toDate(date: string, time: string = '00:00'): Date {
-    return new Date(`${date}T${time || '00:00'}`);
-  }
-
-  private buildScopes(): Scope[] {
-    return this.staticTask.scopes
-      .filter((s) => s.startDate && s.endDate)
-      .map(
-        (s) => new Scope(this.toDate(s.startDate, s.startTime), this.toDate(s.endDate, s.endTime)),
-      );
+    this.cdr.markForCheck();
   }
 
   get isValid(): boolean {
     if (!this.currentTask.title.trim()) return false;
-    if (this.mode === 'static') {
-      const p = this.staticTask;
-      if (!p.scopes) return false;
-      for (var scope of p.scopes) {
-        if (scope.startDate > scope.endDate) return false;
-        if (scope.startDate == scope.endDate && scope.startTime > scope.endTime) return false;
-      }
-    } else if (this.mode === 'planned') {
-      const p = this.algoTask;
-      return !!p.startDate && p.minScopeMinutes > 0 && p.maxScopeMinutes >= p.minScopeMinutes;
-    }
-    return true;
-  }
-
-  submit() {
-    if (!this.isValid) return;
-
-    let task: Task;
 
     if (this.mode === 'static') {
       const t = this.staticTask;
-      task = new StaticTask(
-        null,
-        t.title.trim(),
-        t.description.trim(),
-        [],
-        t.labels,
-        this.buildScopes(),
-        t.account,
-        t.difficulty,
-        false,
-      );
+      if (!t.startDate || !t.endDate) return false;
+      if (t.startDate > t.endDate) return false;
+      if (t.startDate === t.endDate && t.startTime > t.endTime) return false;
     } else {
-      const t = this.algoTask;
-      task = new AlgoTask(
-        null,
-        t.title.trim(),
-        t.description.trim(),
-        this.toDate(t.startDate),
-        this.toDate(t.dueDate),
-        [],
-        t.labels,
-        t.account,
-        t.difficulty,
-        false,
-        t.minScopeMinutes,
-        t.maxScopeMinutes,
-      );
+      const t = this.dynamicTask;
+      if (!t.startDate || !t.dueDate) return false;
+      if (t.startDate > t.dueDate) return false;
+      if (t.duration <= 0 || t.minScopeDuration <= 0) return false;
+      if (t.maxScopeDuration < t.minScopeDuration) return false;
     }
 
-    if (this.isEditing) {
-      task.id = this.editingTask!.id;
-      this.taskService.updateTask(task);
-    } else {
-      this.taskService.addTask(task);
-    }
+    return true;
+  }
 
-    this.close();
+  async submit(): Promise<void> {
+    if (!this.isValid) return;
+
+    try {
+      if (this.mode === 'static') {
+        const t = this.staticTask;
+        const startDate = this.stringDateToDate(t.startDate, t.startTime);
+        const endDate = this.stringDateToDate(t.endDate, t.endTime);
+
+        if (this.isEditing && this.editingTask) {
+          const request: StaticTaskUpdateRequest = {
+            type: 'STATIC',
+            name: t.title.trim(),
+            description: t.description.trim(),
+            labels: this.convertLabelsToRequest(t.labels),
+            difficulty: t.difficulty,
+            startAt: this.dateToISOString(startDate),
+            endAt: this.dateToISOString(endDate),
+          };
+          await this.taskService.updateTask(this.editingTask.id!, request);
+        } else {
+          const request: StaticTaskCreateRequest = {
+            type: 'STATIC',
+            name: t.title.trim(),
+            description: t.description.trim(),
+            labels: this.convertLabelsToRequest(t.labels),
+            accountId: t.accountId,
+            difficulty: t.difficulty,
+            startAt: this.dateToISOString(startDate),
+            endAt: this.dateToISOString(endDate),
+          };
+          await this.taskService.createTask(request);
+        }
+      } else {
+        const t = this.dynamicTask;
+        const startDate = this.stringDateToDate(t.startDate);
+        const dueDate = this.stringDateToDate(t.dueDate);
+
+        if (this.isEditing && this.editingTask) {
+          const request: DynamicTaskUpdateRequest = {
+            type: 'DYNAMIC',
+            name: t.title.trim(),
+            description: t.description.trim(),
+            labels: this.convertLabelsToRequest(t.labels),
+            difficulty: t.difficulty,
+            duration: t.duration,
+            minScopeDuration: t.minScopeDuration,
+            maxScopeDuration: t.maxScopeDuration,
+            startAt: this.dateToISOString(startDate),
+            endAt: this.dateToISOString(dueDate),
+          };
+          await this.taskService.updateTask(this.editingTask.id!, request);
+        } else {
+          const request: DynamicTaskCreateRequest = {
+            type: 'DYNAMIC',
+            name: t.title.trim(),
+            description: t.description.trim(),
+            labels: this.convertLabelsToRequest(t.labels),
+            accountId: t.accountId,
+            difficulty: t.difficulty,
+            duration: t.duration,
+            minScopeDuration: t.minScopeDuration,
+            maxScopeDuration: t.maxScopeDuration,
+            startAt: this.dateToISOString(startDate),
+            endAt: this.dateToISOString(dueDate),
+          };
+          await this.taskService.createTask(request);
+        }
+      }
+
+      this.close();
+    } catch (error) {
+      console.error('Error submitting task:', error);
+      // TODO: Display user-friendly error message in UI
+      alert('Failed to save task. Please check your input and try again.');
+    }
   }
 
   close() {

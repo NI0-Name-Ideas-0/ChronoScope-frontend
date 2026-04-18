@@ -157,8 +157,8 @@ export class TaskService {
       return [
         {
           id: task.id.toString(),
-          start: task.scope.start,
-          end: task.scope.end,
+          start: task.start,
+          end: task.end,
         },
       ];
     } else if (task instanceof AlgoTask) {

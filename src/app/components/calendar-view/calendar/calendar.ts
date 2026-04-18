@@ -38,9 +38,13 @@ export class Calendar {
   ngAfterViewInit() {
     const api = this.calendarRef.getApi();
 
-    api.setOption('eventClick', (info: EventClickArg) => {
-      const task = this.taskService.getTask(info.event.id);
-      if (task) this.taskModalService.openForEdit(task);
+    api.setOption('eventClick', async (info: EventClickArg) => {
+      try {
+        const task = await this.taskService.getTask(Number(info.event.id));
+        if (task) this.taskModalService.openForEdit(task);
+      } catch (error) {
+        console.error('Error fetching task:', error);
+      }
     });
     this.taskService.tasks$.subscribe(() => {
       api.getEvents().forEach((e) => e.remove());
