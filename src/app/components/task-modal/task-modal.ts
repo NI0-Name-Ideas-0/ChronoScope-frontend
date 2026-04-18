@@ -4,7 +4,6 @@ import { ChangeDetectorRef } from '@angular/core';
 import { TaskModalService } from '../../../services/task-modal.service';
 import { TaskService } from '../../../services/task.service';
 import { Scope } from '../../model/scope';
-import { Account } from '../../model/account';
 import { StaticTask } from '../../model/static-task';
 import { Task } from '../../model/task';
 import { AlgoTask } from '../../model/algo-task';
@@ -20,7 +19,7 @@ interface BaseTaskForm {
   title: string;
   description: string;
   labels: string[];
-  account: Account;
+  accountId: number;
   difficulty: number;
 }
 

@@ -1,6 +1,5 @@
 import { Task } from './task';
 import { Scope } from './scope';
-import { Account } from './account';
 
 export class StaticTask extends Task {
   scope: Scope;
@@ -11,11 +10,11 @@ export class StaticTask extends Task {
     dependencies: Task[] = [],
     labels: string[] = [],
     scope: Scope,
-    account: Account,
+    accountId: number,
     difficulty: number,
     isFinished: boolean = false,
   ) {
-    super(id, title, description, dependencies, labels, account, difficulty, isFinished);
+    super(id, title, description, dependencies, labels, accountId, difficulty, isFinished);
     this.scope = scope;
   }
 }

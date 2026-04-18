@@ -1,6 +1,5 @@
 import { Task } from './task';
 import { Scope } from './scope';
-import { Account } from './account';
 
 export class AlgoTask extends Task {
   startDate: Date;
@@ -17,7 +16,7 @@ export class AlgoTask extends Task {
     dueDate: Date,
     dependencies: Task[] = [],
     labels: string[] = [],
-    account: Account,
+    accountId: number,
     scopes: Scope[] = [],
     difficulty: number,
     isFinished: boolean = false,
@@ -25,7 +24,7 @@ export class AlgoTask extends Task {
     maxScopeMinutes: number,
   ) {
     // PlannedTask scopes are set by the algorithm, not the user
-    super(id, title, description, dependencies, labels, account, difficulty, isFinished);
+    super(id, title, description, dependencies, labels, accountId, difficulty, isFinished);
     this.startDate = startDate;
     this.dueDate = dueDate;
     this.scopes = scopes;

@@ -3,7 +3,6 @@ import { BehaviorSubject } from 'rxjs';
 import { Task } from '../app/model/task';
 import { StaticTask } from '../app/model/static-task';
 import { Scope } from '../app/model/scope';
-import { Account } from '../app/model/account';
 import { EventInput } from '@fullcalendar/core';
 import { AlgoTask } from '@app/model/algo-task';
 import { Api } from '../api/api';
@@ -33,19 +32,15 @@ export class TaskService {
   /**
    * Provides Tasks to subscribers
    *
-   * @remarks should later be connected to the backend.
+   * @remarks Connected to the backend for real-time task management
+   * @remarks Connected accounts are managed by Auth service (auth.ts)
    */
   private tasks: Map<number, Task> = new Map();
   private tasksSubject = new BehaviorSubject<Task[]>([]);
   tasks$ = this.tasksSubject.asObservable();
 
   constructor(private api: Api) {
-    this.initMockTasks();
     this.loadTasks();
-  }
-
-  private initMockTasks(): void {
-    // Load tasks from backend on initialization
   }
 
   /**
