@@ -6,6 +6,27 @@ import { Scope } from '../app/model/scope';
 import { Account } from '../app/model/account';
 import { EventInput } from '@fullcalendar/core';
 import { AlgoTask } from '@app/model/algo-task';
+import { Api } from '../api/api';
+import {
+  createTask as createTaskApi,
+  CreateTask$Params,
+  getTasks as getTasksApi,
+  GetTasks$Params,
+  getTask as getTaskApi,
+  GetTask$Params,
+  updateTask as updateTaskApi,
+  UpdateTask$Params,
+  deleteTask as deleteTaskApi,
+  DeleteTask$Params,
+} from '../api/functions';
+import {
+  StaticTaskCreateRequest,
+  DynamicTaskCreateRequest,
+  StaticTaskResponse,
+  DynamicTaskResponse,
+  StaticTaskUpdateRequest,
+  DynamicTaskUpdateRequest,
+} from '../api/models';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -18,47 +39,122 @@ export class TaskService {
   private tasksSubject = new BehaviorSubject<Task[]>([]);
   tasks$ = this.tasksSubject.asObservable();
 
-  constructor() {
+  constructor(private api: Api) {
     this.initMockTasks();
+    this.loadTasks();
   }
 
   private initMockTasks(): void {
-    const now = new Date();
-
-    this.addTask(
-      new StaticTask(
-        0,
-        'Mock Event',
-        'This is a mocked static task',
-        [],
-        [],
-        new Scope(
-          new Date(now.getTime() + 1 * 60 * 60 * 1000), // starts in 1 hour
-          new Date(now.getTime() + 3 * 60 * 60 * 1000), // ends in 3 hours
-        ),
-        new Account(),
-        1,
-        false,
-      ),
-    );
+    // Load tasks from backend on initialization
   }
 
-  addTask(task: Task): void {
-    this.tasks.set(task.id, task);
+  /**
+   * Loads all tasks from the backend and updates the subject
+   */
+  private async loadTasks(): Promise<void> {
+    try {
+      const params: GetTasks$Params = {};
+      const tasks = await this.api.invoke(getTasksApi, params);
+      this.tasks.clear();
+      tasks.forEach((task) => {
+        if (task.id !== undefined) {
+          this.tasks.set(task.id, task as any);
+        }
+      });
+      this.tasksSubject.next([...this.tasks.values()]);
+    } catch (error) {
+      console.error('Error loading tasks from backend:', error);
+    }
+  }
+
+  /**
+   * Creates a new task on the backend
+   * @param request The task creation request (StaticTaskCreateRequest or DynamicTaskCreateRequest)
+   * @returns Promise with the created task response
+   */
+  async createTask(
+    request: StaticTaskCreateRequest | DynamicTaskCreateRequest,
+  ): Promise<StaticTaskResponse | DynamicTaskResponse> {
+    const params: CreateTask$Params = {
+      body: request,
+    };
+    const response = await this.api.invoke(createTaskApi, params);
+    // Add the newly created task to local cache
+    if (response.id !== undefined) {
+      this.tasks.set(response.id, response as any);
+      this.tasksSubject.next([...this.tasks.values()]);
+    }
+    return response;
+  }
+
+  /**
+   * Updates a task on the backend
+   * @param id The task ID
+   * @param request The update request (StaticTaskUpdateRequest or DynamicTaskUpdateRequest)
+   * @returns Promise with the updated task response
+   */
+  async updateTask(
+    id: number,
+    request: StaticTaskUpdateRequest | DynamicTaskUpdateRequest,
+  ): Promise<StaticTaskResponse | DynamicTaskResponse> {
+    const params: UpdateTask$Params = {
+      id,
+      body: request,
+    };
+    const response = await this.api.invoke(updateTaskApi, params);
+    // Update the task in local cache
+    if (response.id !== undefined) {
+      this.tasks.set(response.id, response as any);
+      this.tasksSubject.next([...this.tasks.values()]);
+    }
+    return response;
+  }
+
+  /**
+   * Fetches a single task by ID from the backend
+   * @param id The task ID
+   * @returns Promise with the task response
+   */
+  async getTask(id: number): Promise<StaticTaskResponse | DynamicTaskResponse> {
+    const params: GetTask$Params = { id };
+    const response = await this.api.invoke(getTaskApi, params);
+    // Cache the task locally
+    if (response.id !== undefined) {
+      this.tasks.set(response.id, response as any);
+      this.tasksSubject.next([...this.tasks.values()]);
+    }
+    return response;
+  }
+
+  /**
+   * Fetches all tasks from the backend
+   * @returns Promise with array of task responses
+   */
+  async getTasks(): Promise<(StaticTaskResponse | DynamicTaskResponse)[]> {
+    const params: GetTasks$Params = {};
+    const tasks = await this.api.invoke(getTasksApi, params);
+    // Update local cache
+    this.tasks.clear();
+    tasks.forEach((task) => {
+      if (task.id !== undefined) {
+        this.tasks.set(task.id, task as any);
+      }
+    });
     this.tasksSubject.next([...this.tasks.values()]);
+    return tasks;
   }
 
-  updateTask(task: Task): void {
-    this.tasks.set(task.id, task);
+  /**
+   * Deletes a task from the backend
+   * @param id The task ID
+   * @returns Promise that resolves when deletion is complete
+   */
+  async deleteTask(id: number): Promise<void> {
+    const params: DeleteTask$Params = { id };
+    await this.api.invoke(deleteTaskApi, params);
+    // Remove from local cache
+    this.tasks.delete(id);
     this.tasksSubject.next([...this.tasks.values()]);
-  }
-
-  getTask(id: number): Task | undefined {
-    return this.tasks.get(id);
-  }
-
-  getTasks(): Task[] {
-    return [...this.tasks.values()];
   }
 
   toCalendarEvents(task: Task): EventInput[] {
@@ -82,6 +178,6 @@ export class TaskService {
   }
 
   getAllCalendarEvents(): EventInput[] {
-    return this.getTasks().flatMap((task) => this.toCalendarEvents(task));
+    return [...this.tasks.values()].flatMap((task: any) => this.toCalendarEvents(task));
   }
 }
