@@ -4,7 +4,7 @@
     <div>
       <app-navbar (settingsRequested)="openSettings()"></app-navbar>
     </div>
-    <div class="bg-white flex-1 rounded-md p-1.5">
+    <div class="bg-base-100 flex-1 rounded-md p-1.5">
       @switch (activeView()) {
         @case ('list') {
           <app-list-view></app-list-view>
