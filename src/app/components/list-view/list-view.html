@@ -37,15 +37,15 @@
       <!-- Statistik -->
       <div class="stats shadow mb-6 w-full bg-base-100">
         <div class="stat">
-          <div class="stat-title">Gesamt</div>
+          <div class="stat-title">Overall</div>
           <div class="stat-value text-primary">{{ filteredTasks().length }}</div>
         </div>
         <div class="stat">
-          <div class="stat-title">Offen</div>
+          <div class="stat-title">Open</div>
           <div class="stat-value text-warning">{{ openCount() }}</div>
         </div>
         <div class="stat">
-          <div class="stat-title">Erledigt</div>
+          <div class="stat-title">Done</div>
           <div class="stat-value text-success">{{ doneCount() }}</div>
         </div>
       </div>
@@ -55,87 +55,49 @@
         @for (task of filteredTasks(); track task.id) {
           <div 
             class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-base-200"
-            [class.border-l-4]="task.priority === 'high'"
-            [class.border-error]="task.priority === 'high'"
-            [class.border-l-4]="task.priority === 'medium'"
-            [class.border-warning]="task.priority === 'medium'"
-            [class.border-l-4]="task.priority === 'low'"
-            [class.border-info]="task.priority === 'low'"
             (click)="onTaskClick(task)"
           >
-            <div class="card-body p-4 flex flex-row items-center gap-4">
-              <!-- Avatar / Checkbox -->
-              <div class="flex-shrink-0">
-                @if (task.assignee) {
-                  <div class="avatar placeholder">
-                    <div class="bg-neutral text-neutral-content rounded-full w-12">
-                      @if (task.assignee.avatar) {
-                        <img [src]="task.assignee.avatar" [alt]="task.assignee.name" />
-                      } @else {
-                        <span class="text-sm">{{ task.assignee.initials }}</span>
-                      }
-                    </div>
-                  </div>
-                } @else {
-                  <div class="avatar placeholder">
-                    <div class="bg-neutral text-neutral-content rounded-full w-12">
-                      <span class="text-sm">?</span>
-                    </div>
-                  </div>
-                }
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-1">
+                <h3 class="font-semibold text-lg truncate">{{ task.title }}</h3>
               </div>
+              <p class="text-sm text-base-content/70 truncate">{{ task.description }}</p>
+              <p class="text-xs text-base-content/50 mt-1">
+                DueDate: {{ task.dueDate | date:'dd.MM.yyyy' }}
+              </p>
+            </div>
 
-              <!-- Content -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1">
-                  <h3 class="font-semibold text-lg truncate">{{ task.title }}</h3>
-                  <div class="badge badge-sm" [class]="getStatusClass(task.status)">
-                    {{ getStatusLabel(task.status) }}
-                  </div>
-                  <div class="badge badge-sm badge-ghost">
-                    {{ getPriorityLabel(task.priority) }}
-                  </div>
-                </div>
-                <p class="text-sm text-base-content/70 truncate">{{ task.description }}</p>
-                <p class="text-xs text-base-content/50 mt-1">
-                  Fällig: {{ task.dueDate | date:'dd.MM.yyyy' }}
-                  @if (task.assignee) {
-                    <span class="ml-2">• {{ task.assignee.name }}</span>
-                  }
-                </p>
-              </div>
-
-              <!-- Actions -->
-              <div class="flex-shrink-0 flex gap-1">
-                <button 
-                  class="btn btn-ghost btn-sm btn-circle"
-                  (click)="onEdit(task, $event)"
-                  title="Bearbeiten"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button 
-                  class="btn btn-ghost btn-sm btn-circle text-error"
-                  (click)="onDelete(task, $event)"
-                  title="Löschen"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
+            <!-- Actions -->
+            <div class="flex-shrink-0 flex gap-1">
+              <button 
+                class="btn btn-ghost btn-sm btn-circle"
+                (click)="onEdit(task, $event)"
+                title="Bearbeiten"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button 
+                class="btn btn-ghost btn-sm btn-circle text-error"
+                (click)="onDelete(task, $event)"
+                title="Löschen"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
             </div>
           </div>
-        } @empty {
-          <div class="text-center py-12">
-            <div class="text-6xl mb-4">📝</div>
-            <h3 class="text-lg font-semibold mb-2">Keine Aufgaben gefunden</h3>
-            <p class="text-base-content/70">
-              {{ searchTask ? 'Versuche einen anderen Suchbegriff' : 'Erstelle deine erste Aufgabe' }}
-            </p>
-          </div>
-        }
-      </div>
+      } @empty {
+        <div class="text-center py-12">
+          <div class="text-6xl mb-4">📝</div>
+          <h3 class="text-lg font-semibold mb-2">Keine Aufgaben gefunden</h3>
+          <p class="text-base-content/70">
+            {{ searchTask ? 'Versuche einen anderen Suchbegriff' : 'Erstelle deine erste Aufgabe' }}
+          </p>
+        </div>
+      }
     </div>
+  </div>
