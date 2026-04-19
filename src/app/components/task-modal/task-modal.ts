@@ -53,6 +53,8 @@ type TaskMode = 'static' | 'planned';
 export class TaskModal {
   isOpen = signal(false);
   isLeaving = signal(false);
+  isSaving = signal(false);
+  errorMessage = signal<string | null>(null);
   mode: TaskMode = 'static';
 
   editingTask: StaticTaskResponse | DynamicTaskResponse | null = null;
@@ -60,15 +62,18 @@ export class TaskModal {
     return this.editingTask !== null;
   }
 
-  staticTask: StaticTaskForm = this.emptyStaticTask();
-  dynamicTask: DynamicTaskForm = this.emptyDynamicTask();
+  staticTask: StaticTaskForm;
+  dynamicTask: DynamicTaskForm;
 
-  constructor(
-    private taskModalService: TaskModalService,
-    private taskService: TaskService,
-    private auth: Auth,
-    private cdr: ChangeDetectorRef,
-  ) {
+  private taskModalService = inject(TaskModalService);
+  private taskService = inject(TaskService);
+  private auth = inject(Auth);
+  private cdr = inject(ChangeDetectorRef);
+
+  constructor() {
+    this.staticTask = this.emptyStaticTask();
+    this.dynamicTask = this.emptyDynamicTask();
+
     this.taskModalService.open$.subscribe(({ task }) => {
       if (task !== undefined) {
         this.editingTask = task;
@@ -79,6 +84,7 @@ export class TaskModal {
         this.dynamicTask = this.emptyDynamicTask();
         this.mode = 'static';
       }
+      this.errorMessage.set(null);
       this.isOpen.set(true);
       this.cdr.markForCheck();
     });
@@ -112,7 +118,7 @@ export class TaskModal {
       difficulty: 0,
       startDate: '',
       dueDate: '',
-      duration: 3600,
+      duration: 60,
       minScopeDuration: 30,
       maxScopeDuration: 120,
     };
@@ -163,7 +169,7 @@ export class TaskModal {
         ...baseData,
         startDate,
         dueDate: endDate,
-        duration: task.duration || 3600,
+        duration: task.duration || 60,
         minScopeDuration: task.minScopeDuration || 30,
         maxScopeDuration: task.maxScopeDuration || 120,
       } as DynamicTaskForm;
@@ -190,6 +196,10 @@ export class TaskModal {
 
   get currentTask(): StaticTaskForm | DynamicTaskForm {
     return this.mode === 'static' ? this.staticTask : this.dynamicTask;
+  }
+
+  get accountOptions(): { id: number; displayName: string }[] {
+    return formatAccountsForDropdown(this.auth.getAccounts());
   }
 
   // Labels
@@ -228,6 +238,9 @@ export class TaskModal {
 
   async submit(): Promise<void> {
     if (!this.isValid) return;
+
+    this.isSaving.set(true);
+    this.errorMessage.set(null);
 
     try {
       if (this.mode === 'static') {
@@ -299,8 +312,24 @@ export class TaskModal {
       this.close();
     } catch (error) {
       console.error('Error submitting task:', error);
-      // TODO: Display user-friendly error message in UI
-      alert('Failed to save task. Please check your input and try again.');
+
+      let message = 'Failed to save task. Please check your input and try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('network')) {
+          message = 'Network error. Please check your connection and try again.';
+        } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+          message = 'Your session has expired. Please log in again.';
+        } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+          message = 'You do not have permission to save this task.';
+        } else if (error.message.includes('400')) {
+          message = 'Invalid task data. Please check your input and try again.';
+        }
+      }
+
+      this.errorMessage.set(message);
+    } finally {
+      this.isSaving.set(false);
+      this.cdr.markForCheck();
     }
   }
 
