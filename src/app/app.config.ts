@@ -2,7 +2,6 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 
 import { provideOAuthClient } from 'angular-oauth2-oidc';
 import { provideApiConfiguration } from '../api/api-configuration';
@@ -12,7 +11,6 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideClientHydration(withEventReplay()),
     provideApiConfiguration(environment.apiUrl),
     provideOAuthClient({
       resourceServer: {
