@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, output } from '@angular/core';
 import { Auth } from '@services/auth'
 import { TaskModalService } from '@services/task-modal.service';
+import { ViewService } from '@services/view.service';
 
 @Component({
   selector: 'app-navbar',
@@ -10,6 +11,7 @@ import { TaskModalService } from '@services/task-modal.service';
   styleUrl: './navbar.css',
 })
 export class Navbar {
+
   constructor(private taskModalService: TaskModalService) { }
   private authService = inject(Auth);
 
@@ -26,4 +28,11 @@ export class Navbar {
   openSettings() {
     this.settingsRequested.emit();
   }
+
+  viewService = inject(ViewService);
+  
+  setView(view: 'list' | 'calendar') {
+    this.viewService.activeView.set(view);
+  }
+
 }
