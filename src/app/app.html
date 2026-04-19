@@ -5,7 +5,14 @@
       <app-navbar (settingsRequested)="openSettings()"></app-navbar>
     </div>
     <div class="bg-white flex-1 rounded-md p-1.5">
-      <app-calendar-view></app-calendar-view>
+      @switch (activeView()) {
+        @case ('list') {
+          <app-list-view></app-list-view>
+        }
+        @case ('calendar'){
+          <app-calendar-view></app-calendar-view>
+        }
+      }
     </div>
   </div>
 
