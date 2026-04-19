@@ -16,7 +16,7 @@ import { Task } from '@app/model/task';
 export class ListView implements OnInit {
    constructor(
     private taskService: TaskService,
-    private taskModalService: TaskModalService,
+    private taskModalService: TaskModalService
   ) {}
 
   // Inputs
@@ -24,9 +24,10 @@ export class ListView implements OnInit {
   
   // Interner State
   searchTask: string = '';
-  activeFilter: 'todo' | 'today' | 'done' = 'todo';
+  activeFilter: 'all' | 'todo' | 'today' | 'done' = 'today';
   
   filters = [
+    { label: 'All', value: 'all' as const },
     { label: 'Open', value: 'todo' as const },
     { label: 'Today', value: 'today' as const },
     { label: 'Done', value: 'done' as const }
@@ -44,20 +45,42 @@ export class ListView implements OnInit {
 
   }
 
-  setFilter(filterValue:string){
-
+  setFilter(filterValue: 'todo' | 'today' | 'done' | 'all'){
+    this.activeFilter = filterValue;
   }
 
-  filteredTasks(){
-    return this.tasks
-  }
+  filteredTasks(): Task[] {
+    let result = this.tasks;
 
-  openCount(){
-    return 0
+    // 1. Status-Filter
+    switch (this.activeFilter) {
+      case 'todo':
+        result = result.filter(task => task.isFinished === false);
+        break;
+      case 'done':
+        result = result.filter(task => task.isFinished === true);
+        break;
+      case 'today':
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        result = result.filter(task => {
+          const due = new Date(task.dueDate);
+          due.setHours(0, 0, 0, 0);
+          return due.getTime() === today.getTime();
+        });
+        break;
+      case 'all':
+      default:
+        break; // Kein Filter
+    }
+    return result;
   }
+  openCount(): number {
+  return this.tasks.filter(t => t.isFinished === false).length;
+}
 
   doneCount(){
-    return 0
+    return this.tasks.filter(t => t.isFinished === true).length;
   }
 
   onTaskClick(task:Task){
