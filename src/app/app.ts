@@ -38,7 +38,4 @@ export class App implements OnInit {
   }
 
   viewService = inject(ViewService);
-  
-  // Automatisch synchron – kein Output nötig
-  activeView = computed(() => this.viewService.activeView());
 }

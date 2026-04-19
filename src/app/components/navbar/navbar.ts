@@ -30,9 +30,19 @@ export class Navbar {
   }
 
   viewService = inject(ViewService);
-  
-  setView(view: 'list' | 'calendar') {
-    this.viewService.activeView.set(view);
+  setCalendarView(){
+    if(this.viewService.listView){
+      this.viewService.calendarView = !this.viewService.calendarView;
+    }else{
+      this.viewService.calendarView = true;
+    }
   }
 
+  setListView(){
+    if(this.viewService.calendarView){
+      this.viewService.listView = !this.viewService.listView;
+    }else{
+      this.viewService.listView = true;
+    }
+  }
 }
