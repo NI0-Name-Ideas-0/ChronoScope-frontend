@@ -4,5 +4,6 @@
 export interface WorkSlotCreateRequest {
   accountId: number;
   endAt: string;
+  organizationId: number;
   startAt: string;
 }

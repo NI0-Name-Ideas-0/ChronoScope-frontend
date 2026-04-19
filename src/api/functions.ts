@@ -3,6 +3,12 @@
 
 export type { TestEndpoint$Params as TestEndpoint$Params } from './fn/test-controller/test-endpoint';
 export { testEndpoint as testEndpoint } from './fn/test-controller/test-endpoint';
+export type { TestEndpoint2$Params as TestEndpoint2$Params } from './fn/test-controller/test-endpoint-2';
+export { testEndpoint2 as testEndpoint2 } from './fn/test-controller/test-endpoint-2';
+export type { TestEndpoint3$Params as TestEndpoint3$Params } from './fn/test-controller/test-endpoint-3';
+export { testEndpoint3 as testEndpoint3 } from './fn/test-controller/test-endpoint-3';
+export type { TestCreateTask$Params as TestCreateTask$Params } from './fn/test-controller/test-create-task';
+export { testCreateTask as testCreateTask } from './fn/test-controller/test-create-task';
 export type { GetIdentity$Params as GetIdentity$Params } from './fn/identity/get-identity';
 export { getIdentity as getIdentity } from './fn/identity/get-identity';
 export type { RequestAccountLink$Params as RequestAccountLink$Params } from './fn/identity/request-account-link';

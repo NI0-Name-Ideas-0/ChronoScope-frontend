@@ -5,5 +5,6 @@ export interface WorkSlotResponse {
   accountId?: number;
   endAt?: string;
   id?: number;
+  organizationId?: number;
   startAt?: string;
 }
