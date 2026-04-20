@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Task } from '../app/model/task';
 import { StaticTask } from '../app/model/static-task';
@@ -26,6 +26,8 @@ import {
   StaticTaskUpdateRequest,
   DynamicTaskUpdateRequest,
 } from '../api/models';
+import { OAuthService } from 'angular-oauth2-oidc';
+import { Auth } from './auth';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -39,8 +41,18 @@ export class TaskService {
   private tasksSubject = new BehaviorSubject<Task[]>([]);
   tasks$ = this.tasksSubject.asObservable();
 
-  constructor(private api: Api) {
-    this.loadTasks();
+  private authService = inject(Auth);
+
+  constructor(
+    private api: Api,
+    private oauthService: OAuthService,
+  ) {
+    // Wait for auth to be ready before loading tasks
+    this.authService.authReady$.subscribe((isReady) => {
+      if (isReady) {
+        this.loadTasks();
+      }
+    });
   }
 
   /**
