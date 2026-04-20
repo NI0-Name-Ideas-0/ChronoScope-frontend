@@ -93,7 +93,15 @@ export class Auth {
   private async loadIdentity(): Promise<void> {
     try {
       const params: GetIdentity$Params = {};
-      const identityData = await this.api.invoke(getIdentity, params);
+      const response = await this.api.invoke(getIdentity, params);
+
+      // Handle blob response - parse it as JSON if it's a Blob
+      let identityData = response;
+      if (response instanceof Blob) {
+        const jsonText = await response.text();
+        identityData = JSON.parse(jsonText);
+      }
+
       this.identity.next(identityData);
       this.accounts.next(identityData.accounts || []);
     } catch (error) {

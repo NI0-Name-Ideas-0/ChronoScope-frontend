@@ -61,7 +61,20 @@ export class TaskService {
   private async loadTasks(): Promise<void> {
     try {
       const params: GetTasks$Params = {};
-      const tasks = await this.api.invoke(getTasksApi, params);
+      const response = await this.api.invoke(getTasksApi, params);
+
+      // Handle blob response - parse it as JSON if it's a Blob
+      let tasks = response;
+      if (response instanceof Blob) {
+        const jsonText = await response.text();
+        tasks = JSON.parse(jsonText);
+      }
+
+      // Ensure tasks is an array
+      if (!Array.isArray(tasks)) {
+        throw new Error('Expected tasks to be an array, got: ' + typeof tasks);
+      }
+
       this.tasks.clear();
       tasks.forEach((task) => {
         if (task.id !== undefined) {
@@ -139,7 +152,20 @@ export class TaskService {
    */
   async getTasks(): Promise<(StaticTaskResponse | DynamicTaskResponse)[]> {
     const params: GetTasks$Params = {};
-    const tasks = await this.api.invoke(getTasksApi, params);
+    const response = await this.api.invoke(getTasksApi, params);
+
+    // Handle blob response - parse it as JSON if it's a Blob
+    let tasks = response;
+    if (response instanceof Blob) {
+      const jsonText = await response.text();
+      tasks = JSON.parse(jsonText);
+    }
+
+    // Ensure tasks is an array
+    if (!Array.isArray(tasks)) {
+      throw new Error('Expected tasks to be an array, got: ' + typeof tasks);
+    }
+
     // Update local cache
     this.tasks.clear();
     tasks.forEach((task) => {
