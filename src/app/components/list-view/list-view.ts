@@ -49,10 +49,9 @@ export class ListView implements OnInit {
     this.activeFilter = filterValue;
   }
 
-  filteredTasks(): Task[] {
+  filteringTasks(): Task[] {
     let result = this.tasks;
 
-    // 1. Status-Filter
     switch (this.activeFilter) {
       case 'todo':
         result = result.filter(task => task.isFinished === false);
@@ -70,13 +69,14 @@ export class ListView implements OnInit {
         });
         break;
       default:
-        break; // No Filter
+        break;
     }
+
     return result;
   }
 
   openCount(): number {
-  return this.tasks.filter(t => t.isFinished === false).length;
+    return this.tasks.filter(t => t.isFinished === false).length;
   }
 
   doneCount(): number{
