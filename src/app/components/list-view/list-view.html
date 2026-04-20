@@ -34,7 +34,7 @@
 
       <!-- Task-Liste -->
       <div class="space-y-2">
-        @for (task of filteredTasks(); track task.id) {
+        @for (task of filteringTasks(); track task.id) {
           <div 
             class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-base-200"
             (click)="onTaskClick(task)"
