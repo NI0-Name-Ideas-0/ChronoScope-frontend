@@ -4,7 +4,9 @@
     <div>
       <app-navbar (settingsRequested)="openSettings()"></app-navbar>
     </div>
+    <!--Container for the switching Views-->
       @if (viewService.calendarView && viewService.listView) {
+        <!--SplitView-->
         <div class="bg-base-100 flex-1 flex flex-row items-stretch rounded-md p-1.5 gap-2">
           <div class="w-[30%] min-w-0 flex flex-col overflow-hidden">
             <app-list-view class="block w-full h-full overflow-auto"></app-list-view>
@@ -15,11 +17,13 @@
         </div>
       }
       @else if(viewService.listView){
+        <!--ListView-->
           <div class="bg-base-100 flex-1 rounded-md p-1.5">
             <app-list-view></app-list-view>
           </div>
         }
       @else if (viewService.calendarView){
+        <!--CalendarView-->
           <div class="bg-base-100 flex-1 rounded-md p-1.5">
             <app-calendar-view></app-calendar-view>
           </div>

@@ -28,7 +28,9 @@ export class Navbar {
   openSettings() {
     this.settingsRequested.emit();
   }
-
+  /*
+  Import of the View Service for changing the view via the functions
+  */
   viewService = inject(ViewService);
   setCalendarView(){
     if(this.viewService.listView){

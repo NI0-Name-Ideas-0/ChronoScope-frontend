@@ -2,6 +2,9 @@ import { Injectable } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class ViewService {
+  /* 
+    Provides the functionality for switching between the diffrent views
+  */
   private _listView = false;
   private _calendarView = true;
 

@@ -16,7 +16,6 @@ import { Task } from '@app/model/task';
 export class ListView implements OnInit {
    constructor(
     private taskService: TaskService,
-    private taskModalService: TaskModalService
   ) {}
 
   // Inputs
@@ -69,17 +68,17 @@ export class ListView implements OnInit {
           return due.getTime() === today.getTime();
         });
         break;
-      case 'all':
       default:
-        break; // Kein Filter
+        break; // No Filter
     }
     return result;
   }
+
   openCount(): number {
   return this.tasks.filter(t => t.isFinished === false).length;
-}
+  }
 
-  doneCount(){
+  doneCount(): number{
     return this.tasks.filter(t => t.isFinished === true).length;
   }
 
