@@ -1,4 +1,3 @@
-// src/app/components/list-view/list-view.ts
 import { Component, OnInit, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -33,7 +32,9 @@ export class ListView implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.tasks = this.taskService.getTasks();
+    this.taskService.tasks$.subscribe(tasks => {
+      this.tasks = tasks;
+    });
   }
 
   onSearchChange(){
