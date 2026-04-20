@@ -17,13 +17,11 @@ export class ListView implements OnInit {
     private taskService: TaskService,
   ) {}
 
-  // Inputs
   tasks: Task[] = [];
-  
-  // Interner State
   searchTask: string = '';
   activeFilter: 'all' | 'todo' | 'today' | 'done' = 'today';
   
+  //filters for the automatic Button creation in the .html
   filters = [
     { label: 'All', value: 'all' as const },
     { label: 'Open', value: 'todo' as const },
@@ -45,10 +43,12 @@ export class ListView implements OnInit {
 
   }
 
+  //used by the Filter-Buttons to set the value
   setFilter(filterValue: 'todo' | 'today' | 'done' | 'all'){
     this.activeFilter = filterValue;
   }
 
+  //used for creating the List-View with the diffrent filter values, default is the unfiltered List
   filteringTasks(): Task[] {
     let result = this.tasks;
 
@@ -75,12 +75,14 @@ export class ListView implements OnInit {
     return result;
   }
 
+  //returns the overall number of open tasks 
   openCount(): number {
-    return this.tasks.filter(t => t.isFinished === false).length;
+    return this.tasks.filter(task => task.isFinished === false).length;
   }
 
+  //returns the overall number of done tasks
   doneCount(): number{
-    return this.tasks.filter(t => t.isFinished === true).length;
+    return this.tasks.filter(task => task.isFinished === true).length;
   }
 
   onTaskClick(task:Task){
