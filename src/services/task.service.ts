@@ -76,9 +76,10 @@ export class TaskService {
       }
 
       this.tasks.clear();
-      tasks.forEach((task) => {
-        if (task.id !== undefined) {
-          this.tasks.set(task.id, task as any);
+      tasks.forEach((apiTask) => {
+        if (apiTask.id !== undefined) {
+          const modelTask = this.convertApiTaskToModel(apiTask);
+          this.tasks.set(apiTask.id, modelTask);
         }
       });
       this.tasksSubject.next([...this.tasks.values()]);
@@ -101,7 +102,8 @@ export class TaskService {
     const response = await this.api.invoke(createTaskApi, params);
     // Add the newly created task to local cache
     if (response.id !== undefined) {
-      this.tasks.set(response.id, response as any);
+      const modelTask = this.convertApiTaskToModel(response);
+      this.tasks.set(response.id, modelTask);
       this.tasksSubject.next([...this.tasks.values()]);
     }
     return response;
@@ -124,7 +126,8 @@ export class TaskService {
     const response = await this.api.invoke(updateTaskApi, params);
     // Update the task in local cache
     if (response.id !== undefined) {
-      this.tasks.set(response.id, response as any);
+      const modelTask = this.convertApiTaskToModel(response);
+      this.tasks.set(response.id, modelTask);
       this.tasksSubject.next([...this.tasks.values()]);
     }
     return response;
@@ -140,7 +143,8 @@ export class TaskService {
     const response = await this.api.invoke(getTaskApi, params);
     // Cache the task locally
     if (response.id !== undefined) {
-      this.tasks.set(response.id, response as any);
+      const modelTask = this.convertApiTaskToModel(response);
+      this.tasks.set(response.id, modelTask);
       this.tasksSubject.next([...this.tasks.values()]);
     }
     return response;
@@ -168,9 +172,10 @@ export class TaskService {
 
     // Update local cache
     this.tasks.clear();
-    tasks.forEach((task) => {
-      if (task.id !== undefined) {
-        this.tasks.set(task.id, task as any);
+    tasks.forEach((apiTask) => {
+      if (apiTask.id !== undefined) {
+        const modelTask = this.convertApiTaskToModel(apiTask);
+        this.tasks.set(apiTask.id, modelTask);
       }
     });
     this.tasksSubject.next([...this.tasks.values()]);
@@ -188,6 +193,47 @@ export class TaskService {
     // Remove from local cache
     this.tasks.delete(id);
     this.tasksSubject.next([...this.tasks.values()]);
+  }
+
+  /**
+   * Converts API response objects to proper Task class instances
+   */
+  private convertApiTaskToModel(apiTask: StaticTaskResponse | DynamicTaskResponse): Task {
+    const isStatic = apiTask.type === 'static' || !('duration' in apiTask);
+
+    if (isStatic) {
+      const staticTask = apiTask as StaticTaskResponse;
+      return new StaticTask(
+        staticTask.id!,
+        staticTask.name || '',
+        staticTask.description || '',
+        [], // dependencies - TODO: resolve actual task dependencies if needed
+        (staticTask.labels as any)?.map((l: any) => l.name || l) || [],
+        new Date(staticTask.startAt || ''),
+        new Date(staticTask.endAt || ''),
+        staticTask.accountId || 0,
+        staticTask.difficulty || 1,
+        false, // isFinished
+      );
+    } else {
+      const dynamicTask = apiTask as DynamicTaskResponse;
+      return new AlgoTask(
+        dynamicTask.id!,
+        dynamicTask.name || '',
+        dynamicTask.description || '',
+        new Date(dynamicTask.startAt || ''),
+        new Date(dynamicTask.endAt || ''),
+        dynamicTask.duration || 0,
+        [], // dependencies - TODO: resolve actual task dependencies if needed
+        (dynamicTask.labels as any)?.map((l: any) => l.name || l) || [],
+        dynamicTask.accountId || 0,
+        [], // scopes - these are set by the algorithm
+        dynamicTask.difficulty || 1,
+        false, // isFinished
+        dynamicTask.minScopeDuration || 30,
+        dynamicTask.maxScopeDuration || 120,
+      );
+    }
   }
 
   toCalendarEvents(task: Task): EventInput[] {
