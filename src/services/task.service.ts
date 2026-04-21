@@ -111,15 +111,13 @@ export class TaskService {
           body: { accountId },
         };
         await this.api.invoke(planApi, planParams);
-        // Reload tasks after successful planning
-        await this.loadTasks();
-      } else {
-        // If no accountId, just reload tasks after task creation
-        await this.loadTasks();
       }
     } catch (error) {
       console.error('Error calling plan endpoint after task creation:', error);
       // Don't throw - the task was created successfully, planning failure shouldn't break task creation
+    } finally {
+      // Always reload tasks after task creation, whether planning succeeds or fails
+      await this.loadTasks();
     }
 
     return response;
