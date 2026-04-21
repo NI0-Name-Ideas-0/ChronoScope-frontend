@@ -212,12 +212,11 @@
               Difficulty
             </span>
           </label>
-          <input
-            type="number"
-            class="input input-bordered w-full"
-            min="0"
-            [(ngModel)]="currentTask.difficulty"
-          />
+          <select class="select select-bordered w-full" [(ngModel)]="currentTask.difficulty">
+            @for (level of difficultyOptions; track level.value) {
+              <option [value]="level.value">{{ level.label }}</option>
+            }
+          </select>
         </div>
 
         <!-- Labels -->
