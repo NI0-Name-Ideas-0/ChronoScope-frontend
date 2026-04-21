@@ -17,6 +17,8 @@ import {
   UpdateTask$Params,
   deleteTask as deleteTaskApi,
   DeleteTask$Params,
+  plan as planApi,
+  Plan$Params,
 } from '../api/functions';
 import {
   StaticTaskCreateRequest,
@@ -58,7 +60,7 @@ export class TaskService {
   /**
    * Loads all tasks from the backend and updates the subject
    */
-  private async loadTasks(): Promise<void> {
+  async loadTasks(): Promise<void> {
     try {
       const params: GetTasks$Params = {};
       const response = await this.api.invoke(getTasksApi, params);
@@ -89,7 +91,7 @@ export class TaskService {
   }
 
   /**
-   * Creates a new task on the backend
+   * Creates a new task on the backend and triggers planning
    * @param request The task creation request (StaticTaskCreateRequest or DynamicTaskCreateRequest)
    * @returns Promise with the created task response
    */
@@ -100,12 +102,26 @@ export class TaskService {
       body: request,
     };
     const response = await this.api.invoke(createTaskApi, params);
-    // Add the newly created task to local cache
-    if (response.id !== undefined) {
-      const modelTask = this.convertApiTaskToModel(response);
-      this.tasks.set(response.id, modelTask);
-      this.tasksSubject.next([...this.tasks.values()]);
+
+    // Call the plan endpoint after task creation
+    try {
+      const accountId = request.accountId;
+      if (accountId !== undefined) {
+        const planParams: Plan$Params = {
+          body: { accountId },
+        };
+        await this.api.invoke(planApi, planParams);
+        // Reload tasks after successful planning
+        await this.loadTasks();
+      } else {
+        // If no accountId, just reload tasks after task creation
+        await this.loadTasks();
+      }
+    } catch (error) {
+      console.error('Error calling plan endpoint after task creation:', error);
+      // Don't throw - the task was created successfully, planning failure shouldn't break task creation
     }
+
     return response;
   }
 
