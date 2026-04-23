@@ -1,17 +1,23 @@
 import { Task } from './task';
-import { Scope } from './scope';
 
 export class StaticTask extends Task {
+  start: Date;
+  end: Date;
+
   constructor(
+    id: number,
     title: string,
     description: string = '',
-    startDate: Date | undefined = undefined,
-    dueDate: Date,
     dependencies: Task[] = [],
     labels: string[] = [],
-    scopes: Scope[] = [],
+    start: Date,
+    end: Date,
+    accountId: number,
+    difficulty: number,
     isFinished: boolean = false,
   ) {
-    super(title, description, startDate, dueDate, dependencies, labels, scopes, isFinished);
+    super(id, title, description, dependencies, labels, accountId, difficulty, isFinished);
+    this.start = start;
+    this.end = end;
   }
 }

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
-import { Task } from '../app/model/task';
+import { StaticTaskResponse, DynamicTaskResponse } from '../api/models';
 
 export interface ModalOpenEvent {
-  task?: Task;
+  task?: StaticTaskResponse | DynamicTaskResponse;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -18,7 +18,7 @@ export class TaskModalService {
     this.openSubject.next({});
   }
 
-  openForEdit(task: Task) {
+  openForEdit(task: StaticTaskResponse | DynamicTaskResponse) {
     this.openSubject.next({ task });
   }
 }
