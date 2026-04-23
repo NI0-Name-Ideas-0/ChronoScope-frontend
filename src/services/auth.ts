@@ -15,6 +15,9 @@ export class Auth {
   private identity = new BehaviorSubject<IdentityResponse | null>(null);
   identity$ = this.identity.asObservable();
 
+  private authReady = new BehaviorSubject<boolean>(false);
+  authReady$ = this.authReady.asObservable();
+
   constructor(
     private oauthService: OAuthService,
     private api: Api,
@@ -49,15 +52,18 @@ export class Auth {
 
     // Load identity on app initialization if already logged in
     if (this.oauthService.hasValidAccessToken()) {
-      this.loadIdentity().catch((error) => {
-        console.error('Failed to load identity on app init:', error);
-        throw new Error('Failed to load user accounts. Please refresh the page.');
-      });
+      this.loadIdentity()
+        .then(() => {
+          this.authReady.next(true);
+        })
+        .catch((error) => {
+          console.error('Failed to load identity on app init:', error);
+          throw new Error('Failed to load user accounts. Please refresh the page.');
+        });
     }
   }
 
   login() {
-    console.log('Redirecting');
     this.oauthService.loadDiscoveryDocumentAndLogin();
 
     this.oauthService.events
@@ -66,6 +72,7 @@ export class Auth {
         this.oauthService.loadUserProfile();
         try {
           await this.loadIdentity();
+          this.authReady.next(true);
         } catch (error) {
           console.error('Failed to load identity after login:', error);
           throw error;
@@ -86,7 +93,15 @@ export class Auth {
   private async loadIdentity(): Promise<void> {
     try {
       const params: GetIdentity$Params = {};
-      const identityData = await this.api.invoke(getIdentity, params);
+      const response = await this.api.invoke(getIdentity, params);
+
+      // Handle blob response - parse it as JSON if it's a Blob
+      let identityData = response;
+      if (response instanceof Blob) {
+        const jsonText = await response.text();
+        identityData = JSON.parse(jsonText);
+      }
+
       this.identity.next(identityData);
       this.accounts.next(identityData.accounts || []);
     } catch (error) {

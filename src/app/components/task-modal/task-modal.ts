@@ -16,6 +16,15 @@ import {
   LabelResponse,
 } from '../../../api/models';
 
+// Difficulty level mapping
+const DIFFICULTY_LEVELS = [
+  { value: 1, label: 'Trivial' },
+  { value: 2, label: 'Easy' },
+  { value: 3, label: 'Medium' },
+  { value: 4, label: 'Hard' },
+  { value: 5, label: 'Extreme' },
+] as const;
+
 interface StaticTaskForm {
   title: string;
   description: string;
@@ -26,6 +35,8 @@ interface StaticTaskForm {
   startTime: string;
   endDate: string;
   endTime: string;
+  rrule: string;
+  isBlocker: boolean;
 }
 
 interface DynamicTaskForm {
@@ -39,6 +50,8 @@ interface DynamicTaskForm {
   duration: number;
   minScopeDuration: number;
   maxScopeDuration: number;
+  rrule: string;
+  dependencies: Array<any>;
 }
 
 type TaskMode = 'static' | 'planned';
@@ -101,11 +114,13 @@ export class TaskModal {
       description: '',
       labels: [],
       accountId: this.getDefaultAccountId(),
-      difficulty: 0,
+      difficulty: 1,
       startDate: '',
       startTime: '09:00',
       endDate: '',
       endTime: '10:00',
+      rrule: '',
+      isBlocker: false,
     };
   }
 
@@ -115,12 +130,14 @@ export class TaskModal {
       description: '',
       labels: [],
       accountId: this.getDefaultAccountId(),
-      difficulty: 0,
+      difficulty: 1,
       startDate: '',
       dueDate: '',
       duration: 60,
       minScopeDuration: 30,
       maxScopeDuration: 120,
+      rrule: '',
+      dependencies: [],
     };
   }
 
@@ -157,7 +174,7 @@ export class TaskModal {
       description: task.description || '',
       labels: this.labelResponseToString(task.labels as LabelResponse[] | undefined),
       accountId: task.accountId || this.getDefaultAccountId(),
-      difficulty: task.difficulty || 0,
+      difficulty: task.difficulty || 1,
     };
 
     if (this.isDynamicTask(task)) {
@@ -172,6 +189,8 @@ export class TaskModal {
         duration: task.duration || 60,
         minScopeDuration: task.minScopeDuration || 30,
         maxScopeDuration: task.maxScopeDuration || 120,
+        rrule: task.rrule || '',
+        dependencies: task.dependencies || [],
       } as DynamicTaskForm;
       this.staticTask = this.emptyStaticTask();
     } else {
@@ -189,6 +208,8 @@ export class TaskModal {
         startTime,
         endDate,
         endTime,
+        rrule: task.rrule || '',
+        isBlocker: ('isBlocker' in task && task.isBlocker) || false,
       } as StaticTaskForm;
       this.dynamicTask = this.emptyDynamicTask();
     }
@@ -200,6 +221,15 @@ export class TaskModal {
 
   get accountOptions(): { id: number; displayName: string }[] {
     return formatAccountsForDropdown(this.auth.getAccounts());
+  }
+
+  get difficultyOptions(): typeof DIFFICULTY_LEVELS {
+    return DIFFICULTY_LEVELS;
+  }
+
+  getDifficultyLabel(value: number): string {
+    const level = DIFFICULTY_LEVELS.find((d) => d.value === value);
+    return level ? level.label : 'Unknown';
   }
 
   // Labels
@@ -250,18 +280,20 @@ export class TaskModal {
 
         if (this.isEditing && this.editingTask) {
           const request: StaticTaskUpdateRequest = {
-            type: 'STATIC',
+            type: 'static',
             name: t.title.trim(),
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             difficulty: t.difficulty,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),
+            rrule: t.rrule,
+            isBlocker: t.isBlocker,
           };
           await this.taskService.updateTask(this.editingTask.id!, request);
         } else {
           const request: StaticTaskCreateRequest = {
-            type: 'STATIC',
+            type: 'static',
             name: t.title.trim(),
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
@@ -269,6 +301,8 @@ export class TaskModal {
             difficulty: t.difficulty,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),
+            rrule: t.rrule,
+            isBlocker: t.isBlocker,
           };
           await this.taskService.createTask(request);
         }
@@ -279,7 +313,7 @@ export class TaskModal {
 
         if (this.isEditing && this.editingTask) {
           const request: DynamicTaskUpdateRequest = {
-            type: 'DYNAMIC',
+            type: 'dynamic',
             name: t.title.trim(),
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
@@ -289,11 +323,12 @@ export class TaskModal {
             maxScopeDuration: t.maxScopeDuration,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(dueDate),
+            rrule: t.rrule,
           };
           await this.taskService.updateTask(this.editingTask.id!, request);
         } else {
           const request: DynamicTaskCreateRequest = {
-            type: 'DYNAMIC',
+            type: 'dynamic',
             name: t.title.trim(),
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
@@ -304,6 +339,8 @@ export class TaskModal {
             maxScopeDuration: t.maxScopeDuration,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(dueDate),
+            rrule: t.rrule,
+            dependencies: t.dependencies,
           };
           await this.taskService.createTask(request);
         }

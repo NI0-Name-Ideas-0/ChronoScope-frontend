@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Task } from '../app/model/task';
 import { StaticTask } from '../app/model/static-task';
@@ -17,6 +17,8 @@ import {
   UpdateTask$Params,
   deleteTask as deleteTaskApi,
   DeleteTask$Params,
+  plan as planApi,
+  Plan$Params,
 } from '../api/functions';
 import {
   StaticTaskCreateRequest,
@@ -26,6 +28,8 @@ import {
   StaticTaskUpdateRequest,
   DynamicTaskUpdateRequest,
 } from '../api/models';
+import { OAuthService } from 'angular-oauth2-oidc';
+import { Auth } from './auth';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -39,21 +43,45 @@ export class TaskService {
   private tasksSubject = new BehaviorSubject<Task[]>([]);
   tasks$ = this.tasksSubject.asObservable();
 
-  constructor(private api: Api) {
-    this.loadTasks();
+  private authService = inject(Auth);
+
+  constructor(
+    private api: Api,
+    private oauthService: OAuthService,
+  ) {
+    // Wait for auth to be ready before loading tasks
+    this.authService.authReady$.subscribe((isReady) => {
+      if (isReady) {
+        this.loadTasks();
+      }
+    });
   }
 
   /**
    * Loads all tasks from the backend and updates the subject
    */
-  private async loadTasks(): Promise<void> {
+  async loadTasks(): Promise<void> {
     try {
       const params: GetTasks$Params = {};
-      const tasks = await this.api.invoke(getTasksApi, params);
+      const response = await this.api.invoke(getTasksApi, params);
+
+      // Handle blob response - parse it as JSON if it's a Blob
+      let tasks = response;
+      if (response instanceof Blob) {
+        const jsonText = await response.text();
+        tasks = JSON.parse(jsonText);
+      }
+
+      // Ensure tasks is an array
+      if (!Array.isArray(tasks)) {
+        throw new Error('Expected tasks to be an array, got: ' + typeof tasks);
+      }
+
       this.tasks.clear();
-      tasks.forEach((task) => {
-        if (task.id !== undefined) {
-          this.tasks.set(task.id, task as any);
+      tasks.forEach((apiTask) => {
+        if (apiTask.id !== undefined) {
+          const modelTask = this.convertApiTaskToModel(apiTask);
+          this.tasks.set(apiTask.id, modelTask);
         }
       });
       this.tasksSubject.next([...this.tasks.values()]);
@@ -63,7 +91,7 @@ export class TaskService {
   }
 
   /**
-   * Creates a new task on the backend
+   * Creates a new task on the backend and triggers planning
    * @param request The task creation request (StaticTaskCreateRequest or DynamicTaskCreateRequest)
    * @returns Promise with the created task response
    */
@@ -74,11 +102,24 @@ export class TaskService {
       body: request,
     };
     const response = await this.api.invoke(createTaskApi, params);
-    // Add the newly created task to local cache
-    if (response.id !== undefined) {
-      this.tasks.set(response.id, response as any);
-      this.tasksSubject.next([...this.tasks.values()]);
+
+    // Call the plan endpoint after task creation
+    try {
+      const accountId = request.accountId;
+      if (accountId !== undefined) {
+        const planParams: Plan$Params = {
+          body: { accountId },
+        };
+        await this.api.invoke(planApi, planParams);
+      }
+    } catch (error) {
+      console.error('Error calling plan endpoint after task creation:', error);
+      // Don't throw - the task was created successfully, planning failure shouldn't break task creation
+    } finally {
+      // Always reload tasks after task creation, whether planning succeeds or fails
+      await this.loadTasks();
     }
+
     return response;
   }
 
@@ -99,7 +140,8 @@ export class TaskService {
     const response = await this.api.invoke(updateTaskApi, params);
     // Update the task in local cache
     if (response.id !== undefined) {
-      this.tasks.set(response.id, response as any);
+      const modelTask = this.convertApiTaskToModel(response);
+      this.tasks.set(response.id, modelTask);
       this.tasksSubject.next([...this.tasks.values()]);
     }
     return response;
@@ -115,7 +157,8 @@ export class TaskService {
     const response = await this.api.invoke(getTaskApi, params);
     // Cache the task locally
     if (response.id !== undefined) {
-      this.tasks.set(response.id, response as any);
+      const modelTask = this.convertApiTaskToModel(response);
+      this.tasks.set(response.id, modelTask);
       this.tasksSubject.next([...this.tasks.values()]);
     }
     return response;
@@ -127,12 +170,26 @@ export class TaskService {
    */
   async getTasks(): Promise<(StaticTaskResponse | DynamicTaskResponse)[]> {
     const params: GetTasks$Params = {};
-    const tasks = await this.api.invoke(getTasksApi, params);
+    const response = await this.api.invoke(getTasksApi, params);
+
+    // Handle blob response - parse it as JSON if it's a Blob
+    let tasks = response;
+    if (response instanceof Blob) {
+      const jsonText = await response.text();
+      tasks = JSON.parse(jsonText);
+    }
+
+    // Ensure tasks is an array
+    if (!Array.isArray(tasks)) {
+      throw new Error('Expected tasks to be an array, got: ' + typeof tasks);
+    }
+
     // Update local cache
     this.tasks.clear();
-    tasks.forEach((task) => {
-      if (task.id !== undefined) {
-        this.tasks.set(task.id, task as any);
+    tasks.forEach((apiTask) => {
+      if (apiTask.id !== undefined) {
+        const modelTask = this.convertApiTaskToModel(apiTask);
+        this.tasks.set(apiTask.id, modelTask);
       }
     });
     this.tasksSubject.next([...this.tasks.values()]);
@@ -150,6 +207,47 @@ export class TaskService {
     // Remove from local cache
     this.tasks.delete(id);
     this.tasksSubject.next([...this.tasks.values()]);
+  }
+
+  /**
+   * Converts API response objects to proper Task class instances
+   */
+  private convertApiTaskToModel(apiTask: StaticTaskResponse | DynamicTaskResponse): Task {
+    const isStatic = apiTask.type === 'static' || !('duration' in apiTask);
+
+    if (isStatic) {
+      const staticTask = apiTask as StaticTaskResponse;
+      return new StaticTask(
+        staticTask.id!,
+        staticTask.name || '',
+        staticTask.description || '',
+        [], // dependencies - TODO: resolve actual task dependencies if needed
+        (staticTask.labels as any)?.map((l: any) => l.name || l) || [],
+        new Date(staticTask.startAt || ''),
+        new Date(staticTask.endAt || ''),
+        staticTask.accountId || 0,
+        staticTask.difficulty || 1,
+        false, // isFinished
+      );
+    } else {
+      const dynamicTask = apiTask as DynamicTaskResponse;
+      return new AlgoTask(
+        dynamicTask.id!,
+        dynamicTask.name || '',
+        dynamicTask.description || '',
+        new Date(dynamicTask.startAt || ''),
+        new Date(dynamicTask.endAt || ''),
+        dynamicTask.duration || 0,
+        [], // dependencies - TODO: resolve actual task dependencies if needed
+        (dynamicTask.labels as any)?.map((l: any) => l.name || l) || [],
+        dynamicTask.accountId || 0,
+        [], // scopes - these are set by the algorithm
+        dynamicTask.difficulty || 1,
+        false, // isFinished
+        dynamicTask.minScopeDuration || 30,
+        dynamicTask.maxScopeDuration || 120,
+      );
+    }
   }
 
   toCalendarEvents(task: Task): EventInput[] {

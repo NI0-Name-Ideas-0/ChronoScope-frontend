@@ -10,11 +10,12 @@ describe('Auth', () => {
     configure: vi.fn(),
     setStorage: vi.fn(),
     setupAutomaticSilentRefresh: vi.fn(),
+    hasValidAccessToken: vi.fn().mockReturnValue(false),
     loadDiscoveryDocumentAndLogin: vi.fn(),
     events: {
       pipe: () => ({
-        subscribe: vi.fn()
-      })
+        subscribe: vi.fn(),
+      }),
     },
     loadUserProfile: vi.fn(),
     logOut: vi.fn(),
@@ -22,10 +23,7 @@ describe('Auth', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        Auth,
-        { provide: OAuthService, useValue: mockOAuthService }
-      ]
+      providers: [Auth, { provide: OAuthService, useValue: mockOAuthService }],
     });
     service = TestBed.inject(Auth);
   });

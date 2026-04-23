@@ -3,12 +3,14 @@
 
 import { LabelCreateRequest } from '../models/label-create-request';
 import { TaskCreateRequest } from '../models/task-create-request';
+import { TaskDependencyCreateRequest } from '../models/task-dependency-create-request';
 
 /**
  * Create request for a dynamic (schedulable) task with duration and scope constraints
  */
 export type DynamicTaskCreateRequest = TaskCreateRequest & {
   accountId?: number;
+  dependencies?: Array<TaskDependencyCreateRequest>;
   description?: string;
   difficulty?: number;
   duration?: number;
