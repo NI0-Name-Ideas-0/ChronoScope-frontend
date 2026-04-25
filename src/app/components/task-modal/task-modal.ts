@@ -15,6 +15,7 @@ import {
   LabelCreateRequest,
   LabelResponse,
 } from '../../../api/models';
+import { RepetitionFieldComponent } from "../repetition-modal/repetition-modal";
 
 // Difficulty level mapping
 const DIFFICULTY_LEVELS = [
@@ -58,7 +59,7 @@ type TaskMode = 'static' | 'planned';
 
 @Component({
   selector: 'app-task-modal',
-  imports: [FormsModule],
+  imports: [FormsModule, RepetitionFieldComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './task-modal.html',
   styleUrl: './task-modal.css',
