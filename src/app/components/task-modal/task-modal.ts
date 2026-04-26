@@ -5,6 +5,7 @@ import { TaskModalService } from '../../../services/task-modal.service';
 import { TaskService } from '../../../services/task.service';
 import { Auth } from '../../../services/auth';
 import { formatAccountsForDropdown } from '../../../services/account.utils';
+import { RepetitionFieldComponent } from "../repetition-modal/repetition-modal";
 import {
   StaticTaskCreateRequest,
   DynamicTaskCreateRequest,
@@ -15,7 +16,6 @@ import {
   LabelCreateRequest,
   LabelResponse,
 } from '../../../api/models';
-import { RepetitionFieldComponent } from "../repetition-modal/repetition-modal";
 
 // Difficulty level mapping
 const DIFFICULTY_LEVELS = [
@@ -369,6 +369,11 @@ export class TaskModal {
       this.isSaving.set(false);
       this.cdr.markForCheck();
     }
+  }
+
+  onRruleChange(rrule: string) {
+  this.staticTask.rrule = rrule;
+  this.cdr.markForCheck();
   }
 
   close() {

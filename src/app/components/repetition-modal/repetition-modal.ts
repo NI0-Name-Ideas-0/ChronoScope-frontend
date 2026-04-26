@@ -1,41 +1,42 @@
-// repetition-field.component.ts
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-export interface RepetitionConfig {
-  frequency: 'none' | 'daily' | 'weekly' | 'monthly';
-  interval: number;
-  weekdays: number[];
-}
+import { RRule, rrulestr } from 'rrule';
 
 @Component({
   selector: 'app-repetition-field',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: 'repetition-modal.html',
-  styleUrl: 'repetition-modal.css',
+  templateUrl:'repetition-modal.html',
+  styleUrl:'repetition-modal.css'
 })
 export class RepetitionFieldComponent {
-  @Output() repetitionChange = new EventEmitter<RepetitionConfig>();
+  @Input() set value(rrule: string) {
+    if (rrule && rrule !== this._rrule) {
+      this._rrule = rrule;
+      this.parseRrule(rrule);
+    }
+  }
+  @Output() valueChange = new EventEmitter<string>();
 
   isOpen = false;
   displayText = 'no repetition';
+  private _rrule = '';
 
-  config: RepetitionConfig = {
-    frequency: 'none',
+  config = {
+    frequency: 'none' as 'none' | 'daily' | 'weekly' | 'monthly',
     interval: 1,
-    weekdays: []
+    weekdays: [] as number[]
   };
 
   weekDays = [
-    { label: 'Mo', value: 1 },//RRule.MO.weekday },
-    { label: 'Tu', value: 2 },//RRule.TU.weekday },
-    { label: 'We', value: 3 },//RRule.WE.weekday },
-    { label: 'Th', value: 4 },//RRule.TH.weekday },
-    { label: 'Fr', value: 5 },//RRule.FR.weekday },
-    { label: 'Sa', value: 6 },//RRule.SA.weekday },
-    { label: 'Su', value: 0 },//RRule.SU.weekday }
+    { label: 'Mo', value: RRule.MO.weekday },
+    { label: 'Tu', value: RRule.TU.weekday },
+    { label: 'We', value: RRule.WE.weekday },
+    { label: 'Th', value: RRule.TH.weekday },
+    { label: 'Fr', value: RRule.FR.weekday },
+    { label: 'Sa', value: RRule.SA.weekday },
+    { label: 'Su', value: RRule.SU.weekday }
   ];
 
   openModal() { this.isOpen = true; }
@@ -51,16 +52,41 @@ export class RepetitionFieldComponent {
 
     if (frequency === 'none') {
       this.displayText = 'no repetition';
-    } else if (frequency === 'daily') {
+      this.valueChange.emit('');
+      this.isOpen = false;
+      return;
+    }
+
+    const freqMap = { daily: RRule.DAILY, weekly: RRule.WEEKLY, monthly: RRule.MONTHLY };
+    const rule = new RRule({
+      freq: freqMap[frequency],
+      interval,
+      byweekday: weekdays.length ? weekdays : undefined,
+      dtstart: new Date()
+    });
+
+    // generating diplay text
+    if (frequency === 'daily') {
       this.displayText = interval === 1 ? 'daily' : `every ${interval} days`;
     } else if (frequency === 'weekly') {
       const days = weekdays.sort().map(d => this.weekDays.find(w => w.value === d)?.label).join(', ');
       this.displayText = interval === 1 ? `weekly${days ? ' on ' + days : ''}` : `every ${interval} weeks${days ? ' on ' + days : ''}`;
-    } else if (frequency === 'monthly') {
+    } else {
       this.displayText = interval === 1 ? 'monthly' : `every ${interval} months`;
     }
 
-    this.repetitionChange.emit({ ...this.config });
+    this.valueChange.emit(rule.toString());
     this.isOpen = false;
+  }
+
+  private parseRrule(rrule: string) {
+    try {
+      const rule = rrulestr(rrule);
+      const options = rule.options;
+      // mapping to config
+      this.config.interval = options.interval || 1;
+    } catch {
+      // ignore invalid string
+    }
   }
 }
