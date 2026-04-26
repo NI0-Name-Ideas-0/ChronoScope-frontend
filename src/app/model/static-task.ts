@@ -3,6 +3,7 @@ import { Task } from './task';
 export class StaticTask extends Task {
   start: Date;
   end: Date;
+  rrule: string;
 
   constructor(
     id: number,
@@ -15,9 +16,11 @@ export class StaticTask extends Task {
     accountId: number,
     difficulty: number,
     isFinished: boolean = false,
+    rrule:string = '',
   ) {
     super(id, title, description, dependencies, labels, accountId, difficulty, isFinished);
     this.start = start;
     this.end = end;
+    this.rrule = rrule;
   }
 }

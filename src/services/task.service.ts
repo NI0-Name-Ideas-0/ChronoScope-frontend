@@ -228,6 +228,7 @@ export class TaskService {
         staticTask.accountId || 0,
         staticTask.difficulty || 1,
         false, // isFinished
+        staticTask.rrule || '',
       );
     } else {
       const dynamicTask = apiTask as DynamicTaskResponse;

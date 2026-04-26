@@ -51,7 +51,6 @@ interface DynamicTaskForm {
   duration: number;
   minScopeDuration: number;
   maxScopeDuration: number;
-  rrule: string;
   dependencies: Array<any>;
 }
 
@@ -137,7 +136,6 @@ export class TaskModal {
       duration: 60,
       minScopeDuration: 30,
       maxScopeDuration: 120,
-      rrule: '',
       dependencies: [],
     };
   }
@@ -190,7 +188,6 @@ export class TaskModal {
         duration: task.duration || 60,
         minScopeDuration: task.minScopeDuration || 30,
         maxScopeDuration: task.maxScopeDuration || 120,
-        rrule: task.rrule || '',
         dependencies: task.dependencies || [],
       } as DynamicTaskForm;
       this.staticTask = this.emptyStaticTask();
@@ -324,7 +321,6 @@ export class TaskModal {
             maxScopeDuration: t.maxScopeDuration,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(dueDate),
-            rrule: t.rrule,
           };
           await this.taskService.updateTask(this.editingTask.id!, request);
         } else {
@@ -340,7 +336,6 @@ export class TaskModal {
             maxScopeDuration: t.maxScopeDuration,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(dueDate),
-            rrule: t.rrule,
             dependencies: t.dependencies,
           };
           await this.taskService.createTask(request);
