@@ -371,6 +371,10 @@ export class TaskModal {
   this.cdr.markForCheck();
   }
 
+  getTaskStartDate(): Date {
+  return this.stringDateToDate(this.staticTask.startDate, this.staticTask.startTime);
+  }
+
   close() {
     this.isLeaving.set(true);
     setTimeout(() => {

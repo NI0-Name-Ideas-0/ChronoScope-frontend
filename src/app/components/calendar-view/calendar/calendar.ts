@@ -27,7 +27,7 @@ export class Calendar {
 
   calendarOptions: CalendarOptions = {
     initialView: 'dayGridMonth',
-    plugins: [dayGridPlugin, timeGridPlugin],
+    plugins: [dayGridPlugin, timeGridPlugin, rrulePlugin],
     height: '100%',
     headerToolbar: {
       start: 'timeGridWeek dayGridMonth',

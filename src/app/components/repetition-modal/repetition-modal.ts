@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RRule, rrulestr } from 'rrule';
+import { TaskModal } from '../task-modal/task-modal';
 
 @Component({
   selector: 'app-repetition-field',
@@ -17,8 +18,10 @@ export class RepetitionFieldComponent {
       this.parseRrule(rrule);
     }
   }
+  @Input() dtstart: Date = new Date();
   @Output() valueChange = new EventEmitter<string>();
-
+  
+  dateError: string | null = null;
   isOpen = false;
   displayText = 'no repetition';
   private _rrule = '';
@@ -39,8 +42,25 @@ export class RepetitionFieldComponent {
     { label: 'Su', value: RRule.SU.weekday }
   ];
 
-  openModal() { this.isOpen = true; }
-  closeModal() { this.isOpen = false; }
+  openModal() {
+    if (!this.isDtstartValid()) {
+      this.dateError = 'Please select a date and time first.';
+      return;
+    }
+    this.dateError = null;
+    this.isOpen = true;
+  }
+
+  private isDtstartValid(): boolean {
+    return this.dtstart instanceof Date && 
+           !isNaN(this.dtstart.getTime()) && 
+           this.dtstart.getTime() > 0;
+  }
+
+  closeModal() {
+    this.isOpen = false;
+    this.dateError = null;
+  }
 
   toggleWeekday(value: number) {
     const idx = this.config.weekdays.indexOf(value);
@@ -62,7 +82,7 @@ export class RepetitionFieldComponent {
       freq: freqMap[frequency],
       interval,
       byweekday: weekdays.length ? weekdays : undefined,
-      dtstart: new Date()
+      dtstart: this.dtstart,
     });
 
     // generating diplay text

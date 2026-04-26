@@ -367,6 +367,7 @@
           <div class="form-control">
               <app-repetition-field
               [value]="staticTask.rrule"
+              [dtstart]="getTaskStartDate()"
               (valueChange)="onRruleChange($event)"
               ></app-repetition-field>
           </div>
