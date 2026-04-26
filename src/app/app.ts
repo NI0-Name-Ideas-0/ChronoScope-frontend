@@ -1,4 +1,11 @@
-import { Component, ChangeDetectionStrategy, signal, inject, OnInit, computed } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  signal,
+  inject,
+  OnInit,
+  computed,
+} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Navbar } from './components/navbar/navbar';
 import { Topbar } from './components/topbar/topbar';
@@ -8,6 +15,7 @@ import { SettingsModal } from './components/settings-modal/settings-modal';
 import { TaskModal } from './components/task-modal/task-modal';
 import { ListView } from './components/list-view/list-view';
 import { ViewService } from '@services/view.service';
+import { ThemeService } from '@services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -19,10 +27,12 @@ import { ViewService } from '@services/view.service';
 export class App implements OnInit {
   protected readonly title = signal('ChronoScope-frontend');
   private authService = inject(Auth);
+  private themeService = inject(ThemeService);
 
   isSettingsOpen = signal(false);
 
   ngOnInit() {
+    this.themeService.initialize();
     this.login();
   }
 
