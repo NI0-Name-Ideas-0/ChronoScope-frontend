@@ -1,0 +1,8 @@
+.draggable-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+.drop-target {
+    background-color: oklch(var(--p) / 0.08) !important;
+}

@@ -70,7 +70,9 @@
               <app-settings-organizations />
             }
             @case ('work') {
-              <app-settings-work-preferences />
+              <app-settings-work-preferences 
+                (saved)="onWorkSaved($event)" 
+                (cancelled)="onWorkCancelled()" />
             }
             @case ('privacy') {
               <app-settings-data-privacy />
