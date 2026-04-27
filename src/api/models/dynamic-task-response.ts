@@ -3,7 +3,6 @@
 
 import { LabelResponse } from '../models/label-response';
 import { ScopeResponse } from '../models/scope-response';
-import { TaskDependencyResponse } from '../models/task-dependency-response';
 import { TaskResponse } from '../models/task-response';
 
 /**
@@ -11,17 +10,19 @@ import { TaskResponse } from '../models/task-response';
  */
 export type DynamicTaskResponse = TaskResponse & {
   accountId?: number;
-  dependencies?: Array<TaskDependencyResponse>;
+  dependencies?: Array<number>;
+  dependents?: Array<number>;
   description?: string;
   difficulty?: number;
-  duration?: number;
-  elapsed?: number;
+  duration?: string;
+  elapsed?: string;
   endAt?: string;
   id?: number;
   labels?: Array<LabelResponse>;
-  maxScopeDuration?: number;
-  minScopeDuration?: number;
+  maxScopeDuration?: string;
+  minScopeDuration?: string;
   name?: string;
+  organizationId?: number;
   rrule?: string;
   scopes?: Array<ScopeResponse>;
   startAt?: string;

@@ -19,8 +19,6 @@ export type { StaticTaskCreateRequest } from './models/static-task-create-reques
 export type { StaticTaskResponse } from './models/static-task-response';
 export type { StaticTaskUpdateRequest } from './models/static-task-update-request';
 export type { TaskCreateRequest } from './models/task-create-request';
-export type { TaskDependencyCreateRequest } from './models/task-dependency-create-request';
-export type { TaskDependencyResponse } from './models/task-dependency-response';
 export type { TaskResponse } from './models/task-response';
 export type { TaskUpdateRequest } from './models/task-update-request';
 export type { WorkSlotCreateRequest } from './models/work-slot-create-request';

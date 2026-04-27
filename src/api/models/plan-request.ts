@@ -3,4 +3,5 @@
 
 export interface PlanRequest {
   accountId: number;
+  organizationId: number;
 }

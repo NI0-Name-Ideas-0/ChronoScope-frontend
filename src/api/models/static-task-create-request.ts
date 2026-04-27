@@ -15,6 +15,7 @@ export type StaticTaskCreateRequest = TaskCreateRequest & {
   isBlocker?: boolean;
   labels?: Array<LabelCreateRequest>;
   name?: string;
+  organizationId?: number;
   rrule?: string;
   startAt?: string;
 };
