@@ -57,6 +57,45 @@ export class TaskService {
     });
   }
 
+  private async parseResponse<T>(response: T | Blob): Promise<T> {
+    if (response instanceof Blob) {
+      const jsonText = await response.text();
+      return JSON.parse(jsonText) as T;
+    }
+    return response;
+  }
+
+  private parseDurationToMinutes(duration?: string, fallback: number = 0): number {
+    if (!duration) {
+      return fallback;
+    }
+
+    const numeric = Number(duration);
+    if (!Number.isNaN(numeric)) {
+      return numeric;
+    }
+
+    const isoMatch = duration.match(
+      /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/,
+    );
+
+    if (!isoMatch) {
+      return fallback;
+    }
+
+    const days = Number(isoMatch[1] || 0);
+    const hours = Number(isoMatch[2] || 0);
+    const minutes = Number(isoMatch[3] || 0);
+    const seconds = Number(isoMatch[4] || 0);
+
+    return Math.round(days * 24 * 60 + hours * 60 + minutes + seconds / 60);
+  }
+
+  private resolveOrganizationId(accountId: number): number | undefined {
+    const account = this.authService.getAccounts().find((a) => a.id === accountId);
+    return account?.organizations?.[0]?.id;
+  }
+
   /**
    * Loads all tasks from the backend and updates the subject
    */
@@ -64,13 +103,7 @@ export class TaskService {
     try {
       const params: GetTasks$Params = {};
       const response = await this.api.invoke(getTasksApi, params);
-
-      // Handle blob response - parse it as JSON if it's a Blob
-      let tasks = response;
-      if (response instanceof Blob) {
-        const jsonText = await response.text();
-        tasks = JSON.parse(jsonText);
-      }
+      const tasks = await this.parseResponse<(StaticTaskResponse | DynamicTaskResponse)[]>(response);
 
       // Ensure tasks is an array
       if (!Array.isArray(tasks)) {
@@ -102,13 +135,21 @@ export class TaskService {
       body: request,
     };
     const response = await this.api.invoke(createTaskApi, params);
+    const createdTask = await this.parseResponse<StaticTaskResponse | DynamicTaskResponse>(response);
 
     // Call the plan endpoint after task creation
     try {
       const accountId = request.accountId;
       if (accountId !== undefined) {
+        const organizationId = this.resolveOrganizationId(accountId);
+
+        if (organizationId === undefined) {
+          console.warn(`No organization found for account ${accountId}; skipping planning.`);
+          return createdTask;
+        }
+
         const planParams: Plan$Params = {
-          body: { accountId },
+          body: { accountId, organizationId },
         };
         await this.api.invoke(planApi, planParams);
       }
@@ -120,7 +161,7 @@ export class TaskService {
       await this.loadTasks();
     }
 
-    return response;
+    return createdTask;
   }
 
   /**
@@ -138,13 +179,14 @@ export class TaskService {
       body: request,
     };
     const response = await this.api.invoke(updateTaskApi, params);
+    const updatedTask = await this.parseResponse<StaticTaskResponse | DynamicTaskResponse>(response);
     // Update the task in local cache
-    if (response.id !== undefined) {
-      const modelTask = this.convertApiTaskToModel(response);
-      this.tasks.set(response.id, modelTask);
+    if (updatedTask.id !== undefined) {
+      const modelTask = this.convertApiTaskToModel(updatedTask);
+      this.tasks.set(updatedTask.id, modelTask);
       this.tasksSubject.next([...this.tasks.values()]);
     }
-    return response;
+    return updatedTask;
   }
 
   /**
@@ -155,13 +197,14 @@ export class TaskService {
   async getTask(id: number): Promise<StaticTaskResponse | DynamicTaskResponse> {
     const params: GetTask$Params = { id };
     const response = await this.api.invoke(getTaskApi, params);
+    const task = await this.parseResponse<StaticTaskResponse | DynamicTaskResponse>(response);
     // Cache the task locally
-    if (response.id !== undefined) {
-      const modelTask = this.convertApiTaskToModel(response);
-      this.tasks.set(response.id, modelTask);
+    if (task.id !== undefined) {
+      const modelTask = this.convertApiTaskToModel(task);
+      this.tasks.set(task.id, modelTask);
       this.tasksSubject.next([...this.tasks.values()]);
     }
-    return response;
+    return task;
   }
 
   /**
@@ -171,13 +214,7 @@ export class TaskService {
   async getTasks(): Promise<(StaticTaskResponse | DynamicTaskResponse)[]> {
     const params: GetTasks$Params = {};
     const response = await this.api.invoke(getTasksApi, params);
-
-    // Handle blob response - parse it as JSON if it's a Blob
-    let tasks = response;
-    if (response instanceof Blob) {
-      const jsonText = await response.text();
-      tasks = JSON.parse(jsonText);
-    }
+    const tasks = await this.parseResponse<(StaticTaskResponse | DynamicTaskResponse)[]>(response);
 
     // Ensure tasks is an array
     if (!Array.isArray(tasks)) {
@@ -231,21 +268,25 @@ export class TaskService {
       );
     } else {
       const dynamicTask = apiTask as DynamicTaskResponse;
+      const scopes = (dynamicTask.scopes || [])
+        .filter((scope) => scope.startAt && scope.endAt)
+        .map((scope) => new Scope(new Date(scope.startAt!), new Date(scope.endAt!)));
+
       return new AlgoTask(
         dynamicTask.id!,
         dynamicTask.name || '',
         dynamicTask.description || '',
         new Date(dynamicTask.startAt || ''),
         new Date(dynamicTask.endAt || ''),
-        dynamicTask.duration || 0,
+        this.parseDurationToMinutes(dynamicTask.duration, 0),
         [], // dependencies - TODO: resolve actual task dependencies if needed
         (dynamicTask.labels as any)?.map((l: any) => l.name || l) || [],
         dynamicTask.accountId || 0,
-        [], // scopes - these are set by the algorithm
+        scopes,
         dynamicTask.difficulty || 1,
         false, // isFinished
-        dynamicTask.minScopeDuration || 30,
-        dynamicTask.maxScopeDuration || 120,
+        this.parseDurationToMinutes(dynamicTask.minScopeDuration, 30),
+        this.parseDurationToMinutes(dynamicTask.maxScopeDuration, 120),
       );
     }
   }

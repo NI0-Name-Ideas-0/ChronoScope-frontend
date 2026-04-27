@@ -51,7 +51,7 @@ interface DynamicTaskForm {
   minScopeDuration: number;
   maxScopeDuration: number;
   rrule: string;
-  dependencies: Array<any>;
+  dependencies: number[];
 }
 
 type TaskMode = 'static' | 'planned';
@@ -151,6 +151,47 @@ export class TaskModal {
     return date.toISOString();
   }
 
+  private minutesToDuration(minutes: number): string {
+    return `PT${Math.max(0, Math.round(minutes))}M`;
+  }
+
+  private durationToMinutes(duration?: string, fallback: number = 0): number {
+    if (!duration) {
+      return fallback;
+    }
+
+    const numeric = Number(duration);
+    if (!Number.isNaN(numeric)) {
+      return numeric;
+    }
+
+    const isoMatch = duration.match(
+      /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/,
+    );
+
+    if (!isoMatch) {
+      return fallback;
+    }
+
+    const days = Number(isoMatch[1] || 0);
+    const hours = Number(isoMatch[2] || 0);
+    const minutes = Number(isoMatch[3] || 0);
+    const seconds = Number(isoMatch[4] || 0);
+
+    return Math.round(days * 24 * 60 + hours * 60 + minutes + seconds / 60);
+  }
+
+  private resolveOrganizationIdOrThrow(accountId: number): number {
+    const account = this.auth.getAccounts().find((a) => a.id === accountId);
+    const organizationId = account?.organizations?.[0]?.id;
+
+    if (organizationId === undefined) {
+      throw new Error(`No organization found for account ${accountId}`);
+    }
+
+    return organizationId;
+  }
+
   // Helper: Combine date and time strings into a Date object
   private stringDateToDate(dateStr: string, timeStr: string = '00:00'): Date {
     return new Date(`${dateStr}T${timeStr}`);
@@ -186,9 +227,9 @@ export class TaskModal {
         ...baseData,
         startDate,
         dueDate: endDate,
-        duration: task.duration || 60,
-        minScopeDuration: task.minScopeDuration || 30,
-        maxScopeDuration: task.maxScopeDuration || 120,
+        duration: this.durationToMinutes(task.duration, 60),
+        minScopeDuration: this.durationToMinutes(task.minScopeDuration, 30),
+        maxScopeDuration: this.durationToMinutes(task.maxScopeDuration, 120),
         rrule: task.rrule || '',
         dependencies: task.dependencies || [],
       } as DynamicTaskForm;
@@ -277,6 +318,7 @@ export class TaskModal {
         const t = this.staticTask;
         const startDate = this.stringDateToDate(t.startDate, t.startTime);
         const endDate = this.stringDateToDate(t.endDate, t.endTime);
+        const organizationId = this.resolveOrganizationIdOrThrow(t.accountId);
 
         if (this.isEditing && this.editingTask) {
           const request: StaticTaskUpdateRequest = {
@@ -285,6 +327,7 @@ export class TaskModal {
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             difficulty: t.difficulty,
+            organizationId,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),
             rrule: t.rrule,
@@ -298,6 +341,7 @@ export class TaskModal {
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             accountId: t.accountId,
+            organizationId,
             difficulty: t.difficulty,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),
@@ -310,6 +354,7 @@ export class TaskModal {
         const t = this.dynamicTask;
         const startDate = this.stringDateToDate(t.startDate);
         const dueDate = this.stringDateToDate(t.dueDate);
+        const organizationId = this.resolveOrganizationIdOrThrow(t.accountId);
 
         if (this.isEditing && this.editingTask) {
           const request: DynamicTaskUpdateRequest = {
@@ -318,9 +363,10 @@ export class TaskModal {
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             difficulty: t.difficulty,
-            duration: t.duration,
-            minScopeDuration: t.minScopeDuration,
-            maxScopeDuration: t.maxScopeDuration,
+            organizationId,
+            duration: this.minutesToDuration(t.duration),
+            minScopeDuration: this.minutesToDuration(t.minScopeDuration),
+            maxScopeDuration: this.minutesToDuration(t.maxScopeDuration),
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(dueDate),
             rrule: t.rrule,
@@ -333,10 +379,11 @@ export class TaskModal {
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             accountId: t.accountId,
+            organizationId,
             difficulty: t.difficulty,
-            duration: t.duration,
-            minScopeDuration: t.minScopeDuration,
-            maxScopeDuration: t.maxScopeDuration,
+            duration: this.minutesToDuration(t.duration),
+            minScopeDuration: this.minutesToDuration(t.minScopeDuration),
+            maxScopeDuration: this.minutesToDuration(t.maxScopeDuration),
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(dueDate),
             rrule: t.rrule,

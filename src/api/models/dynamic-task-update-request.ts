@@ -8,15 +8,17 @@ import { TaskUpdateRequest } from '../models/task-update-request';
  * Update request for a dynamic (schedulable) task
  */
 export type DynamicTaskUpdateRequest = TaskUpdateRequest & {
+  dependencies?: Array<number>;
   description?: string;
   difficulty?: number;
-  duration?: number;
-  elapsed?: number;
+  duration?: string;
+  elapsed?: string;
   endAt?: string;
   labels?: Array<LabelCreateRequest>;
-  maxScopeDuration?: number;
-  minScopeDuration?: number;
+  maxScopeDuration?: string;
+  minScopeDuration?: string;
   name?: string;
+  organizationId?: number;
   rrule?: string;
   startAt?: string;
 };
