@@ -363,6 +363,19 @@
               />
             </div>
           </div>
+
+          <div class="form-control">
+            <label class="label cursor-pointer">
+              <span class="task-field-label">Blocker</span>
+              <input
+                type="checkbox"
+                class="toggle toggle-primary"
+                [(ngModel)]="staticTask.isBlocker"
+                role="switch"
+                [attr.aria-checked]="staticTask.isBlocker"
+              />
+            </label>
+          </div>
         }
 
         <!-- Planned: Extra Fields -->
