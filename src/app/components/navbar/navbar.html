@@ -20,7 +20,7 @@
 
     <a
       class="btn btn-square p-1"
-      [class.btn-primary]="viewService.calendarView"
+      [class.btn-secondary]="viewService.calendarView"
       [class.btn-ghost]="!viewService.calendarView"
       title="Calendar View"
       (click)="setCalendarView()"
@@ -34,7 +34,7 @@
 
     <a
       class="btn btn-square p-1"
-      [class.btn-primary]="viewService.listView"
+      [class.btn-secondary]="viewService.listView"
       [class.btn-ghost]="!viewService.listView"
       title="List View"
       (click)="setListView()"
