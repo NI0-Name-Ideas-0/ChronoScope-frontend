@@ -4,7 +4,6 @@ import {
   signal,
   inject,
   OnInit,
-  computed,
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Navbar } from './components/navbar/navbar';
