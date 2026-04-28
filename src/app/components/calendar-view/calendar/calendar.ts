@@ -28,6 +28,17 @@ export class Calendar {
     initialView: 'dayGridMonth',
     plugins: [dayGridPlugin, timeGridPlugin],
     height: '100%',
+    locale: 'en-GB',
+    slotLabelFormat: {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    },
+    eventTimeFormat: {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    },
     headerToolbar: {
       start: 'timeGridWeek dayGridMonth',
       center: 'title',
