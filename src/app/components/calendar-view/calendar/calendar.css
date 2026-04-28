@@ -6,4 +6,11 @@
 
 :host ::ng-deep .fc {
   color: inherit;
+  --fc-today-bg-color: color-mix(in srgb, var(--color-secondary) 20%, transparent);
+}
+
+:host-context(html[data-theme="chrono-dark"]) ::ng-deep .fc-theme-standard .fc-scrollgrid,
+:host-context(html[data-theme="chrono-dark"]) ::ng-deep .fc-theme-standard td,
+:host-context(html[data-theme="chrono-dark"]) ::ng-deep .fc-theme-standard th {
+  @apply border-base-300;
 }
