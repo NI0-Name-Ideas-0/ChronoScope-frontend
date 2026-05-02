@@ -27,9 +27,6 @@ interface SavedWorkState {
 /** Default daily work hours */
 const DEFAULT_HOURS_PER_DAY = 8;
 
-/** Default empty slots - calendar starts completely empty */
-const DEFAULT_SLOTS: TimeSlot[] = [];
-
 @Component({
   selector: 'app-settings-work-preferences',
   standalone: true,
