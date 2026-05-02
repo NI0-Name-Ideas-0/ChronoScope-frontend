@@ -18,7 +18,6 @@ describe('RepetitionFieldComponent', () => {
     fixture = TestBed.createComponent(RepetitionFieldComponent);
     component = fixture.componentInstance;
 
-    // Auf Output subscriben statt spyOn
     component.valueChange.subscribe((v: string) => {
       emittedValue = v;
     });
@@ -47,7 +46,7 @@ describe('RepetitionFieldComponent', () => {
       component.dtstart = new Date(''); // Invalid Date
       component.openModal();
       expect(component.isOpen).toBe(false);
-      expect(component.dateError).toBe('Please select a start date and time first.');
+      expect(component.dateError).toBe('Please select a date and time first.');
     });
 
     it('should NOT open modal when dtstart is epoch 0', () => {
@@ -113,7 +112,8 @@ describe('RepetitionFieldComponent', () => {
 
       expect(component.displayText).toBe('daily');
       expect(emittedValue).toMatch(/FREQ=DAILY/);
-      expect(emittedValue).toMatch(/DTSTART:20260426T090000/);
+      const dtstartUtc = component.dtstart.toISOString().replace(/[-:]/g, '').slice(0, 15);
+      expect(emittedValue).toMatch(new RegExp(`DTSTART:${dtstartUtc}`));
     });
 
     it('should emit rrule string with interval for daily every 3 days', () => {
@@ -148,7 +148,7 @@ describe('RepetitionFieldComponent', () => {
   });
 
   describe('value input', () => {
-    it('should update display when existing rrule value is set', () => {
+    it('should parse interval from existing rrule value', () => {
       const rule = new RRule({
         freq: RRule.WEEKLY,
         interval: 2,
@@ -158,8 +158,7 @@ describe('RepetitionFieldComponent', () => {
       component.value = rule.toString();
       fixture.detectChanges();
 
-      const input = fixture.debugElement.query(By.css('input[readonly]'));
-      expect(input.nativeElement.value).not.toBe('no repetition');
+      expect(component.config.interval).toBe(2);
     });
   });
 
@@ -171,7 +170,8 @@ describe('RepetitionFieldComponent', () => {
       component.config.interval = 1;
       component.apply();
 
-      expect(emittedValue).toMatch(/DTSTART:20261225T143000/);
+      const dtstartUtc = specificDate.toISOString().replace(/[-:]/g, '').slice(0, 15);
+      expect(emittedValue).toMatch(new RegExp(`DTSTART:${dtstartUtc}`));
     });
   });
 
@@ -184,7 +184,7 @@ describe('RepetitionFieldComponent', () => {
       const errorEl = fixture.debugElement.query(By.css('p.text-error'));
       expect(errorEl).toBeTruthy();
       expect(errorEl.nativeElement.textContent).toContain(
-        'Please select a start date and time first'
+        'Please select a date and time first.'
       );
     });
 

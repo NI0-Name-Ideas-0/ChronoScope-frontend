@@ -28,6 +28,7 @@ describe('ViewService', () => {
 
   describe('Toggle Methods', () => {
     it('should toggle listView from false to true', () => {
+      service.setListView(false);
       expect(service.listView).toBe(false);
       
       service.toggleList();
