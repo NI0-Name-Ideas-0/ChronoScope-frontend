@@ -1,12 +1,4 @@
-<label class="label">
-  <span class="label-text flex items-center gap-1.5">
-    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-    </svg>
-    Frequenzy
-  </span>
-</label>
-<!--Dropdown-Selection in the Task-Modal-->>
+<!--Dropdown-Selection in the Task-Modal-->
 <div class="relative cursor-pointer" (click)="openModal()">
   <input type="text" readonly [value]="displayText" [class.input-error]="dateError"
           class="input input-bordered w-full cursor-pointer pr-10" />
@@ -18,8 +10,8 @@
 <!--New Repetition-Modal-->
 <dialog class="modal" [class.modal-open]="isOpen">
   <div class="modal-box">
-    <h3 class="font-bold text-lg mb-4">Frequenzy</h3>
-    <!--Dorpdown-Selection for Frequenzy-->
+    <h3 class="font-bold text-lg mb-4">Frequency</h3>
+    <!--Dorpdown-Selection for Frequency-->
     <div class="space-y-4">
       <div class="form-control">
         <label class="label"><span class="label-text">Repetition Base</span></label>
