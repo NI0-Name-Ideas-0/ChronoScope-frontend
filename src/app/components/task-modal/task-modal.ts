@@ -51,7 +51,7 @@ interface DynamicTaskForm {
   duration: number;
   minScopeDuration: number;
   maxScopeDuration: number;
-  dependencies: TaskDependencyCreateRequest [];
+  dependencies: Array <any>;
 }
 
 type TaskMode = 'static' | 'planned';
