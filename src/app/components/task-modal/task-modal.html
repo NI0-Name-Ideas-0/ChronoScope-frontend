@@ -365,14 +365,14 @@
               />
             </div>
           </div>
-          <!--Frequenzy-->
+          <!--Frequency-->
           <div class="form-control">
               <app-repetition-field
               [value]="staticTask.rrule"
               [dtstart]="getTaskStartDate()"
               (valueChange)="onRruleChange($event)"
               ></app-repetition-field>
-
+          </div>
           <div class="form-control">
             <label class="label cursor-pointer">
               <span class="task-field-label">Blocker</span>
