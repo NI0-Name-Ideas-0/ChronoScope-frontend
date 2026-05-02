@@ -16,6 +16,7 @@ export type StaticTaskResponse = TaskResponse & {
   isBlocker?: boolean;
   labels?: Array<LabelResponse>;
   name?: string;
+  organizationId?: number;
   rrule?: string;
   startAt?: string;
 };

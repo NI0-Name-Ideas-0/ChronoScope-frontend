@@ -1,0 +1,9 @@
+@reference "#styles.css";
+
+:host {
+  @apply text-base-content;
+}
+
+:host ::ng-deep .fc {
+  color: inherit;
+}

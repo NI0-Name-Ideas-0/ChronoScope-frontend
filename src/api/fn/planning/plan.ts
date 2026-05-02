@@ -8,25 +8,28 @@ import { StrictHttpResponse } from '../../strict-http-response';
 import { RequestBuilder } from '../../request-builder';
 
 import { PlanRequest } from '../../models/plan-request';
-import { WorkSlotResponse } from '../../models/work-slot-response';
+import { ScopeResponse } from '../../models/scope-response';
 
 export interface Plan$Params {
-      body: PlanRequest
+  body: PlanRequest;
 }
 
-export function plan(http: HttpClient, rootUrl: string, params: Plan$Params, context?: HttpContext): Observable<StrictHttpResponse<Array<WorkSlotResponse>>> {
+export function plan(
+  http: HttpClient,
+  rootUrl: string,
+  params: Plan$Params,
+  context?: HttpContext,
+): Observable<StrictHttpResponse<Array<ScopeResponse>>> {
   const rb = new RequestBuilder(rootUrl, plan.PATH, 'post');
   if (params) {
     rb.body(params.body, 'application/json');
   }
 
-  return http.request(
-    rb.build({ responseType: 'blob', accept: '*/*', context })
-  ).pipe(
+  return http.request(rb.build({ responseType: 'blob', accept: '*/*', context })).pipe(
     filter((r: any): r is HttpResponse<any> => r instanceof HttpResponse),
     map((r: HttpResponse<any>) => {
-      return r as StrictHttpResponse<Array<WorkSlotResponse>>;
-    })
+      return r as StrictHttpResponse<Array<ScopeResponse>>;
+    }),
   );
 }
 

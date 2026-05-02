@@ -1,6 +1,7 @@
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ThemePreference, ThemeService } from '@services/theme.service';
 
-type ThemeOption = 'light' | 'dark' | 'system';
+type ThemeOption = ThemePreference;
 
 @Component({
   selector: 'app-settings-appearance',
@@ -10,15 +11,17 @@ type ThemeOption = 'light' | 'dark' | 'system';
   styleUrl: './appearance.css',
 })
 export class AppearanceSection {
+  private readonly themeService = inject(ThemeService);
+
   readonly themeOptions: { value: ThemeOption; label: string; previewClass: string }[] = [
     { value: 'light', label: 'Light', previewClass: 'preview-light' },
     { value: 'dark', label: 'Dark', previewClass: 'preview-dark' },
     { value: 'system', label: 'System', previewClass: 'preview-system' },
   ];
 
-  selectedTheme = signal<ThemeOption>('system');
+  readonly selectedTheme = this.themeService.theme;
 
   setTheme(theme: ThemeOption) {
-    this.selectedTheme.set(theme);
+    this.themeService.setTheme(theme);
   }
 }
