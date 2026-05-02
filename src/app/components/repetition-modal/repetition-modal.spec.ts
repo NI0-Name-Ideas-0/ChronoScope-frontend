@@ -145,6 +145,36 @@ describe('RepetitionFieldComponent', () => {
       expect(emittedValue).toMatch(/FREQ=MONTHLY/);
       expect(emittedValue).toMatch(/INTERVAL=2/);
     });
+
+    it('should not apply with float interval', () => {
+      component.openModal();
+      component.config.frequency = 'daily';
+      component.config.interval = 2.5;
+      component.apply();
+
+      expect(component.intervalError).toBe('Interval must be a whole number greater than 0.');
+      expect(component.isOpen).toBe(true);
+    });
+
+    it('should not apply with zero interval', () => {
+      component.openModal();
+      component.config.frequency = 'daily';
+      component.config.interval = 0;
+      component.apply();
+
+      expect(component.intervalError).toBe('Interval must be a whole number greater than 0.');
+      expect(component.isOpen).toBe(true);
+    });
+
+    it('should not apply with negative interval', () => {
+      component.openModal();
+      component.config.frequency = 'daily';
+      component.config.interval = -1;
+      component.apply();
+
+      expect(component.intervalError).toBe('Interval must be a whole number greater than 0.');
+      expect(component.isOpen).toBe(true);
+    });
   });
 
   describe('value input', () => {
@@ -209,6 +239,33 @@ describe('RepetitionFieldComponent', () => {
         const btn = buttons.find((b) => b.nativeElement.textContent.trim() === label);
         expect(btn).toBeTruthy();
       });
+    });
+
+    it('should show intervalError in template for float interval', () => {
+      component.dtstart = new Date('2026-04-26T09:00:00');
+      component.openModal();
+      component.config.frequency = 'daily';
+      component.config.interval = 2.5;
+      component.apply();
+      fixture.detectChanges();
+
+      const errorEl = fixture.debugElement.query(By.css('p.text-error'));
+      expect(errorEl).toBeTruthy();
+      expect(errorEl.nativeElement.textContent).toContain(
+        'Interval must be a whole number greater than 0.'
+      );
+    });
+
+    it('should clear intervalError on closeModal', () => {
+      component.dtstart = new Date('2026-04-26T09:00:00');
+      component.openModal();
+      component.config.frequency = 'daily';
+      component.config.interval = 2.5;
+      component.apply();
+      expect(component.intervalError).not.toBeNull();
+
+      component.closeModal();
+      expect(component.intervalError).toBeNull();
     });
   });
 });

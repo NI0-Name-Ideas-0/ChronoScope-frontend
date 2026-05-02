@@ -21,6 +21,7 @@ export class RepetitionFieldComponent {
   @Output() valueChange = new EventEmitter<string>();
   
   dateError: string | null = null;
+  intervalError: string | null = null;
   isOpen = false;
   displayText = 'no repetition';
   private _rrule = '';
@@ -59,6 +60,17 @@ export class RepetitionFieldComponent {
   closeModal() {
     this.isOpen = false;
     this.dateError = null;
+    this.intervalError = null;
+  }
+
+  validateInterval(): boolean {
+    const interval = this.config.interval;
+    if (!Number.isInteger(interval) || interval < 1) {
+      this.intervalError = 'Interval must be a whole number greater than 0.';
+      return false;
+    }
+    this.intervalError = null;
+    return true;
   }
 
   toggleWeekday(value: number) {
@@ -73,6 +85,10 @@ export class RepetitionFieldComponent {
       this.displayText = 'no repetition';
       this.valueChange.emit('');
       this.isOpen = false;
+      return;
+    }
+
+    if (!this.validateInterval()) {
       return;
     }
 
@@ -103,7 +119,7 @@ export class RepetitionFieldComponent {
       const rule = rrulestr(rrule);
       const options = rule.options;
       // mapping to config
-      this.config.interval = options.interval || 1;
+      this.config.interval = Math.max(1, Math.round(options.interval || 1));
     } catch {
       // ignore invalid string
     }
