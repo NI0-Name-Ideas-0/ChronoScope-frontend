@@ -11,7 +11,7 @@ import { OrganizationsSection } from './sections/organizations/organizations';
 import { WorkPreferencesSection } from './sections/work-preferences/work-preferences';
 import { DataPrivacySection } from './sections/data-privacy/data-privacy';
 import { SafeHtmlPipe } from '@pipes/safeHtml.pipe';
-import { TimeSlot } from './sections/work-preferences/work-preferences';
+import { TimeSlot } from '../../model/work-preference.model';
 
 type SettingsCategory =
   | 'account'
@@ -86,14 +86,11 @@ export class SettingsModal {
   ];
 
   onWorkSaved(slots: TimeSlot[]): void {
-    console.log('Gespeichert:', slots);
-    // Hier deine Speicher-Logik
-    // Optional: Toast anzeigen
+    console.log('Work preferences saved:', slots);
   }
 
   onWorkCancelled(): void {
-    // Optional: Toast oder einfach nichts tun
-    // Die Komponente hat sich bereits selbst zurückgesetzt
+    // Work-preferences component has already reset its own state
   }
 
   // Weird closing animation logic because nested animations aren't yet in Angular 21 (will come in 22)

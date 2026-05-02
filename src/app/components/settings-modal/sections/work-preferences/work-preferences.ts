@@ -4,21 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { Auth } from 'services/auth';
 import { AccountResponse } from 'api/models';
 import { getAccountDisplayName } from 'services/account.utils';
+import { WorkSlotPreferenceService } from 'services/work-slot-preference.service';
+import { TimeSlot, TimeSlotType, COLOR_POOL } from '../../../../model/work-preference.model';
 
-/** Type of time slot: work for an organization or a break */
-type TimeSlotType = 'organization' | 'break';
 
-/** Represents a scheduled block of time in the week calendar */
-export interface TimeSlot {
-  id: string;
-  dayIndex: number;
-  startHour: number;
-  durationHours: number;
-  type: TimeSlotType;
-  label: string;
-  colorClass: string;
-  accountId: number; // Reference to the associated account
-}
 
 /** Represents an organization derived from a user account */
 interface Organization {
@@ -37,9 +26,6 @@ interface SavedWorkState {
 
 /** Default daily work hours */
 const DEFAULT_HOURS_PER_DAY = 8;
-
-/** DaisyUI color pool for accounts (assigned cyclically) */
-const COLOR_POOL = ['primary', 'secondary', 'accent', 'info', 'success', 'warning'] as const;
 
 /** Default empty slots - calendar starts completely empty */
 const DEFAULT_SLOTS: TimeSlot[] = [];
@@ -60,6 +46,8 @@ export class WorkPreferencesSection implements OnInit {
 
   /** Injected auth service to retrieve user accounts */
   private auth = inject(Auth);
+  /** Service to persist/retrieve work slots via the backend API */
+  private preferenceService = inject(WorkSlotPreferenceService);
 
   // --- Settings ---
 
@@ -132,9 +120,25 @@ export class WorkPreferencesSection implements OnInit {
     return null;
   });
 
-  /** Lifecycle hook: load accounts when component initializes */
+  /** Lifecycle hook: load accounts and existing slots when component initializes */
   ngOnInit(): void {
     this.loadOrganizationsFromAccounts();
+  }
+
+  /** Loads previously saved work slot preferences from the backend */
+  private async loadSlotsFromBackend(): Promise<void> {
+    try {
+      const slots = await this.preferenceService.loadPreferences();
+      if (slots.length > 0) {
+        this.slots.set(slots);
+        this.savedState = {
+          ...this.savedState,
+          slots: JSON.parse(JSON.stringify(slots)),
+        };
+      }
+    } catch (err) {
+      console.error('Failed to load work slot preferences:', err);
+    }
   }
 
   /** Loads accounts from Auth service and maps them to organizations */
@@ -146,6 +150,7 @@ export class WorkPreferencesSection implements OnInit {
       const sub = this.auth.accounts$.subscribe(accs => {
         if (accs.length > 0) {
           this.mapAccountsToOrganizations(accs);
+          this.loadSlotsFromBackend();
           sub.unsubscribe();
         }
       });
@@ -153,6 +158,7 @@ export class WorkPreferencesSection implements OnInit {
     }
 
     this.mapAccountsToOrganizations(accounts);
+    this.loadSlotsFromBackend();
   }
 
   /** Maps AccountResponse array to internal Organization array with assigned colors */
@@ -241,10 +247,15 @@ export class WorkPreferencesSection implements OnInit {
     this.cancelled.emit();
   }
 
-  /** Save button handler: store current state as new baseline and emit saved event */
-  onSave(): void {
-    this.storeCurrentState();
-    this.saved.emit(this.slots());
+  /** Save button handler: persist slots to backend, store baseline and emit saved event */
+  async onSave(): Promise<void> {
+    try {
+      await this.preferenceService.savePreferences(this.slots());
+      this.storeCurrentState();
+      this.saved.emit(this.slots());
+    } catch (err) {
+      console.error('Failed to save work slot preferences:', err);
+    }
   }
 
   // --- Collision Detection ---
