@@ -260,7 +260,7 @@ export class TaskService {
           const durationMs = task.end.getTime() - task.start.getTime();
           const hours = Math.floor(durationMs / 3600000);
           const minutes = Math.floor((durationMs % 3600000) / 60000);
-          const rule = rrulestr(task.rrule);
+          rrulestr(task.rrule);
           return [
             {
               id: task.id.toString(),
