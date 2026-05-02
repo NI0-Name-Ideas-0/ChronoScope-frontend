@@ -2,7 +2,6 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RRule, rrulestr } from 'rrule';
-import { TaskModal } from '../task-modal/task-modal';
 
 @Component({
   selector: 'app-repetition-field',
