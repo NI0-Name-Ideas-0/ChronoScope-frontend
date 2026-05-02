@@ -422,6 +422,10 @@ export class TaskModal {
   return this.stringDateToDate(this.staticTask.startDate, this.staticTask.startTime);
   }
 
+  getTaskEndDate(): Date {
+  return this.stringDateToDate(this.staticTask.endDate, this.staticTask.endTime);
+  }
+
   close() {
     this.isLeaving.set(true);
     setTimeout(() => {

@@ -35,18 +35,20 @@ describe('RepetitionFieldComponent', () => {
   });
 
   describe('openModal', () => {
-    it('should open modal when dtstart is valid', () => {
+    it('should open modal when dtstart and endDate are valid', () => {
       component.dtstart = new Date('2026-04-26T09:00:00');
+      component.endDate = new Date('2026-05-01');
       component.openModal();
       expect(component.isOpen).toBe(true);
       expect(component.dateError).toBeNull();
+      expect(component.endDateError).toBeNull();
     });
 
     it('should NOT open modal when dtstart is invalid', () => {
       component.dtstart = new Date(''); // Invalid Date
       component.openModal();
       expect(component.isOpen).toBe(false);
-      expect(component.dateError).toBe('Please select a date and time first.');
+      expect(component.dateError).toBe('Please select a correct date and time.');
     });
 
     it('should NOT open modal when dtstart is epoch 0', () => {
@@ -55,17 +57,27 @@ describe('RepetitionFieldComponent', () => {
       expect(component.isOpen).toBe(false);
       expect(component.dateError).not.toBeNull();
     });
+
+    it('should NOT open modal when endDate is null', () => {
+      component.dtstart = new Date('2026-04-26T09:00:00');
+      component.endDate = null;
+      component.openModal();
+      expect(component.isOpen).toBe(false);
+      expect(component.endDateError).toBe('Please select a correct date and time.');
+    });
   });
 
   describe('closeModal', () => {
-    it('should close modal and clear dateError', () => {
+    it('should close modal and clear errors', () => {
       component.dtstart = new Date('2026-04-26T09:00:00');
+      component.endDate = new Date('2026-05-01');
       component.openModal();
       expect(component.isOpen).toBe(true);
 
       component.closeModal();
       expect(component.isOpen).toBe(false);
       expect(component.dateError).toBeNull();
+      expect(component.endDateError).toBeNull();
     });
   });
 
@@ -94,6 +106,8 @@ describe('RepetitionFieldComponent', () => {
   describe('apply', () => {
     beforeEach(() => {
       component.dtstart = new Date('2026-04-26T09:00:00');
+      component.endDate = new Date('2026-05-01');
+      component.openModal();
     });
 
     it('should emit empty string and display "no repetition" for frequency none', () => {
@@ -147,32 +161,63 @@ describe('RepetitionFieldComponent', () => {
     });
 
     it('should not apply with float interval', () => {
-      component.openModal();
       component.config.frequency = 'daily';
       component.config.interval = 2.5;
       component.apply();
 
-      expect(component.intervalError).toBe('Interval must be a whole number greater than 0.');
+      expect(component.intervalError).toBe('Please select a correct interval.');
       expect(component.isOpen).toBe(true);
     });
 
     it('should not apply with zero interval', () => {
-      component.openModal();
       component.config.frequency = 'daily';
       component.config.interval = 0;
       component.apply();
 
-      expect(component.intervalError).toBe('Interval must be a whole number greater than 0.');
+      expect(component.intervalError).toBe('Please select a correct interval.');
       expect(component.isOpen).toBe(true);
     });
 
     it('should not apply with negative interval', () => {
-      component.openModal();
       component.config.frequency = 'daily';
       component.config.interval = -1;
       component.apply();
 
-      expect(component.intervalError).toBe('Interval must be a whole number greater than 0.');
+      expect(component.intervalError).toBe('Please select a correct interval.');
+      expect(component.isOpen).toBe(true);
+    });
+
+    it('should apply with valid end date and include UNTIL in rrule', () => {
+      component.config.frequency = 'daily';
+      component.config.interval = 1;
+      component.endDateInput = '2026-05-01';
+      component.apply();
+
+      expect(component.endDateError).toBeNull();
+      expect(emittedValue).toMatch(/FREQ=DAILY/);
+      const endDate = new Date('2026-05-01T00:00:00');
+      const untilUtc = endDate.toISOString().replace(/[-:]/g, '').slice(0, 15);
+      expect(emittedValue).toMatch(new RegExp(`UNTIL=${untilUtc}`));
+      expect(component.isOpen).toBe(false);
+    });
+
+    it('should not apply with invalid end date', () => {
+      component.config.frequency = 'daily';
+      component.config.interval = 1;
+      component.endDateInput = 'invalid';
+      component.apply();
+
+      expect(component.endDateError).toBe('Please select a correct date and time.');
+      expect(component.isOpen).toBe(true);
+    });
+
+    it('should not apply with empty end date input', () => {
+      component.config.frequency = 'daily';
+      component.config.interval = 1;
+      component.endDateInput = '';
+      component.apply();
+
+      expect(component.endDateError).toBe('Please select a correct date and time.');
       expect(component.isOpen).toBe(true);
     });
   });
@@ -196,6 +241,7 @@ describe('RepetitionFieldComponent', () => {
     it('should use provided dtstart in generated rrule', () => {
       const specificDate = new Date('2026-12-25T14:30:00');
       component.dtstart = specificDate;
+      component.endDateInput = '2026-12-31';
       component.config.frequency = 'daily';
       component.config.interval = 1;
       component.apply();
@@ -214,7 +260,7 @@ describe('RepetitionFieldComponent', () => {
       const errorEl = fixture.debugElement.query(By.css('p.text-error'));
       expect(errorEl).toBeTruthy();
       expect(errorEl.nativeElement.textContent).toContain(
-        'Please select a date and time first.'
+        'Please select a correct date and time.'
       );
     });
 
@@ -229,6 +275,7 @@ describe('RepetitionFieldComponent', () => {
 
     it('should render weekday buttons when frequency is weekly', () => {
       component.dtstart = new Date('2026-04-26T09:00:00');
+      component.endDate = new Date('2026-05-01');
       component.openModal();
       component.config.frequency = 'weekly';
       fixture.detectChanges();
@@ -243,6 +290,7 @@ describe('RepetitionFieldComponent', () => {
 
     it('should show intervalError in template for float interval', () => {
       component.dtstart = new Date('2026-04-26T09:00:00');
+      component.endDate = new Date('2026-05-01');
       component.openModal();
       component.config.frequency = 'daily';
       component.config.interval = 2.5;
@@ -252,12 +300,13 @@ describe('RepetitionFieldComponent', () => {
       const errorEl = fixture.debugElement.query(By.css('p.text-error'));
       expect(errorEl).toBeTruthy();
       expect(errorEl.nativeElement.textContent).toContain(
-        'Interval must be a whole number greater than 0.'
+        'Please select a correct interval.'
       );
     });
 
     it('should clear intervalError on closeModal', () => {
       component.dtstart = new Date('2026-04-26T09:00:00');
+      component.endDate = new Date('2026-05-01');
       component.openModal();
       component.config.frequency = 'daily';
       component.config.interval = 2.5;
@@ -266,6 +315,23 @@ describe('RepetitionFieldComponent', () => {
 
       component.closeModal();
       expect(component.intervalError).toBeNull();
+    });
+
+    it('should show endDateError in template for invalid end date', () => {
+      component.dtstart = new Date('2026-04-26T09:00:00');
+      component.endDate = new Date('2026-05-01');
+      component.openModal();
+      component.config.frequency = 'daily';
+      component.config.interval = 1;
+      component.endDateInput = 'invalid';
+      component.apply();
+      fixture.detectChanges();
+
+      const errorEls = fixture.debugElement.queryAll(By.css('p.text-error'));
+      const endDateErrorEl = errorEls.find((el) =>
+        el.nativeElement.textContent.includes('Please select a correct date and time.')
+      );
+      expect(endDateErrorEl).toBeTruthy();
     });
   });
 });

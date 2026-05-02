@@ -208,7 +208,7 @@
             Frequency
           </span>
         </label>
-        <app-repetition-field [value]="staticTask.rrule" [dtstart]="getTaskStartDate()"
+        <app-repetition-field [value]="staticTask.rrule" [dtstart]="getTaskStartDate()" [endDate]="getTaskEndDate()"
           (valueChange)="onRruleChange($event)"></app-repetition-field>
       </div>
       <div class="form-control">

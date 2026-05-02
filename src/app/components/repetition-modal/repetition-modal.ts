@@ -18,9 +18,13 @@ export class RepetitionFieldComponent {
     }
   }
   @Input() dtstart: Date = new Date();
+  @Input() endDate: Date | null = null;
   @Output() valueChange = new EventEmitter<string>();
+
+  endDateInput: string = '';
   
   dateError: string | null = null;
+  endDateError: string | null = null;
   intervalError: string | null = null;
   isOpen = false;
   displayText = 'no repetition';
@@ -43,30 +47,59 @@ export class RepetitionFieldComponent {
   ];
 
   openModal() {
-    if (!this.isDtstartValid()) {
-      this.dateError = 'Please select a date and time first.';
+    this.dateError = null;
+    this.endDateError = null;
+
+    if (!this.isDateValid(this.dtstart)) {
+      this.dateError = 'Please select a correct date and time.';
       return;
     }
-    this.dateError = null;
+    if (this.endDate === null || !this.isDateValid(this.endDate)) {
+      this.endDateError = 'Please select a correct date and time.';
+      return;
+    }
+    this.syncEndDateInput();
     this.isOpen = true;
   }
 
-  private isDtstartValid(): boolean {
-    return this.dtstart instanceof Date && 
-           !isNaN(this.dtstart.getTime()) && 
-           this.dtstart.getTime() > 0;
+  private isDateValid(date: Date): boolean {
+    return date instanceof Date && !isNaN(date.getTime()) && date.getTime() > 0;
+  }
+
+  private syncEndDateInput(): void {
+    if (this.endDate && this.isDateValid(this.endDate)) {
+      const y = this.endDate.getFullYear();
+      const m = String(this.endDate.getMonth() + 1).padStart(2, '0');
+      const d = String(this.endDate.getDate()).padStart(2, '0');
+      this.endDateInput = `${y}-${m}-${d}`;
+    } else {
+      this.endDateInput = '';
+    }
   }
 
   closeModal() {
     this.isOpen = false;
     this.dateError = null;
+    this.endDateError = null;
     this.intervalError = null;
+  }
+
+  private isEndDateValid(): boolean {
+    if (this.endDateInput === '') {
+      return false;
+    }
+    const parsed = new Date(this.endDateInput + 'T00:00:00');
+    if (!this.isDateValid(parsed)) {
+      return false;
+    }
+    this.endDate = parsed;
+    return true;
   }
 
   validateInterval(): boolean {
     const interval = this.config.interval;
     if (!Number.isInteger(interval) || interval < 1) {
-      this.intervalError = 'Interval must be a whole number greater than 0.';
+      this.intervalError = 'Please select a correct interval.';
       return false;
     }
     this.intervalError = null;
@@ -92,13 +125,23 @@ export class RepetitionFieldComponent {
       return;
     }
 
+    if (!this.isEndDateValid()) {
+      this.endDateError = 'Please select a correct date and time.';
+      return;
+    }
+    this.endDateError = null;
+
     const freqMap = { daily: RRule.DAILY, weekly: RRule.WEEKLY, monthly: RRule.MONTHLY };
-    const rule = new RRule({
+    const ruleOptions: any = {
       freq: freqMap[frequency],
       interval,
       byweekday: weekdays.length ? weekdays : undefined,
       dtstart: this.dtstart,
-    });
+    };
+    if (this.endDate) {
+      ruleOptions.until = this.endDate;
+    }
+    const rule = new RRule(ruleOptions);
 
     // generating diplay text
     if (frequency === 'daily') {
