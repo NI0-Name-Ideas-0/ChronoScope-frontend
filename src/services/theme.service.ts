@@ -42,7 +42,8 @@ export class ThemeService {
       return;
     }
 
-    root.setAttribute('data-theme', theme);
+    const resolvedTheme = theme === 'dark' ? 'chrono-dark' : 'chrono-light';
+    root.setAttribute('data-theme', resolvedTheme);
   }
 
   private isThemePreference(value: string | null): value is ThemePreference {
