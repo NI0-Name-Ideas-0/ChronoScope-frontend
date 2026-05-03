@@ -19,7 +19,7 @@ if (!fs.existsSync(coveragePath)) {
 
 const summary = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
 const branches = summary.total.branches;
-const status = branches.pct >= threshold ? 'passed' : 'failed';
+const status = branches.pct >= threshold ? 'passed ✅' : 'failed ❌';
 
 markdown += '| Metric | Covered | Total | Coverage | Threshold | Status |\n';
 markdown += '|---|---:|---:|---:|---:|---|\n';
