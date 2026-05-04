@@ -1,0 +1,11 @@
+/* Draggable sidebar items */
+.draggable-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* Drop target highlight for day columns */
+.drop-target {
+  background-color: oklch(var(--p) / 0.08) !important;
+}

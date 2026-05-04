@@ -5,6 +5,7 @@ import { TaskModalService } from '../../../services/task-modal.service';
 import { TaskService } from '../../../services/task.service';
 import { Auth } from '../../../services/auth';
 import { formatAccountsForDropdown } from '../../../services/account.utils';
+import { RepetitionFieldComponent } from "../repetition-modal/repetition-modal";
 import {
   StaticTaskCreateRequest,
   DynamicTaskCreateRequest,
@@ -50,15 +51,14 @@ interface DynamicTaskForm {
   duration: number;
   minScopeDuration: number;
   maxScopeDuration: number;
-  rrule: string;
-  dependencies: number[];
+  dependencies: Array <any>;
 }
 
 type TaskMode = 'static' | 'planned';
 
 @Component({
   selector: 'app-task-modal',
-  imports: [FormsModule],
+  imports: [FormsModule, RepetitionFieldComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './task-modal.html',
   styleUrl: './task-modal.css',
@@ -136,7 +136,6 @@ export class TaskModal {
       duration: 60,
       minScopeDuration: 30,
       maxScopeDuration: 120,
-      rrule: '',
       dependencies: [],
     };
   }
@@ -230,7 +229,6 @@ export class TaskModal {
         duration: this.durationToMinutes(task.duration, 60),
         minScopeDuration: this.durationToMinutes(task.minScopeDuration, 30),
         maxScopeDuration: this.durationToMinutes(task.maxScopeDuration, 120),
-        rrule: task.rrule || '',
         dependencies: task.dependencies || [],
       } as DynamicTaskForm;
       this.staticTask = this.emptyStaticTask();
@@ -369,7 +367,6 @@ export class TaskModal {
             maxScopeDuration: this.minutesToDuration(t.maxScopeDuration),
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(dueDate),
-            rrule: t.rrule,
           };
           await this.taskService.updateTask(this.editingTask.id!, request);
         } else {
@@ -386,7 +383,6 @@ export class TaskModal {
             maxScopeDuration: this.minutesToDuration(t.maxScopeDuration),
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(dueDate),
-            rrule: t.rrule,
             dependencies: t.dependencies,
           };
           await this.taskService.createTask(request);
@@ -415,6 +411,19 @@ export class TaskModal {
       this.isSaving.set(false);
       this.cdr.markForCheck();
     }
+  }
+
+  onRruleChange(rrule: string) {
+  this.staticTask.rrule = rrule;
+  this.cdr.markForCheck();
+  }
+
+  getTaskStartDate(): Date {
+  return this.stringDateToDate(this.staticTask.startDate, this.staticTask.startTime);
+  }
+
+  getTaskEndDate(): Date {
+  return this.stringDateToDate(this.staticTask.endDate, this.staticTask.endTime);
   }
 
   close() {

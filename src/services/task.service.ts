@@ -30,6 +30,7 @@ import {
 } from '../api/models';
 import { OAuthService } from 'angular-oauth2-oidc';
 import { Auth } from './auth';
+import { rrulestr } from 'rrule';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -265,6 +266,7 @@ export class TaskService {
         staticTask.accountId || 0,
         staticTask.difficulty || 1,
         false, // isFinished
+        staticTask.rrule || '',
       );
     } else {
       const dynamicTask = apiTask as DynamicTaskResponse;
@@ -293,22 +295,63 @@ export class TaskService {
 
   toCalendarEvents(task: Task): EventInput[] {
     if (task instanceof StaticTask) {
+      //reaccuring static task with rrule
+      if (task.rrule && task.rrule.trim()) {
+        try {
+          const durationMs = task.end.getTime() - task.start.getTime();
+          const hours = Math.floor(durationMs / 3600000);
+          const minutes = Math.floor((durationMs % 3600000) / 60000);
+          rrulestr(task.rrule);
+          return [
+            {
+              id: task.id.toString(),
+              title: task.title,
+              rrule: task.rrule,
+              duration:{hours, minutes},
+              extendedProps: {
+                description: task.description,
+                difficulty: task.difficulty,
+                labels: task.labels,
+                isBlocker: (task as any).isBlocker,
+              },
+            },
+          ];
+        } catch (e) {
+          console.warn('Invalid rrule for task', task.id, task.rrule);
+        }
+      }
+
+      //normal static task
       return [
         {
           id: task.id.toString(),
+          title: task.title,
           start: task.start,
           end: task.end,
+          extendedProps: {
+            description: task.description,
+            difficulty: task.difficulty,
+            labels: task.labels,
+          },
         },
       ];
-    } else if (task instanceof AlgoTask) {
+    }
+
+    if (task instanceof AlgoTask) {
       return task.scopes.map((scope: Scope) => ({
-        id: task.id.toString(),
+        id: `${task.id}-${scope.start.getTime()}`,
+        title: task.title,
         start: scope.start,
         end: scope.end,
+        extendedProps: {
+          description: task.description,
+          difficulty: task.difficulty,
+        },
       }));
-    } else {
-      throw console.error('Unexpected calendar event received from service');
     }
+
+    console.error('Unexpected task type', task);
+    return [];
   }
 
   getAllCalendarEvents(): EventInput[] {

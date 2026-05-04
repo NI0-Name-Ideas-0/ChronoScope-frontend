@@ -11,6 +11,7 @@ import { OrganizationsSection } from './sections/organizations/organizations';
 import { WorkPreferencesSection } from './sections/work-preferences/work-preferences';
 import { DataPrivacySection } from './sections/data-privacy/data-privacy';
 import { SafeHtmlPipe } from '@pipes/safeHtml.pipe';
+import { TimeSlot } from '../../model/work-preference.model';
 
 type SettingsCategory =
   | 'account'
@@ -33,7 +34,7 @@ interface NavItem {
     OrganizationsSection,
     WorkPreferencesSection,
     DataPrivacySection,
-    SafeHtmlPipe
+    SafeHtmlPipe,
 ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './settings-modal.html',
@@ -83,6 +84,14 @@ export class SettingsModal {
       </svg>`,
     },
   ];
+
+  onWorkSaved(slots: TimeSlot[]): void {
+    console.log('Work preferences saved:', slots);
+  }
+
+  onWorkCancelled(): void {
+    // Work-preferences component has already reset its own state
+  }
 
   // Weird closing animation logic because nested animations aren't yet in Angular 21 (will come in 22)
   close() {
