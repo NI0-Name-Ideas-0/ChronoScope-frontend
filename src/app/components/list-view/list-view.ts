@@ -1,4 +1,4 @@
-import { Component, OnInit, input, output } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '@services/task.service';
@@ -6,7 +6,6 @@ import { TaskModalService } from '@services/task-modal.service';
 import { Task } from '@app/model/task';
 import { StaticTask } from '@app/model/static-task';
 import { AlgoTask } from '@app/model/algo-task';
-import { StaticTaskResponse, DynamicTaskResponse } from '../../../api/models';
 
 @Component({
   selector: 'app-list-view',
@@ -45,7 +44,7 @@ export class ListView implements OnInit {
    */
   getTaskDueDate(task: Task): Date {
     if (task instanceof StaticTask) {
-      return task.end;
+      return task.scope.end;
     } else if (task instanceof AlgoTask) {
       return task.dueDate;
     }

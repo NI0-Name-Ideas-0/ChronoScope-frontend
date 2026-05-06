@@ -181,11 +181,11 @@
           </label>
           <select
             class="select select-bordered w-full"
-            [(ngModel)]="currentTask.accountId"
+            [(ngModel)]="currentTask.organizationId"
             [disabled]="isEditing"
           >
-            @for (account of accountOptions; track account.id) {
-              <option [value]="account.id">{{ account.displayName }}</option>
+            @for ( organization of (Identity | async)?.organizations; track organization.id) {
+              <option [value]="organization.id">{{ organization.name }}</option>
             }
           </select>
         </div>

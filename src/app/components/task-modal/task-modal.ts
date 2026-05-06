@@ -1,10 +1,10 @@
 import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChangeDetectorRef } from '@angular/core';
-import { TaskModalService } from '../../../services/task-modal.service';
-import { TaskService } from '../../../services/task.service';
-import { Auth } from '../../../services/auth';
-import { formatAccountsForDropdown } from '../../../services/account.utils';
+import { AsyncPipe } from '@angular/common';
+import { TaskModalService } from '@services/task-modal.service';
+import { TaskService } from '@services/task.service';
+import { Auth } from '@services/auth';
 import {
   StaticTaskCreateRequest,
   DynamicTaskCreateRequest,
@@ -14,6 +14,7 @@ import {
   DynamicTaskResponse,
   LabelCreateRequest,
   LabelResponse,
+  IdentityResponse,
 } from '../../../api/models';
 
 // Difficulty level mapping
@@ -29,7 +30,7 @@ interface StaticTaskForm {
   title: string;
   description: string;
   labels: string[];
-  accountId: number;
+  organizationId: string | undefined;
   difficulty: number;
   startDate: string;
   startTime: string;
@@ -43,7 +44,7 @@ interface DynamicTaskForm {
   title: string;
   description: string;
   labels: string[];
-  accountId: number;
+  organizationId: string | undefined;
   difficulty: number;
   startDate: string;
   dueDate: string;
@@ -58,7 +59,7 @@ type TaskMode = 'static' | 'planned';
 
 @Component({
   selector: 'app-task-modal',
-  imports: [FormsModule],
+  imports: [FormsModule, AsyncPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './task-modal.html',
   styleUrl: './task-modal.css',
@@ -103,17 +104,12 @@ export class TaskModal {
     });
   }
 
-  private getDefaultAccountId(): number {
-    const accounts = this.auth.getAccounts();
-    return accounts.length > 0 ? accounts[0].id! : 0;
-  }
-
   emptyStaticTask(): StaticTaskForm {
     return {
       title: '',
       description: '',
       labels: [],
-      accountId: this.getDefaultAccountId(),
+      organizationId: undefined,
       difficulty: 1,
       startDate: '',
       startTime: '09:00',
@@ -129,7 +125,7 @@ export class TaskModal {
       title: '',
       description: '',
       labels: [],
-      accountId: this.getDefaultAccountId(),
+      organizationId: undefined,
       difficulty: 1,
       startDate: '',
       dueDate: '',
@@ -181,17 +177,6 @@ export class TaskModal {
     return Math.round(days * 24 * 60 + hours * 60 + minutes + seconds / 60);
   }
 
-  private resolveOrganizationIdOrThrow(accountId: number): number {
-    const account = this.auth.getAccounts().find((a) => a.id === accountId);
-    const organizationId = account?.organizations?.[0]?.id;
-
-    if (organizationId === undefined) {
-      throw new Error(`No organization found for account ${accountId}`);
-    }
-
-    return organizationId;
-  }
-
   // Helper: Combine date and time strings into a Date object
   private stringDateToDate(dateStr: string, timeStr: string = '00:00'): Date {
     return new Date(`${dateStr}T${timeStr}`);
@@ -214,7 +199,7 @@ export class TaskModal {
       title: task.name || '',
       description: task.description || '',
       labels: this.labelResponseToString(task.labels as LabelResponse[] | undefined),
-      accountId: task.accountId || this.getDefaultAccountId(),
+      organizationId: task.organizationId,
       difficulty: task.difficulty || 1,
     };
 
@@ -230,7 +215,6 @@ export class TaskModal {
         duration: this.durationToMinutes(task.duration, 60),
         minScopeDuration: this.durationToMinutes(task.minScopeDuration, 30),
         maxScopeDuration: this.durationToMinutes(task.maxScopeDuration, 120),
-        rrule: task.rrule || '',
         dependencies: task.dependencies || [],
       } as DynamicTaskForm;
       this.staticTask = this.emptyStaticTask();
@@ -258,10 +242,6 @@ export class TaskModal {
 
   get currentTask(): StaticTaskForm | DynamicTaskForm {
     return this.mode === 'static' ? this.staticTask : this.dynamicTask;
-  }
-
-  get accountOptions(): { id: number; displayName: string }[] {
-    return formatAccountsForDropdown(this.auth.getAccounts());
   }
 
   get difficultyOptions(): typeof DIFFICULTY_LEVELS {
@@ -318,7 +298,6 @@ export class TaskModal {
         const t = this.staticTask;
         const startDate = this.stringDateToDate(t.startDate, t.startTime);
         const endDate = this.stringDateToDate(t.endDate, t.endTime);
-        const organizationId = this.resolveOrganizationIdOrThrow(t.accountId);
 
         if (this.isEditing && this.editingTask) {
           const request: StaticTaskUpdateRequest = {
@@ -327,7 +306,7 @@ export class TaskModal {
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             difficulty: t.difficulty,
-            organizationId,
+            organizationId: t.organizationId,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),
             rrule: t.rrule,
@@ -340,8 +319,7 @@ export class TaskModal {
             name: t.title.trim(),
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
-            accountId: t.accountId,
-            organizationId,
+            organizationId: t.organizationId,
             difficulty: t.difficulty,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),
@@ -354,7 +332,7 @@ export class TaskModal {
         const t = this.dynamicTask;
         const startDate = this.stringDateToDate(t.startDate);
         const dueDate = this.stringDateToDate(t.dueDate);
-        const organizationId = this.resolveOrganizationIdOrThrow(t.accountId);
+        const organizationId = t.organizationId;
 
         if (this.isEditing && this.editingTask) {
           const request: DynamicTaskUpdateRequest = {
@@ -369,7 +347,6 @@ export class TaskModal {
             maxScopeDuration: this.minutesToDuration(t.maxScopeDuration),
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(dueDate),
-            rrule: t.rrule,
           };
           await this.taskService.updateTask(this.editingTask.id!, request);
         } else {
@@ -378,7 +355,6 @@ export class TaskModal {
             name: t.title.trim(),
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
-            accountId: t.accountId,
             organizationId,
             difficulty: t.difficulty,
             duration: this.minutesToDuration(t.duration),
@@ -386,7 +362,6 @@ export class TaskModal {
             maxScopeDuration: this.minutesToDuration(t.maxScopeDuration),
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(dueDate),
-            rrule: t.rrule,
             dependencies: t.dependencies,
           };
           await this.taskService.createTask(request);
@@ -423,5 +398,9 @@ export class TaskModal {
       this.isOpen.set(false);
       this.isLeaving.set(false);
     }, 200);
+  }
+
+  get Identity() {
+    return this.auth.identity$;
   }
 }
