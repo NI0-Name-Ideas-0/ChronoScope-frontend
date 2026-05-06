@@ -19,7 +19,7 @@ export abstract class Task {
   description: string;
   dependencies: Task[];
   labels: string[];
-  accountId: number;
+  organizationId: string | null;
   difficulty: number;
   isFinished: boolean;
 
@@ -29,7 +29,7 @@ export abstract class Task {
     description: string = '',
     dependencies: Task[] = [],
     labels: string[] = [],
-    accountId: number,
+    organizationId: string | null,
     difficulty: number,
     isFinished: boolean = false,
   ) {
@@ -38,7 +38,7 @@ export abstract class Task {
     this.description = description;
     this.dependencies = dependencies;
     this.labels = labels;
-    this.accountId = accountId;
+    this.organizationId = organizationId;
     this.difficulty = difficulty;
     this.isFinished = isFinished;
   }

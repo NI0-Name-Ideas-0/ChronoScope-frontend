@@ -1,4 +1,5 @@
 import { StaticTask } from './static-task';
+import { Scope } from './scope';
 
 describe('StaticTask', () => {
   it('should create an instance', () => {
@@ -9,9 +10,8 @@ describe('StaticTask', () => {
         '', // description
         [], // dependencies
         [], // labels
-        new Date(), // start
-        new Date(), // end
-        1, // accountId
+        new Scope(new Date(), new Date()), // scope(start, end)
+        'uuid', // organizationId
         1, // difficulty
         false, // isFinished
       ),

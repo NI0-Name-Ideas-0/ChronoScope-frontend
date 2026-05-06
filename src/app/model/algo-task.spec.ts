@@ -12,7 +12,7 @@ describe('AlgoTask', () => {
         60, // duration
         [], // dependencies
         [], // labels
-        1, // accountId
+        'uuid', // organizationId
         [], // scopes
         1, // difficulty
         false, // isFinished
