@@ -246,7 +246,6 @@ export class TaskService {
         staticTask.id!,
         staticTask.name!,
         staticTask.description || '',
-        [], // dependencies - TODO: resolve actual task dependencies if needed
         (staticTask.labels as any)?.map((l: any) => l.name || l) || [],
         new Scope(new Date(staticTask.startAt!), new Date(staticTask.endAt!)),
         staticTask.organizationId || null,
