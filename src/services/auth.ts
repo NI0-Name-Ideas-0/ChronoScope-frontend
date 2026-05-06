@@ -1,17 +1,14 @@
 import { Injectable } from '@angular/core';
 import { OAuthService } from 'angular-oauth2-oidc';
-import { BehaviorSubject, filter, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, filter } from 'rxjs';
 import { Api } from '../api/api';
 import { getIdentity, GetIdentity$Params } from '../api/functions';
-import { AccountResponse, IdentityResponse } from '../api/models';
+import { IdentityResponse } from '../api/models';
 
 @Injectable({
   providedIn: 'root',
 })
 export class Auth {
-  private accounts = new BehaviorSubject<AccountResponse[]>([]);
-  accounts$ = this.accounts.asObservable();
-
   private identity = new BehaviorSubject<IdentityResponse | null>(null);
   identity$ = this.identity.asObservable();
 
@@ -82,7 +79,6 @@ export class Auth {
 
   logout() {
     this.oauthService.logOut();
-    this.accounts.next([]);
     this.identity.next(null);
   }
 
@@ -103,19 +99,10 @@ export class Auth {
       }
 
       this.identity.next(identityData);
-      this.accounts.next(identityData.accounts || []);
     } catch (error) {
       console.error('Error fetching identity:', error);
       throw error;
     }
-  }
-
-  /**
-   * Gets the current accounts array
-   * @returns Array of connected accounts
-   */
-  getAccounts(): AccountResponse[] {
-    return this.accounts.getValue();
   }
 
   /**
@@ -124,18 +111,5 @@ export class Auth {
    */
   getIdentityData(): IdentityResponse | null {
     return this.identity.getValue();
-  }
-
-  /**
-   * Gets the human-readable name for an account by its ID
-   * @param accountId The account ID to look up
-   * @returns The account name (from organizations) or a fallback "Account {id}" string
-   */
-  getAccountNameById(accountId: number): string {
-    const account = this.accounts.getValue().find((a) => a.id === accountId);
-    if (!account?.organizations?.[0]?.name) {
-      return `Account ${accountId}`;
-    }
-    return account.organizations.map((org) => org.name).join(', ');
   }
 }
