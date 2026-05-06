@@ -9,9 +9,14 @@ export type { DynamicTaskCreateRequest } from './models/dynamic-task-create-requ
 export type { DynamicTaskResponse } from './models/dynamic-task-response';
 export type { DynamicTaskUpdateRequest } from './models/dynamic-task-update-request';
 export type { IdentityResponse } from './models/identity-response';
+export type { Invitation } from './models/invitation';
+export type { InviteUserRequest } from './models/invite-user-request';
 export type { LabelCreateRequest } from './models/label-create-request';
 export type { LabelResponse } from './models/label-response';
-export type { OrganizationResponse } from './models/organization-response';
+export type { Organization } from './models/organization';
+export type { OrganizationInvitationsResponse } from './models/organization-invitations-response';
+export type { OrganizationMember } from './models/organization-member';
+export type { OrganizationMembersResponse } from './models/organization-members-response';
 export type { PlanRequest } from './models/plan-request';
 export type { ProblemDetail } from './models/problem-detail';
 export type { ScopeResponse } from './models/scope-response';

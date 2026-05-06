@@ -9,21 +9,20 @@ import { TaskResponse } from '../models/task-response';
  * Response for a dynamic (schedulable) task, including its scopes and dependencies
  */
 export type DynamicTaskResponse = TaskResponse & {
-  accountId?: number;
-  dependencies?: Array<number>;
-  dependents?: Array<number>;
-  description?: string;
-  difficulty?: number;
-  duration?: string;
-  elapsed?: string;
-  endAt?: string;
-  id?: number;
-  labels?: Array<LabelResponse>;
-  maxScopeDuration?: string;
-  minScopeDuration?: string;
-  name?: string;
-  organizationId?: number;
-  rrule?: string;
-  scopes?: Array<ScopeResponse>;
-  startAt?: string;
+'dependencies'?: Array<number>;
+'dependents'?: Array<number>;
+'description'?: string;
+'difficulty'?: number;
+'duration'?: string;
+'elapsed'?: string;
+'endAt'?: string;
+'id'?: number;
+'labels'?: Array<LabelResponse>;
+'maxScopeDuration'?: string;
+'minScopeDuration'?: string;
+'name'?: string;
+'organizationId'?: string;
+'scopes'?: Array<ScopeResponse>;
+'startAt'?: string;
 };
+

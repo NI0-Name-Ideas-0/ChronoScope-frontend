@@ -8,17 +8,16 @@ import { TaskCreateRequest } from '../models/task-create-request';
  * Create request for a dynamic (schedulable) task with duration and scope constraints
  */
 export type DynamicTaskCreateRequest = TaskCreateRequest & {
-  accountId?: number;
-  dependencies?: Array<number>;
-  description?: string;
-  difficulty?: number;
-  duration?: string;
-  endAt?: string;
-  labels?: Array<LabelCreateRequest>;
-  maxScopeDuration?: string;
-  minScopeDuration?: string;
-  name?: string;
-  organizationId?: number;
-  rrule?: string;
-  startAt?: string;
+'dependencies'?: Array<number>;
+'description'?: string;
+'difficulty'?: number;
+'duration'?: string;
+'endAt'?: string;
+'labels'?: Array<LabelCreateRequest>;
+'maxScopeDuration'?: string;
+'minScopeDuration'?: string;
+'name'?: string;
+'organizationId'?: string;
+'startAt'?: string;
 };
+

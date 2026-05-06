@@ -8,13 +8,14 @@ import { TaskUpdateRequest } from '../models/task-update-request';
  * Update request for a static (fixed-time) task
  */
 export type StaticTaskUpdateRequest = TaskUpdateRequest & {
-  description?: string;
-  difficulty?: number;
-  endAt?: string;
-  isBlocker?: boolean;
-  labels?: Array<LabelCreateRequest>;
-  name?: string;
-  organizationId?: number;
-  rrule?: string;
-  startAt?: string;
+'description'?: string;
+'difficulty'?: number;
+'endAt'?: string;
+'isBlocker'?: boolean;
+'labels'?: Array<LabelCreateRequest>;
+'name'?: string;
+'organizationId'?: string;
+'rrule'?: string;
+'startAt'?: string;
 };
+

@@ -8,14 +8,18 @@ import { TaskCreateRequest } from '../models/task-create-request';
  * Create request for a static (fixed-time) task
  */
 export type StaticTaskCreateRequest = TaskCreateRequest & {
-  accountId?: number;
-  description?: string;
-  difficulty?: number;
-  endAt?: string;
-  isBlocker?: boolean;
-  labels?: Array<LabelCreateRequest>;
-  name?: string;
-  organizationId?: number;
-  rrule?: string;
-  startAt?: string;
+'description'?: string;
+'difficulty'?: number;
+'endAt'?: string;
+'isBlocker'?: boolean;
+'labels'?: Array<LabelCreateRequest>;
+'name'?: string;
+
+/**
+ * Organization ID. Required unless this static task is a blocker.
+ */
+'organizationId'?: string;
+'rrule'?: string;
+'startAt'?: string;
 };
+
