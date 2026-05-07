@@ -159,7 +159,7 @@
 
         <!-- Account -->
         <div class="flex gap-3">
-          <div class="flex-3 form-control">
+          <div class="flex-3 form-control" [class.task-field--disabled]="isOrganizationDisabled">
             <label class="label">
               <span class="task-field-label">
                 <svg
@@ -183,7 +183,7 @@
             <select
               class="select select-bordered w-full"
               [(ngModel)]="currentTask.organizationId"
-              [disabled]="isEditing"
+              [disabled]="isOrganizationDisabled"
             >
               @for (organization of (Identity | async)?.organizations; track organization.id) {
                 <option [value]="organization.id">{{ organization.name }}</option>
@@ -215,6 +215,7 @@
                   [(ngModel)]="staticTask.isBlocker"
                   role="switch"
                   [attr.aria-checked]="staticTask.isBlocker"
+                  (ngModelChange)="onBlockerToggle($event)"
                 />
               </div>
             </div>

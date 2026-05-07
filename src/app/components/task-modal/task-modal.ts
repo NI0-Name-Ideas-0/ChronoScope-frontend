@@ -248,6 +248,21 @@ export class TaskModal {
     return DIFFICULTY_LEVELS;
   }
 
+  get isOrganizationDisabled(): boolean {
+    return this.isEditing || (this.mode === 'static' && this.staticTask.isBlocker);
+  }
+
+  onBlockerToggle(isBlocker: boolean): void {
+    if (!isBlocker) {
+      return;
+    }
+
+    if (this.staticTask.organizationId) {
+      this.staticTask.organizationId = undefined;
+      this.cdr.markForCheck();
+    }
+  }
+
   getDifficultyLabel(value: number): string {
     const level = DIFFICULTY_LEVELS.find((d) => d.value === value);
     return level ? level.label : 'Unknown';
