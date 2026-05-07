@@ -19,7 +19,7 @@ export abstract class Task {
   description: string;
   labels: string[];
   organizationId: string | null;
-  difficulty: number;
+  difficulty: string;
   isFinished: boolean;
 
   constructor(
@@ -28,7 +28,7 @@ export abstract class Task {
     description: string = '',
     labels: string[] = [],
     organizationId: string | null,
-    difficulty: number,
+    difficulty: string,
     isFinished: boolean = false,
   ) {
     this.id = id;

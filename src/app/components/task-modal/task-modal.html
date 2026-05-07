@@ -245,8 +245,8 @@
             </span>
           </label>
           <select class="select select-bordered w-full" [(ngModel)]="currentTask.difficulty">
-            @for (level of difficultyOptions; track level.value) {
-              <option [value]="level.value">{{ level.label }}</option>
+            @for (level of difficultyOptions; track level) {
+              <option [value]="level">{{ level }}</option>
             }
           </select>
         </div>

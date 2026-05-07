@@ -10,7 +10,7 @@ export class StaticTask extends Task {
     labels: string[] = [],
     scope: Scope,
     organizationId: string | null,
-    difficulty: number,
+    difficulty: string,
     isFinished: boolean = false,
   ) {
     super(id, title, description, labels, organizationId, difficulty, isFinished);

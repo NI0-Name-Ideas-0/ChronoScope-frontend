@@ -19,20 +19,15 @@ import {
 } from '../../../api/models';
 
 // Difficulty level mapping
-const DIFFICULTY_LEVELS = [
-  { value: 1, label: 'Trivial' },
-  { value: 2, label: 'Easy' },
-  { value: 3, label: 'Medium' },
-  { value: 4, label: 'Hard' },
-  { value: 5, label: 'Extreme' },
-] as const;
+type Difficulty = 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
+const DIFFICULTY_LEVELS = ['TRIVIAL', 'EASY', 'MEDIUM', 'HARD', 'EXTREME'];
 
 interface StaticTaskForm {
   title: string;
   description: string;
   labels: string[];
   organizationId: string | undefined;
-  difficulty: number;
+  difficulty: Difficulty;
   startDate: string;
   startTime: string;
   endDate: string;
@@ -46,7 +41,7 @@ interface DynamicTaskForm {
   description: string;
   labels: string[];
   organizationId: string | undefined;
-  difficulty: number;
+  difficulty: Difficulty;
   startDate: string;
   dueDate: string;
   duration: number;
@@ -112,7 +107,7 @@ export class TaskModal {
       description: '',
       labels: [],
       organizationId: undefined,
-      difficulty: 3,
+      difficulty: 'MEDIUM',
       startDate: '',
       startTime: '09:00',
       endDate: '',
@@ -128,7 +123,7 @@ export class TaskModal {
       description: '',
       labels: [],
       organizationId: undefined,
-      difficulty: 1,
+      difficulty: 'MEDIUM',
       startDate: '',
       dueDate: '',
       duration: 60,
@@ -246,8 +241,8 @@ export class TaskModal {
     return this.mode === 'static' ? this.staticTask : this.dynamicTask;
   }
 
-  get difficultyOptions(): typeof DIFFICULTY_LEVELS {
-    return DIFFICULTY_LEVELS;
+  get difficultyOptions(): Difficulty[] {
+    return DIFFICULTY_LEVELS as Difficulty[];
   }
 
   get isOrganizationDisabled(): boolean {
@@ -266,8 +261,8 @@ export class TaskModal {
   }
 
   getDifficultyLabel(value: number): string {
-    const level = DIFFICULTY_LEVELS.find((d) => d.value === value);
-    return level ? level.label : 'Unknown';
+    const level = DIFFICULTY_LEVELS[value];
+    return level;
   }
 
   // Labels

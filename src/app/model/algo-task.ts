@@ -21,7 +21,7 @@ export class AlgoTask extends Task {
     labels: string[] = [],
     organizationId: string | null,
     scopes: Scope[] = [],
-    difficulty: number,
+    difficulty: string,
     isFinished: boolean = false,
     minScopeMinutes: number,
     maxScopeMinutes: number,
