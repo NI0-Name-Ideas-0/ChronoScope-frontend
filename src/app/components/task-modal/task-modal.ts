@@ -110,7 +110,7 @@ export class TaskModal {
       description: '',
       labels: [],
       organizationId: undefined,
-      difficulty: 1,
+      difficulty: 3,
       startDate: '',
       startTime: '09:00',
       endDate: '',
