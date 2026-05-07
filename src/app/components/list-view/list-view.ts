@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '@services/task.service';
@@ -18,6 +18,7 @@ export class ListView implements OnInit {
   constructor(
     private taskService: TaskService,
     private taskModalService: TaskModalService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   tasks: Task[] = [];
@@ -35,6 +36,7 @@ export class ListView implements OnInit {
   ngOnInit(): void {
     this.taskService.tasks$.subscribe((tasks) => {
       this.tasks = tasks;
+      this.cdr.detectChanges();
     });
   }
 
