@@ -410,6 +410,31 @@ export class TaskModal {
     }
   }
 
+  async deleteTask(): Promise<void> {
+    if (!this.isEditing || !this.editingTask) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Are you sure you want to delete "${this.editingTask.name}"?`);
+    if (!confirmed) {
+      return;
+    }
+
+    this.isSaving.set(true);
+    this.errorMessage.set(null);
+
+    try {
+      await this.taskService.deleteTask(this.editingTask.id!);
+      this.close();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      this.errorMessage.set('Failed to delete task. Please try again.');
+    } finally {
+      this.isSaving.set(false);
+      this.cdr.markForCheck();
+    }
+  }
+
   close() {
     this.isLeaving.set(true);
     setTimeout(() => {

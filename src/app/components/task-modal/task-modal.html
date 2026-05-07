@@ -622,22 +622,36 @@
 
       <!-- Footer -->
       <div class="task-footer">
-        <button type="button" class="btn btn-ghost" (click)="close()" [disabled]="isSaving()">
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="btn btn-primary"
-          (click)="submit()"
-          [disabled]="!isValid || isSaving()"
-        >
-          @if (isSaving()) {
-            <span class="loading loading-spinner loading-sm"></span>
-            Saving...
-          } @else {
-            {{ isEditing ? 'Update Task' : 'Create Task' }}
-          }
-        </button>
+        @if (isEditing) {
+          <button
+            type="button"
+            class="btn btn-error btn-outline"
+            (click)="deleteTask()"
+            [disabled]="isSaving()"
+          >
+            Delete
+          </button>
+        } @else {
+          <span></span>
+        }
+        <div class="flex gap-2">
+          <button type="button" class="btn btn-ghost" (click)="close()" [disabled]="isSaving()">
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="submit()"
+            [disabled]="!isValid || isSaving()"
+          >
+            @if (isSaving()) {
+              <span class="loading loading-spinner loading-sm"></span>
+              Saving...
+            } @else {
+              {{ isEditing ? 'Update Task' : 'Create Task' }}
+            }
+          </button>
+        </div>
       </div>
     </div>
   </div>
