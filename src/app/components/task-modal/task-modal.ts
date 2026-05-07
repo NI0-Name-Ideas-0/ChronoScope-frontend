@@ -5,6 +5,8 @@ import { AsyncPipe } from '@angular/common';
 import { TaskModalService } from '@services/task-modal.service';
 import { TaskService } from '@services/task.service';
 import { Auth } from '@services/auth';
+import { Task } from '@app/model/task';
+import { AlgoTask } from '@app/model/algo-task';
 import {
   StaticTaskCreateRequest,
   DynamicTaskCreateRequest,
@@ -83,6 +85,7 @@ export class TaskModal {
   private taskService = inject(TaskService);
   private auth = inject(Auth);
   private cdr = inject(ChangeDetectorRef);
+  tasks$ = this.taskService.tasks$;
 
   constructor() {
     this.staticTask = this.emptyStaticTask();
@@ -281,6 +284,32 @@ export class TaskModal {
   removeLabel(label: string) {
     this.currentTask.labels = this.currentTask.labels.filter((l) => l !== label);
     this.cdr.markForCheck();
+  }
+
+  addDependency(dependencyId: string) {
+    const id = Number(dependencyId);
+    if (Number.isNaN(id)) return;
+    if (!this.dynamicTask.dependencies.includes(id)) {
+      this.dynamicTask.dependencies.push(id);
+      this.cdr.markForCheck();
+    }
+  }
+
+  removeDependency(dependencyId: number) {
+    this.dynamicTask.dependencies = this.dynamicTask.dependencies.filter((id) => id !== dependencyId);
+    this.cdr.markForCheck();
+  }
+
+  availableDependencyOptions(tasks: Task[]): Task[] {
+    const excluded = new Set<number>(this.dynamicTask.dependencies);
+    if (this.isEditing && this.editingTask?.id !== undefined) {
+      excluded.add(this.editingTask.id);
+    }
+    return tasks.filter((task) => task instanceof AlgoTask && !excluded.has(task.id));
+  }
+
+  getDependencyLabel(dependencyId: number, tasks: Task[]): string {
+    return tasks.find((task) => task.id === dependencyId)?.title || `Task #${dependencyId}`;
   }
 
   get isValid(): boolean {
