@@ -16,7 +16,6 @@ import {
   DynamicTaskResponse,
   LabelCreateRequest,
   LabelResponse,
-  IdentityResponse,
 } from '../../../api/models';
 
 // Difficulty level mapping
@@ -296,7 +295,9 @@ export class TaskModal {
   }
 
   removeDependency(dependencyId: number) {
-    this.dynamicTask.dependencies = this.dynamicTask.dependencies.filter((id) => id !== dependencyId);
+    this.dynamicTask.dependencies = this.dynamicTask.dependencies.filter(
+      (id) => id !== dependencyId,
+    );
     this.cdr.markForCheck();
   }
 
@@ -342,46 +343,73 @@ export class TaskModal {
         const t = this.staticTask;
         const startDate = this.stringDateToDate(t.startDate, t.startTime);
         const endDate = this.stringDateToDate(t.endDate, t.endTime);
-        const request: StaticTaskUpdateRequest = {
-          type: 'static',
-          name: t.title.trim(),
-          description: t.description.trim(),
-          labels: this.convertLabelsToRequest(t.labels),
-          difficulty: t.difficulty,
-          organizationId: t.organizationId,
-          startAt: this.dateToISOString(startDate),
-          endAt: this.dateToISOString(endDate),
-          rrule: t.rrule,
-          isBlocker: t.isBlocker,
-        };
-
         if (this.isEditing && this.editingTask) {
+          const request: StaticTaskUpdateRequest = {
+            type: 'static',
+            name: t.title.trim(),
+            description: t.description.trim(),
+            labels: this.convertLabelsToRequest(t.labels),
+            difficulty: t.difficulty,
+            organizationId: t.organizationId,
+            startAt: this.dateToISOString(startDate),
+            endAt: this.dateToISOString(endDate),
+            rrule: t.rrule,
+            isBlocker: t.isBlocker,
+          };
           await this.taskService.updateTask(this.editingTask.id!, request);
         } else {
+          const request: StaticTaskCreateRequest = {
+            type: 'static',
+            name: t.title.trim(),
+            description: t.description.trim(),
+            labels: this.convertLabelsToRequest(t.labels),
+            difficulty: t.difficulty,
+            organizationId: t.organizationId,
+            startAt: this.dateToISOString(startDate),
+            endAt: this.dateToISOString(endDate),
+            rrule: t.rrule,
+            isBlocker: t.isBlocker,
+          };
           await this.taskService.createTask(request);
         }
       } else {
         const t = this.dynamicTask;
         const startDate = this.stringDateToDate(t.startDate);
         const dueDate = this.stringDateToDate(t.dueDate);
-        const request: DynamicTaskUpdateRequest = {
-          type: 'dynamic',
-          name: t.title.trim(),
-          description: t.description.trim(),
-          labels: this.convertLabelsToRequest(t.labels),
-          difficulty: t.difficulty,
-          organizationId: t.organizationId,
-          duration: this.minutesToDuration(t.duration),
-          minScopeDuration: this.minutesToDuration(t.minScopeDuration),
-          maxScopeDuration: this.minutesToDuration(t.maxScopeDuration),
-          startAt: this.dateToISOString(startDate),
-          endAt: this.dateToISOString(dueDate),
-          dependencies: t.dependencies,
-        };
 
         if (this.isEditing && this.editingTask) {
+          const request: DynamicTaskUpdateRequest = {
+            type: 'dynamic',
+            name: t.title.trim(),
+            description: t.description.trim(),
+            labels: this.convertLabelsToRequest(t.labels),
+            difficulty: t.difficulty,
+            organizationId: t.organizationId,
+            duration: this.minutesToDuration(t.duration),
+            minScopeDuration: this.minutesToDuration(t.minScopeDuration),
+            maxScopeDuration: this.minutesToDuration(t.maxScopeDuration),
+            startAt: this.dateToISOString(startDate),
+            endAt: this.dateToISOString(dueDate),
+            dependencies: t.dependencies,
+          };
+
           await this.taskService.updateTask(this.editingTask.id!, request);
         } else {
+          const request: DynamicTaskCreateRequest = {
+            type: 'dynamic',
+            name: t.title.trim(),
+            description: t.description.trim(),
+            labels: this.convertLabelsToRequest(t.labels),
+            difficulty: t.difficulty,
+            organizationId: t.organizationId,
+            duration: this.minutesToDuration(t.duration),
+            minScopeDuration: this.minutesToDuration(t.minScopeDuration),
+            maxScopeDuration: this.minutesToDuration(t.maxScopeDuration),
+            startAt: this.dateToISOString(startDate),
+            endAt: this.dateToISOString(dueDate),
+            dependencies: t.dependencies,
+          };
+
           await this.taskService.createTask(request);
         }
       }
