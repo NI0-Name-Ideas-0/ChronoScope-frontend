@@ -8,11 +8,10 @@ describe('StaticTask', () => {
         1, // id
         'Test Task', // title
         '', // description
-        [], // dependencies
         [], // labels
         new Scope(new Date(), new Date()), // scope(start, end)
         'uuid', // organizationId
-        1, // difficulty
+        'MEDIUM', // difficulty
         false, // isFinished
       ),
     ).toBeTruthy();

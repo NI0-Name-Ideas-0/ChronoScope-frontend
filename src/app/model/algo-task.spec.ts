@@ -14,7 +14,7 @@ describe('AlgoTask', () => {
         [], // labels
         'uuid', // organizationId
         [], // scopes
-        1, // difficulty
+        'MEDIUM', // difficulty
         false, // isFinished
         30, // minScopeMinutes
         120, // maxScopeMinutes
