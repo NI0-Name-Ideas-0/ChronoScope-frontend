@@ -7,7 +7,7 @@ export interface IdentityResponse {
   accounts: Array<AccountResponse>;
 
   /**
-   * Organization names for which the authenticated identity has admin privileges, derived from JWT groups below /org-admin.
+   * Organization IDs for which the authenticated identity has admin privileges, resolved server-side via Keycloak Admin Client lookups.
    */
   adminOrganizations: Array<string>;
   id: number;

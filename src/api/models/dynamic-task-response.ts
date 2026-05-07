@@ -12,7 +12,7 @@ export type DynamicTaskResponse = TaskResponse & {
 'dependencies'?: Array<number>;
 'dependents'?: Array<number>;
 'description'?: string;
-'difficulty'?: number;
+'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
 'duration'?: string;
 'elapsed'?: string;
 'endAt'?: string;

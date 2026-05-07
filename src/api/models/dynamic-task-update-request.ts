@@ -10,7 +10,7 @@ import { TaskUpdateRequest } from '../models/task-update-request';
 export type DynamicTaskUpdateRequest = TaskUpdateRequest & {
 'dependencies'?: Array<number>;
 'description'?: string;
-'difficulty'?: number;
+'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
 'duration'?: string;
 'elapsed'?: string;
 'endAt'?: string;

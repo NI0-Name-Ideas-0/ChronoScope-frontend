@@ -9,7 +9,7 @@ import { TaskUpdateRequest } from '../models/task-update-request';
  */
 export type StaticTaskUpdateRequest = TaskUpdateRequest & {
 'description'?: string;
-'difficulty'?: number;
+'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
 'endAt'?: string;
 'isBlocker'?: boolean;
 'labels'?: Array<LabelCreateRequest>;

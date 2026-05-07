@@ -10,7 +10,7 @@ import { TaskCreateRequest } from '../models/task-create-request';
 export type DynamicTaskCreateRequest = TaskCreateRequest & {
 'dependencies'?: Array<number>;
 'description'?: string;
-'difficulty'?: number;
+'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
 'duration'?: string;
 'endAt'?: string;
 'labels'?: Array<LabelCreateRequest>;

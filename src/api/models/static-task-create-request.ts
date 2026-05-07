@@ -9,7 +9,7 @@ import { TaskCreateRequest } from '../models/task-create-request';
  */
 export type StaticTaskCreateRequest = TaskCreateRequest & {
 'description'?: string;
-'difficulty'?: number;
+'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
 'endAt'?: string;
 'isBlocker'?: boolean;
 'labels'?: Array<LabelCreateRequest>;

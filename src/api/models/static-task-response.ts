@@ -9,7 +9,7 @@ import { TaskResponse } from '../models/task-response';
  */
 export type StaticTaskResponse = TaskResponse & {
 'description'?: string;
-'difficulty'?: number;
+'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
 'endAt'?: string;
 'id'?: number;
 'isBlocker'?: boolean;
