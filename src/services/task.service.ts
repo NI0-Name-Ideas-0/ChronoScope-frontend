@@ -284,7 +284,7 @@ export class TaskService {
       //reaccuring static task with rrule
       if (task.rrule && task.rrule.trim()) {
         try {
-          const durationMs = task.end.getTime() - task.start.getTime();
+          const durationMs = task.scope.end.getTime() - task.scope.start.getTime();
           const hours = Math.floor(durationMs / 3600000);
           const minutes = Math.floor((durationMs % 3600000) / 60000);
           rrulestr(task.rrule);
