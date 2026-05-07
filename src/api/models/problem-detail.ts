@@ -5,8 +5,8 @@ export interface ProblemDetail {
   detail?: string;
   instance?: string;
   properties?: {
-    [key: string]: any;
-  };
+[key: string]: any;
+};
   status?: number;
   title?: string;
   type?: string;

@@ -28,7 +28,6 @@ import {
   StaticTaskUpdateRequest,
   DynamicTaskUpdateRequest,
 } from '../api/models';
-import { OAuthService } from 'angular-oauth2-oidc';
 import { Auth } from './auth';
 import { rrulestr } from 'rrule';
 
@@ -46,10 +45,7 @@ export class TaskService {
 
   private authService = inject(Auth);
 
-  constructor(
-    private api: Api,
-    private oauthService: OAuthService,
-  ) {
+  constructor(private api: Api) {
     // Wait for auth to be ready before loading tasks
     this.authService.authReady$.subscribe((isReady) => {
       if (isReady) {
@@ -92,11 +88,6 @@ export class TaskService {
     return Math.round(days * 24 * 60 + hours * 60 + minutes + seconds / 60);
   }
 
-  private resolveOrganizationId(accountId: number): number | undefined {
-    const account = this.authService.getAccounts().find((a) => a.id === accountId);
-    return account?.organizations?.[0]?.id;
-  }
-
   /**
    * Loads all tasks from the backend and updates the subject
    */
@@ -104,7 +95,8 @@ export class TaskService {
     try {
       const params: GetTasks$Params = {};
       const response = await this.api.invoke(getTasksApi, params);
-      const tasks = await this.parseResponse<(StaticTaskResponse | DynamicTaskResponse)[]>(response);
+      const tasks =
+        await this.parseResponse<(StaticTaskResponse | DynamicTaskResponse)[]>(response);
 
       // Ensure tasks is an array
       if (!Array.isArray(tasks)) {
@@ -136,24 +128,18 @@ export class TaskService {
       body: request,
     };
     const response = await this.api.invoke(createTaskApi, params);
-    const createdTask = await this.parseResponse<StaticTaskResponse | DynamicTaskResponse>(response);
+    const createdTask = await this.parseResponse<StaticTaskResponse | DynamicTaskResponse>(
+      response,
+    );
 
     // Call the plan endpoint after task creation
     try {
-      const accountId = request.accountId;
-      if (accountId !== undefined) {
-        const organizationId = this.resolveOrganizationId(accountId);
+      const organizationId = request.organizationId;
 
-        if (organizationId === undefined) {
-          console.warn(`No organization found for account ${accountId}; skipping planning.`);
-          return createdTask;
-        }
-
-        const planParams: Plan$Params = {
-          body: { accountId, organizationId },
-        };
-        await this.api.invoke(planApi, planParams);
-      }
+      const planParams: Plan$Params = {
+        body: { organizationId },
+      };
+      await this.api.invoke(planApi, planParams);
     } catch (error) {
       console.error('Error calling plan endpoint after task creation:', error);
       // Don't throw - the task was created successfully, planning failure shouldn't break task creation
@@ -180,7 +166,9 @@ export class TaskService {
       body: request,
     };
     const response = await this.api.invoke(updateTaskApi, params);
-    const updatedTask = await this.parseResponse<StaticTaskResponse | DynamicTaskResponse>(response);
+    const updatedTask = await this.parseResponse<StaticTaskResponse | DynamicTaskResponse>(
+      response,
+    );
     // Update the task in local cache
     if (updatedTask.id !== undefined) {
       const modelTask = this.convertApiTaskToModel(updatedTask);
@@ -257,14 +245,12 @@ export class TaskService {
       const staticTask = apiTask as StaticTaskResponse;
       return new StaticTask(
         staticTask.id!,
-        staticTask.name || '',
+        staticTask.name!,
         staticTask.description || '',
-        [], // dependencies - TODO: resolve actual task dependencies if needed
         (staticTask.labels as any)?.map((l: any) => l.name || l) || [],
-        new Date(staticTask.startAt || ''),
-        new Date(staticTask.endAt || ''),
-        staticTask.accountId || 0,
-        staticTask.difficulty || 1,
+        new Scope(new Date(staticTask.startAt!), new Date(staticTask.endAt!)),
+        staticTask.organizationId || null,
+        staticTask.difficulty!,
         false, // isFinished
         staticTask.rrule || '',
       );
@@ -276,16 +262,16 @@ export class TaskService {
 
       return new AlgoTask(
         dynamicTask.id!,
-        dynamicTask.name || '',
+        dynamicTask.name!,
         dynamicTask.description || '',
-        new Date(dynamicTask.startAt || ''),
-        new Date(dynamicTask.endAt || ''),
+        new Date(dynamicTask.startAt!),
+        new Date(dynamicTask.endAt!),
         this.parseDurationToMinutes(dynamicTask.duration, 0),
         [], // dependencies - TODO: resolve actual task dependencies if needed
         (dynamicTask.labels as any)?.map((l: any) => l.name || l) || [],
-        dynamicTask.accountId || 0,
+        dynamicTask.organizationId || null,
         scopes,
-        dynamicTask.difficulty || 1,
+        dynamicTask.difficulty!,
         false, // isFinished
         this.parseDurationToMinutes(dynamicTask.minScopeDuration, 30),
         this.parseDurationToMinutes(dynamicTask.maxScopeDuration, 120),
@@ -298,7 +284,7 @@ export class TaskService {
       //reaccuring static task with rrule
       if (task.rrule && task.rrule.trim()) {
         try {
-          const durationMs = task.end.getTime() - task.start.getTime();
+          const durationMs = task.scope.end.getTime() - task.scope.start.getTime();
           const hours = Math.floor(durationMs / 3600000);
           const minutes = Math.floor((durationMs % 3600000) / 60000);
           rrulestr(task.rrule);
@@ -326,8 +312,8 @@ export class TaskService {
         {
           id: task.id.toString(),
           title: task.title,
-          start: task.start,
-          end: task.end,
+          start: task.scope.start,
+          end: task.scope.end,
           extendedProps: {
             description: task.description,
             difficulty: task.difficulty,

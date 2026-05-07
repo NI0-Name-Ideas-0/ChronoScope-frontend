@@ -5,6 +5,7 @@ export class AlgoTask extends Task {
   startDate: Date;
   dueDate: Date;
   duration: number;
+  dependencies: Task[];
   scopes: Scope[];
   minScopeMinutes: number;
   maxScopeMinutes: number;
@@ -18,18 +19,19 @@ export class AlgoTask extends Task {
     duration: number,
     dependencies: Task[] = [],
     labels: string[] = [],
-    accountId: number,
+    organizationId: string | null,
     scopes: Scope[] = [],
-    difficulty: number,
+    difficulty: string,
     isFinished: boolean = false,
     minScopeMinutes: number,
     maxScopeMinutes: number,
   ) {
     // PlannedTask scopes are set by the algorithm, not the user
-    super(id, title, description, dependencies, labels, accountId, difficulty, isFinished);
+    super(id, title, description, labels, organizationId, difficulty, isFinished);
     this.startDate = startDate;
     this.dueDate = dueDate;
     this.duration = duration;
+    this.dependencies = dependencies;
     this.scopes = scopes;
     this.minScopeMinutes = minScopeMinutes;
     this.maxScopeMinutes = maxScopeMinutes;

@@ -55,4 +55,7 @@
   @apply inline-flex items-center gap-1.5 text-sm font-medium;
 }
 
+.task-field--disabled {
+  @apply opacity-60;
+}
 
