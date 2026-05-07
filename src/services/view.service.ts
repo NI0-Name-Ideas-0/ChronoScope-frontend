@@ -5,7 +5,7 @@ export class ViewService {
   /* 
     Provides the functionality for switching between the diffrent views
   */
-  private _listView = false;
+  private _listView = true;
   private _calendarView = true;
 
   get listView(): boolean {

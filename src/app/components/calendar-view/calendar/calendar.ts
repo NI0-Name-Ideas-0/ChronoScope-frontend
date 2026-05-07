@@ -8,6 +8,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import { EventClickArg } from '@fullcalendar/core';
 import { TaskService } from '@services/task.service';
 import { TaskModalService } from '@services/task-modal.service';
+import rrulePlugin from '@fullcalendar/rrule';
 
 @Component({
   selector: 'app-calendar',
@@ -26,7 +27,7 @@ export class Calendar {
 
   calendarOptions: CalendarOptions = {
     initialView: 'dayGridMonth',
-    plugins: [dayGridPlugin, timeGridPlugin],
+    plugins: [dayGridPlugin, timeGridPlugin, rrulePlugin],
     height: '100%',
     locale: 'en-GB',
     slotLabelFormat: {

@@ -17,8 +17,8 @@ describe('ViewService', () => {
   });
 
   describe('Initial State', () => {
-    it('should have listView disabled by default', () => {
-      expect(service.listView).toBe(false);
+    it('should have listView enabled by default', () => {
+      expect(service.listView).toBe(true);
     });
 
     it('should have calendarView enabled by default', () => {
@@ -28,6 +28,7 @@ describe('ViewService', () => {
 
   describe('Toggle Methods', () => {
     it('should toggle listView from false to true', () => {
+      service.setListView(false);
       expect(service.listView).toBe(false);
       
       service.toggleList();

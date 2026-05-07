@@ -7,6 +7,7 @@ import { TaskService } from '@services/task.service';
 import { Auth } from '@services/auth';
 import { Task } from '@app/model/task';
 import { AlgoTask } from '@app/model/algo-task';
+import { RepetitionFieldComponent } from '../repetition-modal/repetition-modal';
 import {
   StaticTaskCreateRequest,
   DynamicTaskCreateRequest,
@@ -47,15 +48,14 @@ interface DynamicTaskForm {
   duration: number;
   minScopeDuration: number;
   maxScopeDuration: number;
-  rrule: string;
-  dependencies: number[];
+  dependencies: Array<any>;
 }
 
 type TaskMode = 'static' | 'planned';
 
 @Component({
   selector: 'app-task-modal',
-  imports: [FormsModule, AsyncPipe],
+  imports: [FormsModule, AsyncPipe, RepetitionFieldComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './task-modal.html',
   styleUrl: './task-modal.css',
@@ -129,7 +129,6 @@ export class TaskModal {
       duration: 60,
       minScopeDuration: 30,
       maxScopeDuration: 120,
-      rrule: '',
       dependencies: [],
     };
   }
@@ -456,6 +455,18 @@ export class TaskModal {
       this.isSaving.set(false);
       this.cdr.markForCheck();
     }
+  }
+  onRruleChange(rrule: string) {
+    this.staticTask.rrule = rrule;
+    this.cdr.markForCheck();
+  }
+
+  getTaskStartDate(): Date {
+    return this.stringDateToDate(this.staticTask.startDate, this.staticTask.startTime);
+  }
+
+  getTaskEndDate(): Date {
+    return this.stringDateToDate(this.staticTask.endDate, this.staticTask.endTime);
   }
 
   close() {
