@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { OAuthService } from 'angular-oauth2-oidc';
 import { BehaviorSubject, filter } from 'rxjs';
 import { Api } from '../api/api';
-import { getIdentity, GetIdentity$Params } from '../api/functions';
-import { IdentityResponse } from '../api/models';
+import { getIdentity, GetIdentity$Params, requestAccountLink, RequestAccountLink$Params } from '../api/functions';
+import { AccountLinkRequest, IdentityResponse } from '../api/models';
 
 @Injectable({
   providedIn: 'root',
@@ -101,6 +101,16 @@ export class Auth {
       this.identity.next(identityData);
     } catch (error) {
       console.error('Error fetching identity:', error);
+      throw error;
+    }
+  }
+
+  async linkAccount(email: string): Promise<void> {
+    try {
+      const params: RequestAccountLink$Params = {body: {targetEmail: email}};
+      await this.api.invoke(requestAccountLink, params);
+    } catch (error) {
+      console.error('Error linking accounts:', error);
       throw error;
     }
   }

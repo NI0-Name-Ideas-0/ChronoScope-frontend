@@ -1,5 +1,7 @@
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Auth } from '@services/auth';
+import { AsyncPipe } from '@angular/common';
 
 interface Organization {
   id: string;
@@ -12,7 +14,7 @@ interface Organization {
 
 @Component({
   selector: 'app-settings-organizations',
-  imports: [FormsModule],
+  imports: [FormsModule, AsyncPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './organizations.html',
   styleUrl: './organizations.css',
@@ -20,12 +22,7 @@ interface Organization {
 export class OrganizationsSection {
   mergeEmail = '';
   selectedOrgId = signal<string>('1');
-
-  readonly organizations: Organization[] = [
-    { id: '1', name: 'Acme Corporation', role: 'Admin', avatarInitials: 'AC', memberCount: 24, email: 'admin@acme.com' },
-    { id: '2', name: 'Design Studio', role: 'Member', avatarInitials: 'DS', memberCount: 8, email: 'hello@designstudio.co' },
-    { id: '3', name: 'Open Source Collective', role: 'Viewer', avatarInitials: 'OS', memberCount: 142, email: 'contact@opensource.org' },
-  ];
+  protected authService = inject(Auth);
 
   selectOrg(id: string): void {
     this.selectedOrgId.set(id);
@@ -37,5 +34,9 @@ export class OrganizationsSection {
       case 'Member': return 'badge-neutral';
       default: return 'badge-ghost';
     }
+  }
+
+  requestLinkEmail(): void {
+    this.authService.linkAccount(this.mergeEmail);
   }
 }
