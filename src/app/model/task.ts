@@ -17,28 +17,25 @@ export abstract class Task {
   id: number;
   title: string;
   description: string;
-  dependencies: Task[];
   labels: string[];
-  accountId: number;
-  difficulty: number;
+  organizationId: string | null;
+  difficulty: string;
   isFinished: boolean;
 
   constructor(
     id: number,
     title: string,
     description: string = '',
-    dependencies: Task[] = [],
     labels: string[] = [],
-    accountId: number,
-    difficulty: number,
+    organizationId: string | null,
+    difficulty: string,
     isFinished: boolean = false,
   ) {
     this.id = id;
     this.title = title;
     this.description = description;
-    this.dependencies = dependencies;
     this.labels = labels;
-    this.accountId = accountId;
+    this.organizationId = organizationId;
     this.difficulty = difficulty;
     this.isFinished = isFinished;
   }

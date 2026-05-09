@@ -1,20 +1,17 @@
-import { Component, ChangeDetectionStrategy, signal, computed, HostListener, Output, EventEmitter, inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Auth } from 'services/auth';
-import { AccountResponse } from 'api/models';
-import { getAccountDisplayName } from 'services/account.utils';
-import { WorkSlotPreferenceService } from 'services/work-slot-preference.service';
-import { TimeSlot, TimeSlotType, COLOR_POOL } from '../../../../model/work-preference.model';
+import { output } from '@angular/core';
+import { Auth } from '@services/auth';
+import { Organization } from 'api/models';
+import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
+import { TimeSlot, COLOR_POOL } from '@app/model/work-preference.model';
 
-
-
-/** Represents an organization derived from a user account */
-interface Organization {
+/** View-model for organizations shown in the sidebar */
+interface OrgItem {
   id: string;
   name: string;
   colorClass: string;
-  accountId: number;
 }
 
 /** Snapshot of the work schedule state used for cancel/reset functionality */
@@ -29,19 +26,22 @@ const DEFAULT_HOURS_PER_DAY = 8;
 
 @Component({
   selector: 'app-settings-work-preferences',
-  standalone: true,
   imports: [CommonModule, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: `work-preferences.html`,
-  styleUrl: `work-preferences.css`
+  templateUrl: 'work-preferences.html',
+  styleUrl: 'work-preferences.css',
+  host: {
+    '(document:mousemove)': 'onResizeMove($event)',
+    '(document:mouseup)': 'onResizeEnd()',
+  },
 })
-export class WorkPreferencesSection implements OnInit {
+export class WorkPreferencesSection {
   /** Emits the final slot array when the user clicks Save */
-  @Output() saved = new EventEmitter<TimeSlot[]>();
+  saved = output<TimeSlot[]>();
   /** Emits when the user clicks Cancel to discard changes */
-  @Output() cancelled = new EventEmitter<void>();
+  cancelled = output<void>();
 
-  /** Injected auth service to retrieve user accounts */
+  /** Injected auth service to retrieve user organizations */
   private auth = inject(Auth);
   /** Service to persist/retrieve work slots via the backend API */
   private preferenceService = inject(WorkSlotPreferenceService);
@@ -55,8 +55,8 @@ export class WorkPreferencesSection implements OnInit {
 
   // --- Data ---
 
-  /** Organizations derived from the user's accounts; loaded from Auth service */
-  organizations = signal<Organization[]>([]);
+  /** Organizations derived from the user's identity; loaded from Auth service */
+  organizations = signal<OrgItem[]>([]);
   /** All scheduled time slots across the week */
   slots = signal<TimeSlot[]>([]);
 
@@ -72,7 +72,7 @@ export class WorkPreferencesSection implements OnInit {
   /** Which day column currently has a drag hover highlight */
   dragOverDay = signal<number | null>(null);
   /** Payload when dragging from the sidebar (new slot creation) */
-  private dragPayload: { type: TimeSlotType; org: Organization } | null = null;
+  private dragPayload: OrgItem | null = null;
   /** ID of an existing slot being moved */
   private draggedSlotId: string | null = null;
 
@@ -96,13 +96,13 @@ export class WorkPreferencesSection implements OnInit {
 
   /** Count of days marked as work days */
   activeWorkDayCount = computed(() => this.workDays().filter(Boolean).length);
-  
+
   /** Total available hours in the week (hours per day × work days) */
   availableHours = computed(() => this.hoursPerDay() * this.activeWorkDayCount());
 
-  /** Sum of all organization slot durations (breaks excluded) */
-  totalPlannedHours = computed(() => 
-    this.slots().reduce((sum, s) => sum + (s.type === 'organization' ? s.durationHours : 0), 0)
+  /** Sum of all slot durations */
+  totalPlannedHours = computed(() =>
+    this.slots().reduce((sum, s) => sum + s.durationHours, 0)
   );
 
   /** True if planned hours exceed available hours */
@@ -117,9 +117,8 @@ export class WorkPreferencesSection implements OnInit {
     return null;
   });
 
-  /** Lifecycle hook: load accounts and existing slots when component initializes */
-  ngOnInit(): void {
-    this.loadOrganizationsFromAccounts();
+  constructor() {
+    this.loadOrganizations();
   }
 
   /** Loads previously saved work slot preferences from the backend */
@@ -138,46 +137,27 @@ export class WorkPreferencesSection implements OnInit {
     }
   }
 
-  /** Loads accounts from Auth service and maps them to organizations */
-  private loadOrganizationsFromAccounts(): void {
-    const accounts = this.auth.getAccounts();
-    
-    if (accounts.length === 0) {
-      // Auth not ready yet, subscribe to accounts observable for later load
-      const sub = this.auth.accounts$.subscribe(accs => {
-        if (accs.length > 0) {
-          this.mapAccountsToOrganizations(accs);
-          this.loadSlotsFromBackend();
-          sub.unsubscribe();
-        }
-      });
-      return;
-    }
-
-    this.mapAccountsToOrganizations(accounts);
-    this.loadSlotsFromBackend();
-  }
-
-  /** Maps AccountResponse array to internal Organization array with assigned colors */
-  private mapAccountsToOrganizations(accounts: AccountResponse[]): void {
-    const orgs: Organization[] = accounts.map((acc, index) => ({
-      id: acc.id?.toString() ?? index.toString(),
-      name: getAccountDisplayName(acc), // Uses shared utility for consistent naming
-      colorClass: COLOR_POOL[index % COLOR_POOL.length],
-      accountId: acc.id ?? 0,
-    }));
-
+  /** Loads organizations from Auth service and maps them to sidebar items */
+  private loadOrganizations(): void {
+    const orgs = (this.auth.getIdentityData()?.organizations ?? [])
+      .filter((o): o is Organization & { id: string; name: string } => !!o.id && !!o.name)
+      .map((o, i) => ({
+        id: o.id,
+        name: o.name,
+        colorClass: COLOR_POOL[i % COLOR_POOL.length],
+      }));
     this.organizations.set(orgs);
+    this.loadSlotsFromBackend();
   }
 
   /** Toggles a day between work day and off day; removes all slots when switching to off */
   toggleWorkDay(index: number): void {
-    this.workDays.update(days => {
+    this.workDays.update((days) => {
       const next = [...days];
       next[index] = !next[index];
       if (!next[index]) {
         // Day switched to off: remove all slots for this day
-        this.slots.update(slots => slots.filter(s => s.dayIndex !== index));
+        this.slots.update((slots) => slots.filter((s) => s.dayIndex !== index));
       }
       return next;
     });
@@ -186,33 +166,29 @@ export class WorkPreferencesSection implements OnInit {
   /** Returns all slots for a specific day, sorted by start time */
   getSlotsForDay(dayIndex: number): TimeSlot[] {
     return this.slots()
-      .filter(s => s.dayIndex === dayIndex)
+      .filter((s) => s.dayIndex === dayIndex)
       .sort((a, b) => a.startHour - b.startHour);
   }
 
-  /** Helper: returns sorted day slots (same as getSlotsForDay) */
-  private getSortedDaySlots(dayIndex: number): TimeSlot[] {
-    return this.getSlotsForDay(dayIndex);
-  }
-
-  /** Calculates total organization hours scheduled for a specific day */
+  /** Calculates total hours scheduled for a specific day */
   getDayHours(dayIndex: number): number {
     return this.slots()
-      .filter(s => s.dayIndex === dayIndex && s.type === 'organization')
+      .filter((s) => s.dayIndex === dayIndex)
       .reduce((sum, s) => sum + s.durationHours, 0);
   }
 
-  /** Returns the appropriate DaisyUI text color class for a day's hour display */
+  /** Returns the full class string for a day's hour display (includes layout classes) */
   getDayColor(dayIndex: number): string {
+    const base = 'block text-xs font-bold mt-1 ';
     if (!this.workDays()[dayIndex]) {
       const hours = this.getDayHours(dayIndex);
-      return hours > 0 ? 'text-error' : 'text-base-content/30';
+      return base + (hours > 0 ? 'text-error' : 'text-base-content/30');
     }
     const hours = this.getDayHours(dayIndex);
     const limit = this.hoursPerDay();
-    if (hours > limit) return 'text-error';
-    if (hours > limit * 0.9) return 'text-warning';
-    return 'text-success';
+    if (hours > limit) return base + 'text-error';
+    if (hours > limit * 0.9) return base + 'text-warning';
+    return base + 'text-success';
   }
 
   /** Formats a decimal hour (e.g. 9.5) to HH:MM string */
@@ -267,7 +243,7 @@ export class WorkPreferencesSection implements OnInit {
    */
   private hasCollision(dayIndex: number, startHour: number, durationHours: number, excludeId?: string): boolean {
     const endHour = startHour + durationHours;
-    return this.slots().some(s => {
+    return this.slots().some((s) => {
       if (s.dayIndex !== dayIndex) return false;
       if (excludeId && s.id === excludeId) return false;
       const sEnd = s.startHour + s.durationHours;
@@ -278,9 +254,9 @@ export class WorkPreferencesSection implements OnInit {
 
   // --- Native HTML5 Drag & Drop ---
 
-  /** Initiated when user starts dragging an organization or break from the sidebar */
-  onSidebarDragStart(event: DragEvent, type: TimeSlotType, org: Organization) {
-    this.dragPayload = { type, org };
+  /** Initiated when user starts dragging an organization from the sidebar */
+  onSidebarDragStart(event: DragEvent, org: OrgItem) {
+    this.dragPayload = org;
     this.draggedSlotId = null;
     event.dataTransfer!.effectAllowed = 'copy';
     event.dataTransfer!.setData('text/plain', 'sidebar');
@@ -327,14 +303,14 @@ export class WorkPreferencesSection implements OnInit {
     const gridEl = event.currentTarget as HTMLElement;
     const rect = gridEl.getBoundingClientRect();
     const scrollTop = gridEl.scrollTop;
-    
+
     const rawX = event.clientX - rect.left;
     const rawY = event.clientY - rect.top + scrollTop;
-    
+
     // Subtract time column width (60px) to get x position within day columns
     const x = rawX - 60;
     if (x < 0) return;
-    
+
     const dayWidth = (rect.width - 60) / 7;
     const dayIndex = Math.floor(x / dayWidth);
     if (dayIndex < 0 || dayIndex > 6 || !this.workDays()[dayIndex]) return;
@@ -346,29 +322,29 @@ export class WorkPreferencesSection implements OnInit {
 
     if (this.draggedSlotId) {
       // Moving existing slot
-      const existing = this.slots().find(s => s.id === this.draggedSlotId);
+      const existing = this.slots().find((s) => s.id === this.draggedSlotId);
       if (existing && !this.hasCollision(dayIndex, startHour, existing.durationHours, this.draggedSlotId)) {
-        this.slots.update(slots => 
-          slots.map(s => s.id === this.draggedSlotId ? { ...s, dayIndex, startHour } : s)
+        this.slots.update((slots) =>
+          slots.map((s) => (s.id === this.draggedSlotId ? { ...s, dayIndex, startHour } : s))
         );
       }
       this.draggedSlotId = null;
     } else if (this.dragPayload) {
       // Creating new slot from sidebar drag
       const finalDuration = 0.5; // 30 minutes default for all new drops
-      
+
       if (!this.hasCollision(dayIndex, startHour, finalDuration)) {
         const newSlot: TimeSlot = {
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+          id: Date.now().toString() + Math.random().toString(36).substring(2, 5),
           dayIndex,
           startHour,
           durationHours: finalDuration,
-          type: this.dragPayload.type,
-          label: this.dragPayload.org.name,
-          colorClass: this.dragPayload.org.colorClass,
-          accountId: this.dragPayload.org.accountId,
+          type: 'organization',
+          label: this.dragPayload.name,
+          colorClass: this.dragPayload.colorClass,
+          organizationId: this.dragPayload.id,
         };
-        this.slots.update(slots => [...slots, newSlot]);
+        this.slots.update((slots) => [...slots, newSlot]);
       }
       this.dragPayload = null;
     }
@@ -388,24 +364,22 @@ export class WorkPreferencesSection implements OnInit {
   }
 
   /** Handles mouse movement during resize; updates slot duration in real-time */
-  @HostListener('document:mousemove', ['$event'])
   onResizeMove(event: MouseEvent) {
     if (!this.resizingSlot) return;
     const deltaPixels = event.clientY - this.resizeStartY;
     const deltaHours = deltaPixels / 60;
     // Snap to 30-minute increments
     const newDuration = Math.max(0.5, Math.round((this.resizeStartDuration + deltaHours) * 2) / 2);
-    
+
     // Only apply if no collision would occur
     if (!this.hasCollision(this.resizingSlot.dayIndex, this.resizingSlot.startHour, newDuration, this.resizingSlot.id)) {
-      this.slots.update(slots => 
-        slots.map(s => s.id === this.resizingSlot!.id ? { ...s, durationHours: newDuration } : s)
+      this.slots.update((slots) =>
+        slots.map((s) => (s.id === this.resizingSlot!.id ? { ...s, durationHours: newDuration } : s))
       );
     }
   }
 
   /** Cleans up after resize ends */
-  @HostListener('document:mouseup')
   onResizeEnd() {
     if (this.resizingSlot) {
       this.resizingSlot = null;
@@ -418,6 +392,6 @@ export class WorkPreferencesSection implements OnInit {
 
   /** Removes a slot from the schedule */
   removeSlot(slot: TimeSlot) {
-    this.slots.update(slots => slots.filter(s => s.id !== slot.id));
+    this.slots.update((slots) => slots.filter((s) => s.id !== slot.id));
   }
 }

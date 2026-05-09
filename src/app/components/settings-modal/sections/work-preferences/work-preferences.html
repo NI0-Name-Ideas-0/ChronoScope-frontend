@@ -1,21 +1,21 @@
 <!-- Main container: flex column filling the parent tab content -->
 <div class="flex flex-col h-full">
-  
+
   <!-- Settings Bar -->
   <div class="flex flex-wrap items-center gap-6 p-4 rounded-xl border border-base-300 bg-base-200/30 shrink-0">
-    
+
     <!-- Hours per Day Input -->
     <div class="flex items-center gap-3">
       <span class="text-sm font-medium text-base-content/70 whitespace-nowrap">Available per day</span>
       <div class="input input-bordered flex items-center gap-2 bg-base-100 w-24">
-        <input 
-          type="number" 
-          [ngModel]="hoursPerDay()" 
-          (ngModelChange)="hoursPerDay.set(+$event)" 
-          min="0.5" 
-          max="24" 
-          step="0.5" 
-          class="grow text-sm" 
+        <input
+          type="number"
+          [ngModel]="hoursPerDay()"
+          (ngModelChange)="hoursPerDay.set(+$event)"
+          min="0.5"
+          max="24"
+          step="0.5"
+          class="grow text-sm"
         />
         <span class="text-base-content/40 text-sm">h</span>
       </div>
@@ -26,10 +26,10 @@
       <span class="text-sm font-medium text-base-content/70 whitespace-nowrap">Work days</span>
       <div class="flex gap-1">
         @for (day of dayNames; track $index) {
-          <button 
+          <button
             type="button"
-            [class]="workDays()[$index] 
-              ? 'btn btn-xs btn-primary' 
+            [class]="workDays()[$index]
+              ? 'btn btn-xs btn-primary'
               : 'btn btn-xs btn-ghost border border-base-300 text-base-content/40'"
             (click)="toggleWorkDay($index)"
           >
@@ -41,9 +41,9 @@
 
     <!-- Stats: Fixed width to prevent layout shift when warning appears -->
     <div class="ml-auto text-right w-40 shrink-0">
-      <div 
-        class="text-sm font-bold" 
-        [class.text-error]="isOverbooked()" 
+      <div
+        class="text-sm font-bold"
+        [class.text-error]="isOverbooked()"
         [class.text-success]="!isOverbooked()"
       >
         {{ totalPlannedHours() | number:'1.1-1' }}h / {{ availableHours() | number:'1.1-1' }}h
@@ -59,29 +59,33 @@
 
   <!-- Main Layout: Sidebar + Calendar -->
   <div class="flex gap-4 flex-1 min-h-0 mt-4">
-    
+
     <!-- Sidebar: Draggable items and legend -->
     <aside class="w-56 shrink-0 flex flex-col gap-5 overflow-y-auto pr-1">
-      
+
       <!-- Organizations Section -->
       <div>
         <h3 class="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2.5">Organizations</h3>
         <div class="flex flex-col gap-2">
           @for (org of organizations(); track org.id) {
-            <div 
+            <div
               class="draggable-item cursor-grab active:cursor-grabbing select-none border-l-4 rounded-lg p-3 transition-all hover:translate-x-0.5 shadow-sm"
-              [ngClass]="{
-                'bg-primary/10 border-primary': org.colorClass === 'primary',
-                'bg-secondary/10 border-secondary': org.colorClass === 'secondary',
-                'bg-accent/10 border-accent': org.colorClass === 'accent',
-                'bg-info/10 border-info': org.colorClass === 'info',
-                'bg-success/10 border-success': org.colorClass === 'success',
-                'bg-warning/10 border-warning': org.colorClass === 'warning'
-              }"
+              [class.bg-primary/10]="org.colorClass === 'primary'"
+              [class.border-primary]="org.colorClass === 'primary'"
+              [class.bg-secondary/10]="org.colorClass === 'secondary'"
+              [class.border-secondary]="org.colorClass === 'secondary'"
+              [class.bg-accent/10]="org.colorClass === 'accent'"
+              [class.border-accent]="org.colorClass === 'accent'"
+              [class.bg-info/10]="org.colorClass === 'info'"
+              [class.border-info]="org.colorClass === 'info'"
+              [class.bg-success/10]="org.colorClass === 'success'"
+              [class.border-success]="org.colorClass === 'success'"
+              [class.bg-warning/10]="org.colorClass === 'warning'"
+              [class.border-warning]="org.colorClass === 'warning'"
               draggable="true"
-              (dragstart)="onSidebarDragStart($event, 'organization', org)"
+              (dragstart)="onSidebarDragStart($event, org)"
             >
-              <span 
+              <span
                 class="w-2.5 h-2.5 rounded-full shrink-0"
                 [class.bg-primary]="org.colorClass === 'primary'"
                 [class.bg-secondary]="org.colorClass === 'secondary'"
@@ -96,40 +100,21 @@
         </div>
       </div>
 
-      <!-- Breaks Section -->
-      <div>
-        <h3 class="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2.5">Breaks</h3>
-        <div class="flex flex-col gap-2">
-          <div 
-            class="draggable-item cursor-grab active:cursor-grabbing select-none border-l-4 border-neutral bg-neutral/10 rounded-lg p-3 transition-all hover:translate-x-0.5 shadow-sm"
-            draggable="true"
-            (dragstart)="onSidebarDragStart($event, 'break', { name: 'Break', colorClass: 'neutral', id: 'break', accountId: 0 })"
-          >
-            <span class="w-2.5 h-2.5 rounded-full bg-neutral shrink-0"></span>
-            <span class="text-sm font-semibold text-base-content">Break</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Legend -->
       <div class="mt-auto pt-4 border-t border-base-300">
         <h4 class="text-xs font-bold text-base-content/50 mb-2">Legend</h4>
         <div class="space-y-1.5 text-xs text-base-content/70">
           <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-success"></span> 
+            <span class="w-2 h-2 rounded-full bg-success"></span>
             Within limit
           </div>
           <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-warning"></span> 
+            <span class="w-2 h-2 rounded-full bg-warning"></span>
             Near limit
           </div>
           <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-error"></span> 
+            <span class="w-2 h-2 rounded-full bg-error"></span>
             Overbooked
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-neutral"></span> 
-            Break
           </div>
         </div>
       </div>
@@ -137,7 +122,7 @@
 
     <!-- Calendar Grid -->
     <div class="flex-1 flex flex-col border border-base-300 rounded-xl overflow-hidden bg-base-100 min-h-0">
-      
+
       <!-- Calendar Header: Day columns -->
       <div class="grid grid-cols-[60px_repeat(7,1fr)] border-b border-base-300 bg-base-200/50 shrink-0">
         <!-- Time label header cell -->
@@ -146,15 +131,12 @@
         </div>
         <!-- Day header cells -->
         @for (day of weekDays; track day.index) {
-          <div 
+          <div
             class="py-3 text-center border-r border-base-300 last:border-r-0 relative"
             [class.opacity-40]="!workDays()[day.index]"
           >
             <span class="block text-xs font-bold uppercase text-base-content/60">{{ day.short }}</span>
-            <span 
-              class="block text-xs font-bold mt-1" 
-              [class]="getDayColor(day.index)"
-            >
+            <span [class]="getDayColor(day.index)">
               {{ getDayHours(day.index) | number:'1.1-1' }}h
             </span>
             <!-- Off day indicator -->
@@ -168,14 +150,14 @@
       </div>
 
       <!-- Calendar Body: Scrollable grid with time slots -->
-      <div 
-        class="grid grid-cols-[60px_repeat(7,1fr)] flex-1 overflow-y-auto relative" 
+      <div
+        class="grid grid-cols-[60px_repeat(7,1fr)] flex-1 overflow-y-auto relative"
         #calendarBody
         style="scrollbar-gutter: stable;"
-        (dragover)="onGridDragOver($event)" 
+        (dragover)="onGridDragOver($event)"
         (drop)="onGridDrop($event)"
       >
-        
+
         <!-- Time Labels Column -->
         <div class="border-r border-base-300 bg-base-200/30">
           @for (hour of hours; track hour) {
@@ -187,14 +169,14 @@
 
         <!-- Day Columns -->
         @for (day of weekDays; track day.index) {
-          <div 
+          <div
             class="relative border-r border-base-200 last:border-r-0 min-h-[1440px] transition-colors"
             [class.bg-base-200/30]="!workDays()[day.index]"
             [class.drop-target]="dragOverDay() === day.index && workDays()[day.index]"
-            (dragover)="onDayDragOver($event, day.index)" 
+            (dragover)="onDayDragOver($event, day.index)"
             (dragleave)="onDayDragLeave($event)"
           >
-            
+
             <!-- Hour grid lines -->
             @for (hour of hours; track hour) {
               <div class="h-[60px] border-b border-base-200 box-border"></div>
@@ -202,23 +184,26 @@
 
             <!-- Time Slots -->
             @for (slot of getSlotsForDay(day.index); track slot.id) {
-              <div 
+              <div
                 class="absolute left-0.5 right-0.5 rounded-md border-l-4 p-1.5 cursor-grab active:cursor-grabbing overflow-hidden text-xs transition-shadow hover:shadow-lg hover:z-10 group"
-                [ngClass]="{
-                  'bg-primary/20 border-l-primary': slot.colorClass === 'primary' && slot.type !== 'break',
-                  'bg-secondary/20 border-l-secondary': slot.colorClass === 'secondary' && slot.type !== 'break',
-                  'bg-accent/20 border-l-accent': slot.colorClass === 'accent' && slot.type !== 'break',
-                  'bg-info/20 border-l-info': slot.colorClass === 'info' && slot.type !== 'break',
-                  'bg-success/20 border-l-success': slot.colorClass === 'success' && slot.type !== 'break',
-                  'bg-warning/20 border-l-warning': slot.colorClass === 'warning' && slot.type !== 'break',
-                  'bg-neutral/20 border-l-neutral': slot.type === 'break'
-                }"
+                [class.bg-primary/20]="slot.colorClass === 'primary'"
+                [class.border-l-primary]="slot.colorClass === 'primary'"
+                [class.bg-secondary/20]="slot.colorClass === 'secondary'"
+                [class.border-l-secondary]="slot.colorClass === 'secondary'"
+                [class.bg-accent/20]="slot.colorClass === 'accent'"
+                [class.border-l-accent]="slot.colorClass === 'accent'"
+                [class.bg-info/20]="slot.colorClass === 'info'"
+                [class.border-l-info]="slot.colorClass === 'info'"
+                [class.bg-success/20]="slot.colorClass === 'success'"
+                [class.border-l-success]="slot.colorClass === 'success'"
+                [class.bg-warning/20]="slot.colorClass === 'warning'"
+                [class.border-l-warning]="slot.colorClass === 'warning'"
                 [style.top.%]="(slot.startHour / 24) * 100"
                 [style.height.%]="(slot.durationHours / 24) * 100"
                 draggable="true"
                 (dragstart)="onSlotDragStart($event, slot)"
               >
-                
+
                 <!-- Slot content: label and time range -->
                 <div class="flex flex-col pointer-events-none">
                   <span class="font-bold text-base-content truncate leading-tight">{{ slot.label }}</span>
@@ -228,8 +213,8 @@
                 </div>
 
                 <!-- Delete button: visible on hover -->
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   (click)="removeSlot(slot); $event.stopPropagation()"
                   class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-base-content/20 text-base-100 text-[10px] items-center justify-center hidden group-hover:flex hover:bg-error transition-colors"
                 >
@@ -237,7 +222,7 @@
                 </button>
 
                 <!-- Resize handle at bottom of slot -->
-                <div 
+                <div
                   class="absolute bottom-0 left-0 right-0 h-1.5 cursor-ns-resize hover:bg-base-content/10 transition-colors"
                   (mousedown)="onResizeStart($event, slot)"
                 ></div>

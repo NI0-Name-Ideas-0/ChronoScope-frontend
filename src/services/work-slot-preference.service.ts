@@ -7,8 +7,7 @@ import {
   deleteWorkSlot,
 } from '../api/functions';
 import { WorkSlotResponse } from '../api/models';
-import { AccountResponse } from '../api/models';
-import { getAccountDisplayName } from './account.utils';
+import { Organization } from '../api/models';
 import { TimeSlot, COLOR_POOL } from '@app/model/work-preference.model';
 
 /**
@@ -29,7 +28,7 @@ export class WorkSlotPreferenceService {
 
   /** Load organization slots from the backend and map them to TimeSlots. */
   async loadPreferences(): Promise<TimeSlot[]> {
-    const accounts = this.auth.getAccounts();
+    const orgs = this.auth.getIdentityData()?.organizations ?? [];
     const response = await this.api.invoke(getWorkSlots, {});
 
     let slotsData: WorkSlotResponse[] = response as WorkSlotResponse[];
@@ -43,7 +42,7 @@ export class WorkSlotPreferenceService {
     }
 
     return slotsData
-      .map((ws) => this.toTimeSlot(ws, accounts))
+      .map((ws) => this.toTimeSlot(ws, orgs))
       .filter((s): s is TimeSlot => s !== null);
   }
 
@@ -76,8 +75,7 @@ export class WorkSlotPreferenceService {
     const orgSlots = slots.filter((s) => s.type === 'organization');
     await Promise.all(
       orgSlots.map((slot) => {
-        const orgId = this.getOrganizationIdForSlot(slot);
-        if (!orgId) {
+        if (!slot.organizationId) {
           console.warn('Skipping slot without organization:', slot);
           return Promise.resolve();
         }
@@ -85,8 +83,7 @@ export class WorkSlotPreferenceService {
         const { startAt, endAt } = this.toWorkSlotTimes(slot);
         return this.api.invoke(createWorkSlot, {
           body: {
-            accountId: slot.accountId,
-            organizationId: orgId,
+            organizationId: slot.organizationId,
             startAt,
             endAt,
           },
@@ -95,18 +92,17 @@ export class WorkSlotPreferenceService {
     );
   }
 
-  /** Find the first organization ID for the account linked to a slot. */
-  private getOrganizationIdForSlot(slot: TimeSlot): number | null {
-    const account = this.auth.getAccounts().find((a) => a.id === slot.accountId);
-    return account?.organizations?.[0]?.id ?? null;
-  }
-
   /** Convert a backend WorkSlotResponse to a frontend TimeSlot. */
   private toTimeSlot(
     ws: WorkSlotResponse,
-    accounts: AccountResponse[]
+    orgs: Organization[]
   ): TimeSlot | null {
-    if (!ws.startAt || !ws.endAt || ws.accountId == null) {
+    if (!ws.startAt || !ws.endAt || !ws.organizationId) {
+      return null;
+    }
+
+    const org = orgs.find((o) => o.id === ws.organizationId);
+    if (!org || !org.name) {
       return null;
     }
 
@@ -125,14 +121,8 @@ export class WorkSlotPreferenceService {
     const roundedStartHour = Math.round(startHour * 2) / 2;
     const roundedDurationHours = Math.max(0.5, Math.round(durationHours * 2) / 2);
 
-    const account = accounts.find((a) => a.id === ws.accountId);
-    if (!account) {
-      return null;
-    }
-
-    const accountIndex = accounts.findIndex((a) => a.id === ws.accountId);
-    const colorClass = COLOR_POOL[accountIndex % COLOR_POOL.length];
-    const label = getAccountDisplayName(account);
+    const orgIndex = orgs.findIndex((o) => o.id === ws.organizationId);
+    const colorClass = COLOR_POOL[orgIndex % COLOR_POOL.length];
 
     return {
       id: ws.id?.toString() ?? this.generateId(),
@@ -140,9 +130,9 @@ export class WorkSlotPreferenceService {
       startHour: roundedStartHour,
       durationHours: roundedDurationHours,
       type: 'organization',
-      label,
+      label: org.name,
       colorClass,
-      accountId: ws.accountId,
+      organizationId: ws.organizationId,
     };
   }
 

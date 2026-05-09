@@ -8,15 +8,19 @@ import { TaskResponse } from '../models/task-response';
  * Response for a static (fixed-time) task
  */
 export type StaticTaskResponse = TaskResponse & {
-  accountId?: number;
-  description?: string;
-  difficulty?: number;
-  endAt?: string;
-  id?: number;
-  isBlocker?: boolean;
-  labels?: Array<LabelResponse>;
-  name?: string;
-  organizationId?: number;
-  rrule?: string;
-  startAt?: string;
+'description'?: string;
+'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
+'endAt'?: string;
+'id'?: number;
+'isBlocker'?: boolean;
+'labels'?: Array<LabelResponse>;
+'name'?: string;
+
+/**
+ * Organization ID. Null for blocker tasks that are not assigned to an organizationId.
+ */
+'organizationId'?: (string | null);
+'rrule'?: string;
+'startAt'?: string;
 };
+

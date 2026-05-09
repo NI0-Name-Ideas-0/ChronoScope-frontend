@@ -8,6 +8,7 @@ export class ThemeService {
   private readonly storageKey = 'chronoscope-theme';
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
+  private mediaQueryList: MediaQueryList | null = null;
 
   readonly theme = signal<ThemePreference>('system');
 
@@ -21,6 +22,7 @@ export class ThemeService {
 
     this.theme.set(nextTheme);
     this.applyTheme(nextTheme);
+    this.syncSystemThemeListener(nextTheme);
   }
 
   setTheme(theme: ThemePreference) {
@@ -32,18 +34,44 @@ export class ThemeService {
 
     window.localStorage.setItem(this.storageKey, theme);
     this.applyTheme(theme);
+    this.syncSystemThemeListener(theme);
   }
 
   private applyTheme(theme: ThemePreference) {
     const root = this.document.documentElement;
 
     if (theme === 'system') {
-      root.removeAttribute('data-theme');
+      const prefersDark = this.getSystemPrefersDark();
+      root.setAttribute('data-theme', prefersDark ? 'chrono-dark' : 'chrono-light');
       return;
     }
 
     const resolvedTheme = theme === 'dark' ? 'chrono-dark' : 'chrono-light';
     root.setAttribute('data-theme', resolvedTheme);
+  }
+
+  private syncSystemThemeListener(theme: ThemePreference) {
+    if (this.mediaQueryList) {
+      this.mediaQueryList.removeEventListener('change', this.handleSystemThemeChange);
+      this.mediaQueryList = null;
+    }
+
+    if (theme !== 'system') {
+      return;
+    }
+
+    this.mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
+    this.mediaQueryList.addEventListener('change', this.handleSystemThemeChange);
+  }
+
+  private handleSystemThemeChange = () => {
+    if (this.theme() === 'system') {
+      this.applyTheme('system');
+    }
+  };
+
+  private getSystemPrefersDark(): boolean {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
 
   private isThemePreference(value: string | null): value is ThemePreference {

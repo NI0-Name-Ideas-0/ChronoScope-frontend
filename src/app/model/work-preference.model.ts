@@ -10,7 +10,7 @@ export interface TimeSlot {
   type: TimeSlotType;
   label: string;
   colorClass: string;
-  accountId: number; // Reference to the associated account
+  organizationId: string; // Reference to the associated organization
 }
 
 /** DaisyUI color pool for accounts (assigned cyclically) */

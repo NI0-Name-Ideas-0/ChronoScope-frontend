@@ -7,6 +7,18 @@ export type { RequestAccountLink$Params as RequestAccountLink$Params } from './f
 export { requestAccountLink as requestAccountLink } from './fn/identity/request-account-link';
 export type { ConfirmAccountLink$Params as ConfirmAccountLink$Params } from './fn/identity/confirm-account-link';
 export { confirmAccountLink as confirmAccountLink } from './fn/identity/confirm-account-link';
+export type { GetInvitations$Params as GetInvitations$Params } from './fn/organization/get-invitations';
+export { getInvitations as getInvitations } from './fn/organization/get-invitations';
+export type { ResendInvitation$Params as ResendInvitation$Params } from './fn/organization/resend-invitation';
+export { resendInvitation as resendInvitation } from './fn/organization/resend-invitation';
+export type { DeleteInvitation$Params as DeleteInvitation$Params } from './fn/organization/delete-invitation';
+export { deleteInvitation as deleteInvitation } from './fn/organization/delete-invitation';
+export type { GetOrganizationMembers$Params as GetOrganizationMembers$Params } from './fn/organization/get-organization-members';
+export { getOrganizationMembers as getOrganizationMembers } from './fn/organization/get-organization-members';
+export type { InviteUser$Params as InviteUser$Params } from './fn/organization/invite-user';
+export { inviteUser as inviteUser } from './fn/organization/invite-user';
+export type { RemoveMember$Params as RemoveMember$Params } from './fn/organization/remove-member';
+export { removeMember as removeMember } from './fn/organization/remove-member';
 export type { Plan$Params as Plan$Params } from './fn/planning/plan';
 export { plan as plan } from './fn/planning/plan';
 export type { GetScopes$Params as GetScopes$Params } from './fn/scopes/get-scopes';
