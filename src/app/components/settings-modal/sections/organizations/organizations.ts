@@ -21,20 +21,7 @@ interface Organization {
 })
 export class OrganizationsSection {
   mergeEmail = '';
-  selectedOrgId = signal<string>('1');
   protected authService = inject(Auth);
-
-  selectOrg(id: string): void {
-    this.selectedOrgId.set(id);
-  }
-
-  roleBadgeClass(role: string): string {
-    switch (role) {
-      case 'Admin': return 'badge-primary';
-      case 'Member': return 'badge-neutral';
-      default: return 'badge-ghost';
-    }
-  }
 
   requestLinkEmail(): void {
     this.authService.linkAccount(this.mergeEmail);
