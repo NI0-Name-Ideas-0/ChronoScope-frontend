@@ -17,6 +17,7 @@
     "baseUrl": "src",
     "paths": {
     	"@app/*": ["app/*"],
+      "@api/*": ["api/*"],
     	"@services/*": ["services/*"],
     	"@components/*": ["components/*"],
       "@pipes/*": ["pipes/*"]
