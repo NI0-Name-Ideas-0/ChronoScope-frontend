@@ -7,6 +7,8 @@ import { ViewService } from '@services/view.service';
 import { Task } from '@app/model/task';
 import { StaticTask } from '@app/model/static-task';
 import { AlgoTask } from '@app/model/algo-task';
+import { Scope } from '@app/model/scope';
+import { DynamicTaskUpdateRequest } from '../../../api/models';
 
 @Component({
   selector: 'app-list-view',
@@ -26,6 +28,9 @@ export class ListView implements OnInit {
 
   tasks: Task[] = [];
   activeFilter: 'all' | 'todo' | 'today' | 'done' = 'today';
+
+  // Tracks which AlgoTask IDs are expanded
+  expandedTasks = new Set<number>();
 
   get searchTask(): string {
     return this.viewService.searchTask();
@@ -86,6 +91,51 @@ export class ListView implements OnInit {
     return task instanceof AlgoTask;
   }
 
+  /**
+   * Returns the duration of a scope in minutes
+   */
+  getScopeDurationMinutes(scope: Scope): number {
+    return Math.round((scope.end.getTime() - scope.start.getTime()) / 60000);
+  }
+
+  /**
+   * Calculates total elapsed minutes for finished scopes of an AlgoTask
+   */
+  calculateElapsedMinutes(task: AlgoTask): number {
+    return task.scopes
+      .filter((s) => s.isFinished)
+      .reduce((sum, s) => sum + this.getScopeDurationMinutes(s), 0);
+  }
+
+  /**
+   * Toggles expansion of an AlgoTask to show/hide its scopes
+   */
+  toggleExpand(task: Task, event: Event) {
+    event.stopPropagation();
+    if (this.expandedTasks.has(task.id)) {
+      this.expandedTasks.delete(task.id);
+    } else {
+      this.expandedTasks.add(task.id);
+    }
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Checks if an AlgoTask is currently expanded
+   */
+  isExpanded(task: Task): boolean {
+    return this.expandedTasks.has(task.id);
+  }
+
+  /**
+   * Returns the completion ratio of an AlgoTask (0 to 1)
+   */
+  getCompletionRatio(task: AlgoTask): number {
+    if (task.scopes.length === 0) return 0;
+    const doneScopes = task.scopes.filter((s) => s.isFinished).length;
+    return doneScopes / task.scopes.length;
+  }
+
   onSearchChange(value: string) {
     this.viewService.searchTask.set(value);
   }
@@ -110,10 +160,10 @@ export class ListView implements OnInit {
 
     switch (this.activeFilter) {
       case 'todo':
-        result = result.filter((task) => task.isFinished === false);
+        result = result.filter((task) => !this.isTaskFinished(task));
         break;
       case 'done':
-        result = result.filter((task) => task.isFinished === true);
+        result = result.filter((task) => this.isTaskFinished(task));
         break;
       case 'today':
         const today = new Date();
@@ -131,14 +181,25 @@ export class ListView implements OnInit {
     return result;
   }
 
+  /**
+   * Checks if a task is finished.
+   * For AlgoTasks, returns true only when ALL scopes are finished.
+   */
+  isTaskFinished(task: Task): boolean {
+    if (task instanceof AlgoTask) {
+      return task.scopes.length > 0 && task.scopes.every((s) => s.isFinished);
+    }
+    return task.isFinished;
+  }
+
   //returns the overall number of open tasks
   openCount(): number {
-    return this.tasks.filter((task) => task.isFinished === false).length;
+    return this.tasks.filter((task) => !this.isTaskFinished(task)).length;
   }
 
   //returns the overall number of done tasks
   doneCount(): number {
-    return this.tasks.filter((task) => task.isFinished === true).length;
+    return this.tasks.filter((task) => this.isTaskFinished(task)).length;
   }
 
   onTaskClick(task: Task) {
@@ -151,6 +212,34 @@ export class ListView implements OnInit {
   onMarkDone(task: Task, event: Event) {
     event.stopPropagation();
     task.isFinished = !task.isFinished;
+    this.taskService.saveTaskCompletion(task.id, task.isFinished);
+    this.cdr.detectChanges();
+  }
+
+  onMarkScopeDone(task: AlgoTask, scope: Scope, event: Event) {
+    event.stopPropagation();
+    scope.isFinished = !scope.isFinished;
+
+    // Derive task-level completion from all scopes
+    task.isFinished = task.scopes.every((s) => s.isFinished);
+
+    // Persist completion state locally so it survives reloads
+    this.taskService.saveTaskCompletion(
+      task.id,
+      task.isFinished,
+      task.scopes.map((s) => s.isFinished),
+    );
+
+    // Calculate elapsed time from finished scopes and send to backend
+    const elapsedMinutes = this.calculateElapsedMinutes(task);
+    const updateRequest: DynamicTaskUpdateRequest = {
+      type: 'dynamic',
+      elapsed: this.taskService.formatMinutesToDuration(elapsedMinutes),
+    };
+    this.taskService
+      .updateTask(task.id, updateRequest)
+      .catch((error) => console.error('Error updating elapsed time:', error));
+
     this.cdr.detectChanges();
   }
 

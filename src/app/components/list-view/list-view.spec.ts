@@ -8,6 +8,7 @@ import { Api } from '../../../api/api';
 import { Auth } from '@services/auth';
 import { BehaviorSubject } from 'rxjs';
 import { StaticTask } from '@app/model/static-task';
+import { AlgoTask } from '@app/model/algo-task';
 import { Scope } from '@app/model/scope';
 import { Task } from '@app/model/task';
 
@@ -48,10 +49,37 @@ describe('ListView', () => {
     );
   };
 
+  const createMockAlgoTask = (
+    id: number,
+    title: string,
+    scopes: Scope[] = [],
+    isFinished: boolean = false,
+  ): Task => {
+    return new AlgoTask(
+      id,
+      title,
+      'Description',
+      new Date('2026-05-10'),
+      new Date('2026-05-10'),
+      120,
+      [],
+      [],
+      null,
+      scopes,
+      'EASY',
+      isFinished,
+      30,
+      120,
+    );
+  };
+
   const mockTaskService = {
     tasks$: new BehaviorSubject<Task[]>([]),
     getTask: vi.fn(),
     deleteTask: vi.fn(),
+    updateTask: vi.fn().mockResolvedValue({}),
+    formatMinutesToDuration: vi.fn((m: number) => `PT${m}M`),
+    saveTaskCompletion: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -92,114 +120,294 @@ describe('ListView', () => {
     expect(fixture.nativeElement.textContent).toContain('Task 2');
   });
 
-  it('should display mark-as-done buttons for each task', () => {
-    const tasks = [createMockTask(1, 'Task 1'), createMockTask(2, 'Task 2')];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
+  describe('StaticTask', () => {
+    it('should display mark-as-done buttons for static tasks', () => {
+      const tasks = [createMockTask(1, 'Task 1'), createMockTask(2, 'Task 2')];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
 
-    const buttons = fixture.nativeElement.querySelectorAll('button[title="Mark as done"]');
-    expect(buttons.length).toBe(2);
+      const buttons = fixture.nativeElement.querySelectorAll('button[title="Mark as done"]');
+      expect(buttons.length).toBe(2);
+    });
+
+    it('should mark a static task as done when the button is clicked', () => {
+      const tasks = [createMockTask(1, 'Task 1')];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
+
+      const markDoneButton = fixture.nativeElement.querySelector('button[title="Mark as done"]');
+      expect(tasks[0].isFinished).toBe(false);
+
+      markDoneButton.click();
+      fixture.detectChanges();
+
+      expect(tasks[0].isFinished).toBe(true);
+    });
+
+    it('should mark a done static task as open when the button is clicked again', () => {
+      const tasks = [createMockTask(1, 'Task 1', true)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
+
+      const markOpenButton = fixture.nativeElement.querySelector('button[title="Mark as open"]');
+      expect(tasks[0].isFinished).toBe(true);
+
+      markOpenButton.click();
+      fixture.detectChanges();
+
+      expect(tasks[0].isFinished).toBe(false);
+    });
+
+    it('should apply text-warning class to the button when static task is open', () => {
+      const tasks = [createMockTask(1, 'Task 1', false)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
+
+      const button = fixture.nativeElement.querySelector('button[title="Mark as done"]');
+      expect(button.classList.contains('text-warning')).toBe(true);
+      expect(button.classList.contains('text-success')).toBe(false);
+    });
+
+    it('should apply text-success class to the button when static task is finished', () => {
+      const tasks = [createMockTask(1, 'Task 1', true)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
+
+      const button = fixture.nativeElement.querySelector('button[title="Mark as open"]');
+      expect(button.classList.contains('text-success')).toBe(true);
+      expect(button.classList.contains('text-warning')).toBe(false);
+    });
+
+    it('should apply task-done class to finished static tasks', () => {
+      const tasks = [createMockTask(1, 'Done Task', true)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
+
+      const card = fixture.nativeElement.querySelector('.card');
+      expect(card.classList.contains('task-done')).toBe(true);
+    });
+
+    it('should not apply task-done class to open static tasks', () => {
+      const tasks = [createMockTask(1, 'Open Task', false)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
+
+      const card = fixture.nativeElement.querySelector('.card');
+      expect(card.classList.contains('task-done')).toBe(false);
+    });
+
+    it('should toggle task-done class when mark-as-done is clicked on static task', () => {
+      const tasks = [createMockTask(1, 'Task 1', false)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
+
+      const card = fixture.nativeElement.querySelector('.card');
+      const markDoneButton = fixture.nativeElement.querySelector('button[title="Mark as done"]');
+
+      expect(card.classList.contains('task-done')).toBe(false);
+
+      markDoneButton.click();
+      fixture.detectChanges();
+
+      expect(card.classList.contains('task-done')).toBe(true);
+
+      markDoneButton.click();
+      fixture.detectChanges();
+
+      expect(card.classList.contains('task-done')).toBe(false);
+    });
   });
 
-  it('should mark a task as done when the button is clicked', () => {
-    const tasks = [createMockTask(1, 'Task 1')];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
+  describe('AlgoTask', () => {
+    it('should not show task-level mark-as-done button for algo tasks', () => {
+      const tasks = [createMockAlgoTask(1, 'Algo Task 1')];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
 
-    const markDoneButton = fixture.nativeElement.querySelector('button[title="Mark as done"]');
-    expect(tasks[0].isFinished).toBe(false);
+      const buttons = fixture.nativeElement.querySelectorAll('button[title="Mark as done"]');
+      expect(buttons.length).toBe(0);
+    });
 
-    markDoneButton.click();
-    fixture.detectChanges();
+    it('should show expand button for algo tasks', () => {
+      const tasks = [createMockAlgoTask(1, 'Algo Task 1')];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
 
-    expect(tasks[0].isFinished).toBe(true);
-  });
+      const expandButton = fixture.nativeElement.querySelector('.expand-btn');
+      expect(expandButton).toBeTruthy();
+    });
 
-  it('should mark a done task as open when the button is clicked again', () => {
-    const tasks = [createMockTask(1, 'Task 1', true)];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
+    it('should expand and show scopes when expand button is clicked', () => {
+      const scopes = [
+        new Scope(new Date('2026-05-10T09:00'), new Date('2026-05-10T10:00')),
+        new Scope(new Date('2026-05-10T14:00'), new Date('2026-05-10T15:00')),
+      ];
+      const tasks = [createMockAlgoTask(1, 'Algo Task 1', scopes)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
 
-    const markOpenButton = fixture.nativeElement.querySelector('button[title="Mark as open"]');
-    expect(tasks[0].isFinished).toBe(true);
+      expect(component.isExpanded(tasks[0])).toBe(false);
 
-    markOpenButton.click();
-    fixture.detectChanges();
+      const expandButton = fixture.nativeElement.querySelector('.expand-btn');
+      expandButton.click();
+      fixture.detectChanges();
 
-    expect(tasks[0].isFinished).toBe(false);
-  });
+      expect(component.isExpanded(tasks[0])).toBe(true);
+      const scopeCards = fixture.nativeElement.querySelectorAll('.ml-4 .card');
+      expect(scopeCards.length).toBe(2);
+    });
 
-  it('should apply text-warning class to the button when task is open', () => {
-    const tasks = [createMockTask(1, 'Task 1', false)];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
+    it('should mark a scope as done and update elapsed time', async () => {
+      const scopes = [
+        new Scope(new Date('2026-05-10T09:00'), new Date('2026-05-10T10:00')),
+        new Scope(new Date('2026-05-10T14:00'), new Date('2026-05-10T15:00')),
+      ];
+      const tasks = [createMockAlgoTask(1, 'Algo Task 1', scopes)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
 
-    const button = fixture.nativeElement.querySelector('button[title="Mark as done"]');
-    expect(button.classList.contains('text-warning')).toBe(true);
-    expect(button.classList.contains('text-success')).toBe(false);
-  });
+      // Expand first
+      const expandButton = fixture.nativeElement.querySelector('button[title="Expand"]');
+      expandButton.click();
+      fixture.detectChanges();
 
-  it('should apply text-success class to the button when task is finished', () => {
-    const tasks = [createMockTask(1, 'Task 1', true)];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
+      const scopeDoneButton = fixture.nativeElement.querySelector(
+        '.ml-4 button[title="Mark as done"]',
+      );
+      expect(scopes[0].isFinished).toBe(false);
+      expect(tasks[0].isFinished).toBe(false);
 
-    const button = fixture.nativeElement.querySelector('button[title="Mark as open"]');
-    expect(button.classList.contains('text-success')).toBe(true);
-    expect(button.classList.contains('text-warning')).toBe(false);
-  });
+      scopeDoneButton.click();
+      fixture.detectChanges();
 
-  it('should apply task-done class to finished tasks', () => {
-    const tasks = [createMockTask(1, 'Done Task', true)];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
+      expect(scopes[0].isFinished).toBe(true);
+      expect(tasks[0].isFinished).toBe(false); // Not all scopes done yet
+      expect(mockTaskService.updateTask).toHaveBeenCalledWith(1, {
+        type: 'dynamic',
+        elapsed: 'PT60M',
+      });
+    });
 
-    const card = fixture.nativeElement.querySelector('.card');
-    expect(card.classList.contains('task-done')).toBe(true);
-  });
+    it('should mark algo task as done when all scopes are done', async () => {
+      const scopes = [
+        new Scope(new Date('2026-05-10T09:00'), new Date('2026-05-10T10:00')),
+        new Scope(new Date('2026-05-10T14:00'), new Date('2026-05-10T15:00')),
+      ];
+      const tasks = [createMockAlgoTask(1, 'Algo Task 1', scopes)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
 
-  it('should not apply task-done class to open tasks', () => {
-    const tasks = [createMockTask(1, 'Open Task', false)];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
+      // Expand
+      const expandButton = fixture.nativeElement.querySelector('.expand-btn');
+      expandButton.click();
+      fixture.detectChanges();
 
-    const card = fixture.nativeElement.querySelector('.card');
-    expect(card.classList.contains('task-done')).toBe(false);
-  });
+      const scopeButtons = fixture.nativeElement.querySelectorAll('.ml-4 button[title="Mark as done"]');
+      scopeButtons[0].click();
+      scopeButtons[1].click();
+      fixture.detectChanges();
 
-  it('should render mixed done and open tasks with correct styling', () => {
-    const tasks = [
-      createMockTask(1, 'Open Task', false),
-      createMockTask(2, 'Done Task', true),
-    ];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
+      expect(scopes[0].isFinished).toBe(true);
+      expect(scopes[1].isFinished).toBe(true);
+      expect(tasks[0].isFinished).toBe(true);
+      expect(mockTaskService.updateTask).toHaveBeenLastCalledWith(1, {
+        type: 'dynamic',
+        elapsed: 'PT120M',
+      });
+    });
 
-    const cards = fixture.nativeElement.querySelectorAll('.card');
-    expect(cards.length).toBe(2);
-    expect(cards[0].classList.contains('task-done')).toBe(false);
-    expect(cards[1].classList.contains('task-done')).toBe(true);
-  });
+    it('should show progress bar for algo tasks', () => {
+      const scopes = [
+        new Scope(new Date('2026-05-10T09:00'), new Date('2026-05-10T10:00')),
+        new Scope(new Date('2026-05-10T14:00'), new Date('2026-05-10T15:00')),
+      ];
+      const tasks = [createMockAlgoTask(1, 'Algo Task 1', scopes)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
 
-  it('should toggle task-done class when mark-as-done is clicked', () => {
-    const tasks = [createMockTask(1, 'Task 1', false)];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
+      const progress = fixture.nativeElement.querySelector('progress');
+      expect(progress).toBeTruthy();
+      expect(progress.value).toBe(0);
+    });
 
-    const card = fixture.nativeElement.querySelector('.card');
-    const markDoneButton = fixture.nativeElement.querySelector('button[title="Mark as done"]');
+    it('should update progress bar value when scope is marked done', () => {
+      const scopes = [
+        new Scope(new Date('2026-05-10T09:00'), new Date('2026-05-10T10:00')),
+        new Scope(new Date('2026-05-10T14:00'), new Date('2026-05-10T15:00')),
+      ];
+      const tasks = [createMockAlgoTask(1, 'Algo Task 1', scopes)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
 
-    expect(card.classList.contains('task-done')).toBe(false);
+      // Expand
+      const expandButton = fixture.nativeElement.querySelector('.expand-btn');
+      expandButton.click();
+      fixture.detectChanges();
 
-    markDoneButton.click();
-    fixture.detectChanges();
+      const scopeDoneButton = fixture.nativeElement.querySelector(
+        '.ml-4 button[title="Mark as done"]',
+      );
+      scopeDoneButton.click();
+      fixture.detectChanges();
 
-    expect(card.classList.contains('task-done')).toBe(true);
+      const progress = fixture.nativeElement.querySelector('progress');
+      expect(progress.value).toBe(50);
+    });
 
-    markDoneButton.click();
-    fixture.detectChanges();
+    it('should apply task-done class to algo task when all scopes are finished', () => {
+      const scopes = [
+        new Scope(new Date('2026-05-10T09:00'), new Date('2026-05-10T10:00'), true),
+        new Scope(new Date('2026-05-10T14:00'), new Date('2026-05-10T15:00'), true),
+      ];
+      const tasks = [createMockAlgoTask(1, 'Algo Task 1', scopes, true)];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
 
-    expect(card.classList.contains('task-done')).toBe(false);
+      const card = fixture.nativeElement.querySelector('.card');
+      expect(card.classList.contains('task-done')).toBe(true);
+    });
+
+    it('should filter algo tasks by done status when all scopes are done', () => {
+      const doneScopes = [
+        new Scope(new Date('2026-05-10T09:00'), new Date('2026-05-10T10:00'), true),
+      ];
+      const openScopes = [
+        new Scope(new Date('2026-05-10T09:00'), new Date('2026-05-10T10:00'), false),
+      ];
+      const tasks = [
+        createMockAlgoTask(1, 'Open Algo', openScopes),
+        createMockAlgoTask(2, 'Done Algo', doneScopes, true),
+      ];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
+
+      component.setFilter('done');
+
+      const filteredTasks = component.filteringTasks();
+      expect(filteredTasks.length).toBe(1);
+      expect(filteredTasks[0].title).toBe('Done Algo');
+    });
+
+    it('should filter algo tasks by todo status when not all scopes are done', () => {
+      const doneScopes = [
+        new Scope(new Date('2026-05-10T09:00'), new Date('2026-05-10T10:00'), true),
+      ];
+      const openScopes = [
+        new Scope(new Date('2026-05-10T09:00'), new Date('2026-05-10T10:00'), false),
+      ];
+      const tasks = [
+        createMockAlgoTask(1, 'Open Algo', openScopes),
+        createMockAlgoTask(2, 'Done Algo', doneScopes, true),
+      ];
+      mockTaskService.tasks$.next(tasks);
+      fixture.detectChanges();
+
+      component.setFilter('todo');
+
+      const filteredTasks = component.filteringTasks();
+      expect(filteredTasks.length).toBe(1);
+      expect(filteredTasks[0].title).toBe('Open Algo');
+    });
   });
 
   it('should stop event propagation when mark-as-done is clicked', () => {
@@ -218,7 +426,10 @@ describe('ListView', () => {
   });
 
   it('should display jump-to-calendar buttons for each task', () => {
-    const tasks = [createMockTask(1, 'Task 1'), createMockTask(2, 'Task 2')];
+    const tasks = [
+      createMockTask(1, 'Task 1'),
+      createMockAlgoTask(2, 'Algo Task 1'),
+    ];
     mockTaskService.tasks$.next(tasks);
     fixture.detectChanges();
 
@@ -250,49 +461,6 @@ describe('ListView', () => {
     jumpButton.click();
 
     expect(cardClickSpy).not.toHaveBeenCalled();
-  });
-
-  it('should filter tasks by done status', () => {
-    const tasks = [
-      createMockTask(1, 'Open Task', false),
-      createMockTask(2, 'Done Task', true),
-    ];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
-
-    component.setFilter('done');
-
-    const filteredTasks = component.filteringTasks();
-    expect(filteredTasks.length).toBe(1);
-    expect(filteredTasks[0].title).toBe('Done Task');
-  });
-
-  it('should filter tasks by todo status', () => {
-    const tasks = [
-      createMockTask(1, 'Open Task', false),
-      createMockTask(2, 'Done Task', true),
-    ];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
-
-    component.setFilter('todo');
-
-    const filteredTasks = component.filteringTasks();
-    expect(filteredTasks.length).toBe(1);
-    expect(filteredTasks[0].title).toBe('Open Task');
-  });
-
-  it('should update counts when tasks change', () => {
-    const tasks = [
-      createMockTask(1, 'Open Task 1', false),
-      createMockTask(2, 'Open Task 2', false),
-      createMockTask(3, 'Done Task', true),
-    ];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
-
-    expect(component.openCount()).toBe(2);
-    expect(component.doneCount()).toBe(1);
   });
 
   it('should show empty state when no tasks match the filter', () => {
