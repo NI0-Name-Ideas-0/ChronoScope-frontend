@@ -1,6 +1,7 @@
-import { Component, ChangeDetectionStrategy, inject, output } from '@angular/core';
+import { AfterViewInit, Component, ChangeDetectionStrategy, DestroyRef, ElementRef, inject, output, viewChild } from '@angular/core';
 import { Auth } from '@services/auth'
 import { TaskModalService } from '@services/task-modal.service';
+import { ThemeService } from '@services/theme.service';
 import { ViewService } from '@services/view.service';
 
 @Component({
@@ -10,12 +11,31 @@ import { ViewService } from '@services/view.service';
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
 })
-export class Navbar {
+export class Navbar implements AfterViewInit {
 
   constructor(private taskModalService: TaskModalService) { }
   private authService = inject(Auth);
+  private themeService = inject(ThemeService);
+  private destroyRef = inject(DestroyRef);
+
+  private asideEl = viewChild<ElementRef<HTMLElement>>('navbarAside');
+  private dropdownMenuEl = viewChild<ElementRef<HTMLElement>>('themeDropdownMenu');
 
   settingsRequested = output<void>();
+
+  ngAfterViewInit() {
+    const aside = this.asideEl()?.nativeElement;
+    const dropdownMenu = this.dropdownMenuEl()?.nativeElement;
+
+    if (aside) {
+      this.themeService.applyThemeToElement('dark', aside);
+    }
+
+    if (dropdownMenu) {
+      const cleanup = this.themeService.applyCurrentThemeToElement(dropdownMenu);
+      this.destroyRef.onDestroy(cleanup);
+    }
+  }
 
   logout() {
     this.authService.logout();
@@ -24,7 +44,7 @@ export class Navbar {
   openNewTask() {
     this.taskModalService.open();
   }
-  
+
   openSettings() {
     this.settingsRequested.emit();
   }
