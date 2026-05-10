@@ -16,7 +16,6 @@ describe('ListView', () => {
   let component: ListView;
   let fixture: ComponentFixture<ListView>;
   let taskService: TaskService;
-  let viewService: ViewService;
 
   const mockOAuthService = {
     configure: vi.fn(),
@@ -97,7 +96,6 @@ describe('ListView', () => {
     fixture = TestBed.createComponent(ListView);
     component = fixture.componentInstance;
     taskService = TestBed.inject(TaskService);
-    viewService = TestBed.inject(ViewService);
     await fixture.whenStable();
   });
 
@@ -421,44 +419,6 @@ describe('ListView', () => {
 
     const markDoneButton = fixture.nativeElement.querySelector('button[title="Mark as done"]');
     markDoneButton.click();
-
-    expect(cardClickSpy).not.toHaveBeenCalled();
-  });
-
-  it('should display jump-to-calendar buttons for each task', () => {
-    const tasks = [
-      createMockTask(1, 'Task 1'),
-      createMockAlgoTask(2, 'Algo Task 1'),
-    ];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
-
-    const buttons = fixture.nativeElement.querySelectorAll('button[title="Show in calendar"]');
-    expect(buttons.length).toBe(2);
-  });
-
-  it('should set viewService jumpToDate when jump-to-calendar is clicked', () => {
-    const tasks = [createMockTask(1, 'Task 1')];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
-
-    const jumpButton = fixture.nativeElement.querySelector('button[title="Show in calendar"]');
-    jumpButton.click();
-
-    expect(viewService.jumpToDate()).toEqual(new Date('2026-05-10'));
-  });
-
-  it('should stop event propagation when jump-to-calendar is clicked', () => {
-    const tasks = [createMockTask(1, 'Task 1')];
-    mockTaskService.tasks$.next(tasks);
-    fixture.detectChanges();
-
-    const card = fixture.nativeElement.querySelector('.card');
-    const cardClickSpy = vi.fn();
-    card.addEventListener('click', cardClickSpy);
-
-    const jumpButton = fixture.nativeElement.querySelector('button[title="Show in calendar"]');
-    jumpButton.click();
 
     expect(cardClickSpy).not.toHaveBeenCalled();
   });

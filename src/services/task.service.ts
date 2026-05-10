@@ -111,12 +111,15 @@ export class TaskService {
       }
 
       this.tasks.clear();
+      const loadedIds: number[] = [];
       tasks.forEach((apiTask) => {
         if (apiTask.id !== undefined) {
           const modelTask = this.convertApiTaskToModel(apiTask);
           this.tasks.set(apiTask.id, modelTask);
+          loadedIds.push(apiTask.id);
         }
       });
+      this.cleanupCompletionState(loadedIds);
       this.tasksSubject.next([...this.tasks.values()]);
     } catch (error) {
       console.error('Error loading tasks from backend:', error);
@@ -237,8 +240,9 @@ export class TaskService {
   async deleteTask(id: number): Promise<void> {
     const params: DeleteTask$Params = { id };
     await this.api.invoke(deleteTaskApi, params);
-    // Remove from local cache
+    // Remove from local cache and localStorage
     this.tasks.delete(id);
+    this.removeTaskCompletion(id);
     this.tasksSubject.next([...this.tasks.values()]);
   }
 
@@ -260,6 +264,33 @@ export class TaskService {
     const state = this.loadCompletionState();
     state[taskId] = { isFinished, scopes: scopeStates || [] };
     localStorage.setItem('chronoscope-completion', JSON.stringify(state));
+  }
+
+  /**
+   * Removes completion state from localStorage.
+   */
+  removeTaskCompletion(taskId: number): void {
+    const state = this.loadCompletionState();
+    delete state[taskId];
+    localStorage.setItem('chronoscope-completion', JSON.stringify(state));
+  }
+
+  /**
+   * Cleans up localStorage entries for task IDs that no longer exist.
+   */
+  private cleanupCompletionState(loadedTaskIds: number[]): void {
+    const state = this.loadCompletionState();
+    const loadedIds = new Set(loadedTaskIds);
+    let changed = false;
+    for (const key of Object.keys(state)) {
+      if (!loadedIds.has(Number(key))) {
+        delete state[Number(key)];
+        changed = true;
+      }
+    }
+    if (changed) {
+      localStorage.setItem('chronoscope-completion', JSON.stringify(state));
+    }
   }
 
   /**
