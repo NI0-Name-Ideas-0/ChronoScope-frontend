@@ -7,12 +7,15 @@ import {
   confirmAccountLink as confirmAccountLinkApi,
   getIdentity,
   GetIdentity$Params,
+  requestAccountLink, 
+  RequestAccountLink$Params
 } from '../api/functions';
 import {
   AccountLinkConfirmRequest,
   AccountLinkConfirmResponse,
   AccountResponse,
   IdentityResponse,
+  AccountLinkRequest
 } from '../api/models';
 
 @Injectable({
@@ -115,6 +118,16 @@ export class Auth {
     }
   }
 
+  async linkAccount(email: string): Promise<void> {
+    try {
+      const params: RequestAccountLink$Params = {body: {targetEmail: email}};
+      await this.api.invoke(requestAccountLink, params);
+    } catch (error) {
+      console.error('Error linking accounts:', error);
+      throw error;
+    }
+  }
+   
   /*
    * Confirms the account linkage
    * @param request The request containing the token
