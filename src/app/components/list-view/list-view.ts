@@ -120,12 +120,10 @@ export class ListView implements OnInit {
     });
   }
 
-  onEdit(task: Task, event: Event) {
+  onMarkDone(task: Task, event: Event) {
     event.stopPropagation();
-    // Fetch the full task from the service and open for editing
-    this.taskService.getTask(task.id).then((apiTask) => {
-      this.taskModalService.openForEdit(apiTask);
-    });
+    task.isFinished = !task.isFinished;
+    this.cdr.detectChanges();
   }
 
   async onDelete(task: Task, event: Event) {
