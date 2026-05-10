@@ -11,10 +11,5 @@ import { AsyncPipe } from '@angular/common';
   styleUrl: './organizations.css',
 })
 export class OrganizationsSection {
-  mergeEmail = '';
   protected authService = inject(Auth);
-
-  requestLinkEmail(): void {
-    this.authService.linkAccount(this.mergeEmail);
-  }
 }

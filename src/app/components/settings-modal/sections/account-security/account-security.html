@@ -7,4 +7,32 @@
   <a class="btn btn-outline btn-sm" type="button" href="https://auth.ni0.team" target="_blank">
     Manage Account
   </a>
+
+  <!-- Merge accounts -->
+  <div class="settings-card">
+    <h3 class="settings-card-title">Linked Accounts</h3>
+    <p class="settings-card-desc">Accounts you have linked together.</p>
+    <ul class="mt-4 space-y-3" aria-label="Organization list">
+      @for (account of (authService.identity$ | async)?.accounts ; track account.id) {
+        <li class="flex p-3 rounded-xl bg-base-200/60 border border-base-300 justify-between items-center">
+            <p class="font-medium text-base-content text-sm truncate">{{ account.mail }}</p>
+        </li>
+      }
+    </ul>
+    <br>
+    <h3 class="settings-card-title">Merge Accounts</h3>
+    <p class="settings-card-desc">Link another account by entering its email address. Both accounts will be merged.</p>
+    <div class="mt-4 flex flex-col sm:flex-row gap-3">
+      <input
+        type="email"
+        [(ngModel)]="mergeEmail"
+        class="input input-bordered flex-1 bg-base-100"
+        placeholder="account@example.com"
+        aria-label="Email address to merge"
+      />
+      <button class="btn btn-outline btn-sm self-start sm:self-auto" type="button" (click)="requestLinkEmail()">
+        Send Merge Request
+      </button>
+    </div>
+  </div>
 </div>

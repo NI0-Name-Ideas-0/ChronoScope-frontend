@@ -4,4 +4,5 @@
 export interface AccountResponse {
   id: number;
   identityId: number;
+  mail: string;
 }
