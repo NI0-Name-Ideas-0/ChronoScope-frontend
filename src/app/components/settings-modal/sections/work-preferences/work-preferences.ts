@@ -23,6 +23,8 @@ interface SavedWorkState {
 
 /** Default daily work hours */
 const DEFAULT_HOURS_PER_DAY = 8;
+const MIN_SLOT_DURATION = 0.5;
+const HOURS_PER_DAY = 24;
 
 @Component({
   selector: 'app-settings-work-preferences',
@@ -243,6 +245,7 @@ export class WorkPreferencesSection {
    */
   private hasCollision(dayIndex: number, startHour: number, durationHours: number, excludeId?: string): boolean {
     const endHour = startHour + durationHours;
+    if (startHour < 0 || durationHours < MIN_SLOT_DURATION || endHour > HOURS_PER_DAY) return true;
     return this.slots().some((s) => {
       if (s.dayIndex !== dayIndex) return false;
       if (excludeId && s.id === excludeId) return false;
@@ -318,20 +321,21 @@ export class WorkPreferencesSection {
     // Snap to 30-minute grid (60px = 1 hour)
     const rawHour = rawY / 60;
     const snappedHour = Math.round(rawHour * 2) / 2;
-    const startHour = Math.max(0, Math.min(23.5, snappedHour));
+    const startHour = Math.max(0, Math.min(HOURS_PER_DAY - MIN_SLOT_DURATION, snappedHour));
 
     if (this.draggedSlotId) {
       // Moving existing slot
       const existing = this.slots().find((s) => s.id === this.draggedSlotId);
-      if (existing && !this.hasCollision(dayIndex, startHour, existing.durationHours, this.draggedSlotId)) {
+      const duration = existing ? Math.min(existing.durationHours, HOURS_PER_DAY - startHour) : MIN_SLOT_DURATION;
+      if (existing && !this.hasCollision(dayIndex, startHour, duration, this.draggedSlotId)) {
         this.slots.update((slots) =>
-          slots.map((s) => (s.id === this.draggedSlotId ? { ...s, dayIndex, startHour } : s))
+          slots.map((s) => (s.id === this.draggedSlotId ? { ...s, dayIndex, startHour, durationHours: duration } : s))
         );
       }
       this.draggedSlotId = null;
     } else if (this.dragPayload) {
       // Creating new slot from sidebar drag
-      const finalDuration = 0.5; // 30 minutes default for all new drops
+      const finalDuration = MIN_SLOT_DURATION;
 
       if (!this.hasCollision(dayIndex, startHour, finalDuration)) {
         const newSlot: TimeSlot = {
@@ -369,7 +373,9 @@ export class WorkPreferencesSection {
     const deltaPixels = event.clientY - this.resizeStartY;
     const deltaHours = deltaPixels / 60;
     // Snap to 30-minute increments
-    const newDuration = Math.max(0.5, Math.round((this.resizeStartDuration + deltaHours) * 2) / 2);
+    const maxDuration = HOURS_PER_DAY - this.resizingSlot.startHour;
+    const snappedDuration = Math.round((this.resizeStartDuration + deltaHours) * 2) / 2;
+    const newDuration = Math.min(maxDuration, Math.max(MIN_SLOT_DURATION, snappedDuration));
 
     // Only apply if no collision would occur
     if (!this.hasCollision(this.resizingSlot.dayIndex, this.resizingSlot.startHour, newDuration, this.resizingSlot.id)) {
