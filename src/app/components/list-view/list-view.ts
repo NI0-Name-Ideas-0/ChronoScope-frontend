@@ -1,8 +1,9 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '@services/task.service';
 import { TaskModalService } from '@services/task-modal.service';
+import { ViewService } from '@services/view.service';
 import { Task } from '@app/model/task';
 import { StaticTask } from '@app/model/static-task';
 import { AlgoTask } from '@app/model/algo-task';
@@ -21,9 +22,14 @@ export class ListView implements OnInit {
     private cdr: ChangeDetectorRef,
   ) {}
 
+  private viewService = inject(ViewService);
+
   tasks: Task[] = [];
-  searchTask: string = '';
   activeFilter: 'all' | 'todo' | 'today' | 'done' = 'today';
+
+  get searchTask(): string {
+    return this.viewService.searchTask();
+  }
 
   //filters for the automatic Button creation in the .html
   filters = [
@@ -67,9 +73,13 @@ export class ListView implements OnInit {
     return task instanceof AlgoTask;
   }
 
-  onSearchChange() {}
+  onSearchChange(value: string) {
+    this.viewService.searchTask.set(value);
+  }
 
-  clearSearch() {}
+  clearSearch() {
+    this.viewService.searchTask.set('');
+  }
 
   //used by the Filter-Buttons to set the value
   setFilter(filterValue: 'todo' | 'today' | 'done' | 'all') {
@@ -79,6 +89,11 @@ export class ListView implements OnInit {
   //used for creating the List-View with the diffrent filter values, default is the unfiltered List
   filteringTasks(): Task[] {
     let result = this.tasks;
+
+    if (this.searchTask) {
+      const term = this.searchTask.toLowerCase();
+      result = result.filter((task) => task.title.toLowerCase().includes(term));
+    }
 
     switch (this.activeFilter) {
       case 'todo':

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class ViewService {
@@ -7,6 +7,7 @@ export class ViewService {
   */
   private _listView = true;
   private _calendarView = true;
+  searchTask = signal('');
 
   get listView(): boolean {
     return this._listView;

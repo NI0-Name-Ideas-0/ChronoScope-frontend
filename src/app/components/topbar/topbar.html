@@ -7,7 +7,35 @@
   <div class="">
     <app-upcoming-badge></app-upcoming-badge>
   </div>
-  <div class="">
-    <input type="text" placeholder="Search" class="input input-bordered w-24 md:w-auto" />
+  <div class="flex items-center gap-2">
+    <input
+      type="text"
+      placeholder="Search"
+      class="input input-bordered w-24 md:w-auto"
+      [value]="viewService.searchTask()"
+      (input)="onSearchChange($any($event).target.value)"
+    />
+    @if (viewService.searchTask()) {
+      <button
+        class="btn btn-ghost btn-sm btn-circle"
+        (click)="clearSearch()"
+        title="Clear search"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    }
   </div>
 </div>
