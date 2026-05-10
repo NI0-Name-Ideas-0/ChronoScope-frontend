@@ -1,9 +1,19 @@
 import { Injectable } from '@angular/core';
 import { OAuthService } from 'angular-oauth2-oidc';
 import { BehaviorSubject, filter } from 'rxjs';
-import { Api } from '../api/api';
-import { getIdentity, GetIdentity$Params } from '../api/functions';
-import { IdentityResponse } from '../api/models';
+import { Api } from '@api/api';
+import {
+  ConfirmAccountLink$Params,
+  confirmAccountLink as confirmAccountLinkApi,
+  getIdentity,
+  GetIdentity$Params,
+} from '../api/functions';
+import {
+  AccountLinkConfirmRequest,
+  AccountLinkConfirmResponse,
+  AccountResponse,
+  IdentityResponse,
+} from '../api/models';
 
 @Injectable({
   providedIn: 'root',
@@ -40,7 +50,7 @@ export class Auth {
       // The first four are defined by OIDC.
       // Important: Request offline_access to get a refresh token
       // The api scope is a usecase specific one
-      scope: 'openid roles profile email organization',
+      scope: 'openid roles profile email organization:*',
 
       showDebugInformation: true,
     });
@@ -103,6 +113,19 @@ export class Auth {
       console.error('Error fetching identity:', error);
       throw error;
     }
+  }
+
+  /*
+   * Confirms the account linkage
+   * @param request The request containing the token
+   */
+  public async confirmLink(
+    request: AccountLinkConfirmRequest,
+  ): Promise<AccountLinkConfirmResponse> {
+    const params: ConfirmAccountLink$Params = {
+      body: request,
+    };
+    return this.api.invoke(confirmAccountLinkApi, params);
   }
 
   /**
