@@ -60,6 +60,19 @@ export class ListView implements OnInit {
   }
 
   /**
+   * Helper method to get the start date of a task
+   * Works for both StaticTask and AlgoTask
+   */
+  getTaskStartDate(task: Task): Date {
+    if (task instanceof StaticTask) {
+      return task.scope.start;
+    } else if (task instanceof AlgoTask) {
+      return task.startDate;
+    }
+    return new Date(); // fallback
+  }
+
+  /**
    * Helper method to check if a task is static
    */
   isStaticTask(task: Task): boolean {
@@ -139,6 +152,11 @@ export class ListView implements OnInit {
     event.stopPropagation();
     task.isFinished = !task.isFinished;
     this.cdr.detectChanges();
+  }
+
+  onJumpToCalendar(task: Task, event: Event) {
+    event.stopPropagation();
+    this.viewService.jumpToDate.set(this.getTaskStartDate(task));
   }
 
   async onDelete(task: Task, event: Event) {

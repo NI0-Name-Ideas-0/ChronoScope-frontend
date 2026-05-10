@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Calendar } from './calendar/calendar';
+import { ViewService } from '@services/view.service';
 
 @Component({
   selector: 'app-calendar-view',
@@ -7,4 +8,6 @@ import { Calendar } from './calendar/calendar';
   templateUrl: './calendar-view.html',
   styleUrl: './calendar-view.css',
 })
-export class CalendarView {}
+export class CalendarView {
+  viewService = inject(ViewService);
+}

@@ -8,6 +8,7 @@ export class ViewService {
   private _listView = true;
   private _calendarView = true;
   searchTask = signal('');
+  jumpToDate = signal<Date | null>(null);
 
   get listView(): boolean {
     return this._listView;
