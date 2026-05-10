@@ -126,6 +126,8 @@ export class Auth {
       console.error('Error linking accounts:', error);
       throw error;
     }
+  }
+   
   /*
    * Confirms the account linkage
    * @param request The request containing the token
