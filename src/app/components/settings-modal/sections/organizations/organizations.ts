@@ -3,15 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { Auth } from '@services/auth';
 import { AsyncPipe } from '@angular/common';
 
-interface Organization {
-  id: string;
-  name: string;
-  role: string;
-  avatarInitials: string;
-  memberCount: number;
-  email: string;
-}
-
 @Component({
   selector: 'app-settings-organizations',
   imports: [FormsModule, AsyncPipe],

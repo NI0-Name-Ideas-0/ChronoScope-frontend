@@ -13,13 +13,26 @@
         <li class="flex p-3 rounded-xl bg-base-200/60 border border-base-300 justify-between items-center">
             <p class="font-medium text-base-content text-sm truncate">{{ org.name }}</p>
             @if ((authService.identity$ | async)?.adminOrganizations?.includes(org.id!)) {
-            <button class="btn btn-outline btn-sm self-start sm:self-auto" type="button">
-              Manage
-            </button>
+              <p class="font-medium text-base-content text-sm truncate">Admin</p>
             }
         </li>
       }
     </ul>
+  </div>
+
+  <!-- Organizations list -->
+  <div class="settings-card">
+    <h3 class="settings-card-title">Manage Organizations</h3>
+    <p class="settings-card-desc">Invite People to Organizations.</p>
+    <br>
+    <div class="tabs tabs-box">
+      @for (org of (authService.identity$ | async)?.organizations ; track org.id) {
+        @if ((authService.identity$ | async)?.adminOrganizations?.includes(org.id!)) {
+          <input type="radio" name="my_tabs_7" class="tab z-1" [aria-label]="org.name" />
+          <div class="tab-content border-base-300 bg-base-100 p-6">Manage {{org.name}} here</div>
+        }
+      }
+    </div>
   </div>
 
   <!-- Merge accounts -->
