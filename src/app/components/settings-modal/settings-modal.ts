@@ -98,10 +98,4 @@ export class SettingsModal {
       this.close();
     }
   }
-
-  onKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      this.close();
-    }
-  }
 }

@@ -6,14 +6,13 @@
     aria-modal="true"
     aria-label="Create task"
     tabindex="-1"
-    (click)="close()"
+    (mousedown)="onBackdropClick($event)"
     (keydown.escape)="close()"
   >
     <div
       class="task-panel"
       [class.task-panel--leaving]="isLeaving()"
       role="document"
-      (click)="$event.stopPropagation()"
     >
       <!-- Header -->
       <div class="task-header">

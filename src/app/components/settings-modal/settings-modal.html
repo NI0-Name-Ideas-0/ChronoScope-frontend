@@ -6,8 +6,8 @@
     role="dialog"
     aria-modal="true"
     aria-label="Settings"
-    (click)="onBackdropClick($event)"
-    (keydown)="onKeydown($event)"
+    (mousedown)="onBackdropClick($event)"
+    (keydown.escape)="close()"
     tabindex="-1"
   >
     <!-- Modal panel -->
@@ -70,8 +70,8 @@
               <app-settings-organizations />
             }
             @case ('work') {
-              <app-settings-work-preferences 
-                (saved)="onWorkSaved($event)" 
+              <app-settings-work-preferences
+                (saved)="onWorkSaved($event)"
                 (cancelled)="onWorkCancelled()" />
             }
           }
