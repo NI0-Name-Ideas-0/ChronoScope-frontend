@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, inject, AfterViewInit, ViewChild, ElementRef, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { output } from '@angular/core';
@@ -25,6 +25,8 @@ interface SavedWorkState {
 const DEFAULT_HOURS_PER_DAY = 8;
 const MIN_SLOT_DURATION = 0.5;
 const HOURS_PER_DAY = 24;
+const ROW_HEIGHT = 50;
+const DEFAULT_SCROLL_HOUR = 6;
 
 @Component({
   selector: 'app-settings-work-preferences',
@@ -37,11 +39,14 @@ const HOURS_PER_DAY = 24;
     '(document:mouseup)': 'onResizeEnd()',
   },
 })
-export class WorkPreferencesSection {
+export class WorkPreferencesSection implements AfterViewInit {
   /** Emits the final slot array when the user clicks Save */
   saved = output<TimeSlot[]>();
   /** Emits when the user clicks Cancel to discard changes */
   cancelled = output<void>();
+
+  /** Hour to scroll to on initialization (0-23). Defaults to 6 (6:00 AM). */
+  scrollHour = input(DEFAULT_SCROLL_HOUR);
 
   /** Injected auth service to retrieve user organizations */
   private auth = inject(Auth);
@@ -94,6 +99,9 @@ export class WorkPreferencesSection {
   /** Day metadata for the calendar grid */
   weekDays = Array.from({ length: 7 }, (_, i) => ({ index: i, short: this.dayNames[i] }));
 
+  /** Reference to the 6:00 hour row element for scrolling into view */
+  @ViewChild('calendarBody') calendarBody!: ElementRef<HTMLElement>;
+
   // --- Computed Values ---
 
   /** Count of days marked as work days */
@@ -121,6 +129,16 @@ export class WorkPreferencesSection {
 
   constructor() {
     this.loadOrganizations();
+  }
+
+  /** Lifecycle hook: scroll to configured hour after view is initialized */
+  ngAfterViewInit(): void {
+    // Use setTimeout to ensure the view is fully rendered before scrolling
+    setTimeout(() => {
+      const targetHour = this.scrollHour();
+      const scrollTop = targetHour * ROW_HEIGHT;
+      this.calendarBody?.nativeElement.scrollTo({ top: scrollTop, behavior: 'instant' });
+    }, 0);
   }
 
   /** Loads previously saved work slot preferences from the backend */

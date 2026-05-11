@@ -161,7 +161,12 @@
         <!-- Time Labels Column -->
         <div class="border-r border-base-300 bg-base-200/30">
           @for (hour of hours; track hour) {
-            <div class="h-[60px] flex items-start justify-center pt-1 text-xs text-base-content/40 border-b border-base-200 box-border">
+            <div
+              class="h-[50px] flex items-start justify-center pt-1 text-xs text-base-content/40 border-b border-base-200 box-border"
+              [attr.data-hour]="hour"
+              [attr.aria-label]="hour + ':00'"
+              [attr.data-six-am]="hour === 6 ? true : null"
+            >
               {{ hour }}:00
             </div>
           }
@@ -169,8 +174,9 @@
 
         <!-- Day Columns -->
         @for (day of weekDays; track day.index) {
+          <!-- Here -->
           <div
-            class="relative border-r border-base-200 last:border-r-0 min-h-[1440px] transition-colors"
+            class="relative border-r border-base-200 last:border-r-0 min-h-[1200px] transition-colors"
             [class.bg-base-200/30]="!workDays()[day.index]"
             [class.drop-target]="dragOverDay() === day.index && workDays()[day.index]"
             (dragover)="onDayDragOver($event, day.index)"
@@ -178,8 +184,14 @@
           >
 
             <!-- Hour grid lines -->
+            <!--
+                Here row height if you want to change it.
+                Also change the min-h-[...] value above to match 24 * row height.
+                Also change the ROW_HEIGHT value in the typescript file for the scroll calculation.
+                Silas ich hasse dich dafür dass du die row height hardcecodet hast.
+            -->
             @for (hour of hours; track hour) {
-              <div class="h-[60px] border-b border-base-200 box-border"></div>
+              <div class="h-[50px] border-b border-base-200 box-border"></div>
             }
 
             <!-- Time Slots -->
