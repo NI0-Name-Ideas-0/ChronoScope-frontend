@@ -56,6 +56,27 @@
         </button>
       </div>
 
+      <!-- Mode Toggle -->
+      <div class="task-mode-toggle" role="group" aria-label="Task type">
+        <button
+          type="button"
+          class="task-mode-btn"
+          [class.task-mode-btn--active]="mode === 'static'"
+          [class.text-primary-content]="mode === 'static'"
+          (click)="mode = 'static'"
+        >
+          Static
+        </button>
+        <button
+          type="button"
+          class="task-mode-btn"
+          [class.task-mode-btn--active]="mode === 'planned'"
+          (click)="mode = 'planned'"
+        >
+          Planned
+        </button>
+      </div>
+
       <!-- Body -->
       <div class="task-body">
         <!-- Error Message -->
@@ -78,27 +99,6 @@
             <span>{{ errorMessage() }}</span>
           </div>
         }
-
-        <!-- Mode Toggle -->
-        <div class="task-mode-toggle" role="group" aria-label="Task type">
-          <button
-            type="button"
-            class="task-mode-btn"
-            [class.task-mode-btn--active]="mode === 'static'"
-            [class.text-primary-content]="mode === 'static'"
-            (click)="mode = 'static'"
-          >
-            Static
-          </button>
-          <button
-            type="button"
-            class="task-mode-btn"
-            [class.task-mode-btn--active]="mode === 'planned'"
-            (click)="mode = 'planned'"
-          >
-            Planned
-          </button>
-        </div>
 
         <!-- Title -->
         <div class="form-control">
