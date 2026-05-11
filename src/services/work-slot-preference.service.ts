@@ -10,36 +10,29 @@ import { WorkSlotResponse } from '../api/models';
 import { Organization } from '../api/models';
 import { TimeSlot, COLOR_POOL } from '@app/model/work-preference.model';
 
+/** Ordered mapping from dayIndex (0=Mon..6=Sun) to the Java DayOfWeek string */
+const DAY_OF_WEEK_NAMES = [
+  'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
+] as const;
+
+type DayOfWeekName = typeof DAY_OF_WEEK_NAMES[number];
+const MINUTES_PER_DAY = 24 * 60;
+
 /**
- * Converts the frontend's recurring weekly TimeSlot format to/from the backend's
- * absolute-timestamp WorkSlot API.
+ * Handles persistence of the frontend's recurring weekly TimeSlot schedule against
+ * the backend's recurring WorkSlot API (DayOfWeek + HH:mm startTime/endTime).
  *
- * Note: The backend requires an organizationId for every slot, so break slots
- * (type === 'break') are skipped when saving. Only organization work slots are
- * persisted to the backend.
+ * Break slots (type === 'break') are frontend-only and never persisted.
  */
 @Injectable({ providedIn: 'root' })
 export class WorkSlotPreferenceService {
   private api = inject(Api);
   private auth = inject(Auth);
 
-  /** Reference Monday used to convert dayIndex (0=Mon..6=Sun) to absolute Instants */
-  private readonly REFERENCE_MONDAY = Date.UTC(2024, 0, 1);
-
   /** Load organization slots from the backend and map them to TimeSlots. */
   async loadPreferences(): Promise<TimeSlot[]> {
     const orgs = this.auth.getIdentityData()?.organizations ?? [];
-    const response = await this.api.invoke(getWorkSlots, {});
-
-    let slotsData: WorkSlotResponse[] = response as WorkSlotResponse[];
-    if (response instanceof Blob) {
-      const jsonText = await response.text();
-      slotsData = JSON.parse(jsonText);
-    }
-
-    if (!Array.isArray(slotsData)) {
-      return [];
-    }
+    const slotsData = await this.fetchSlots();
 
     return slotsData
       .map((ws) => this.toTimeSlot(ws, orgs))
@@ -48,48 +41,40 @@ export class WorkSlotPreferenceService {
 
   /**
    * Persist the given slots to the backend.
-   * This performs a bulk replace: all existing backend slots are deleted and
-   * new organization slots are created from the provided array.
+   * Bulk replace: all existing backend slots are deleted first, then the new
+   * organization slots are created sequentially (to avoid race conditions).
    */
   async savePreferences(slots: TimeSlot[]): Promise<void> {
-    // 1. Delete all existing work slots for this identity
-    const existing = await this.api.invoke(getWorkSlots, {});
-    let existingData: WorkSlotResponse[] = existing as WorkSlotResponse[];
-    if (existing instanceof Blob) {
-      const jsonText = await existing.text();
-      existingData = JSON.parse(jsonText);
+    // 1. Delete all existing work slots
+    const existingData = await this.fetchSlots();
+    for (const ws of existingData) {
+      if (ws.id != null) {
+        await this.api.invoke(deleteWorkSlot, { id: ws.id });
+      }
     }
 
-    if (Array.isArray(existingData)) {
-      await Promise.all(
-        existingData.map((ws) => {
-          if (ws.id != null) {
-            return this.api.invoke(deleteWorkSlot, { id: ws.id });
-          }
-          return Promise.resolve();
-        })
-      );
-    }
-
-    // 2. Create new organization slots (breaks are skipped)
+    // 2. Create new organization slots (breaks are frontend-only)
     const orgSlots = slots.filter((s) => s.type === 'organization');
-    await Promise.all(
-      orgSlots.map((slot) => {
-        if (!slot.organizationId) {
-          console.warn('Skipping slot without organization:', slot);
-          return Promise.resolve();
-        }
-
-        const { startAt, endAt } = this.toWorkSlotTimes(slot);
-        return this.api.invoke(createWorkSlot, {
-          body: {
-            organizationId: slot.organizationId,
-            startAt,
-            endAt,
-          },
-        });
-      })
-    );
+    for (const slot of orgSlots) {
+      if (!slot.organizationId) {
+        console.warn('Skipping slot without organization:', slot);
+        continue;
+      }
+      const startMinutes = this.toMinutes(slot.startHour);
+      const endMinutes = this.toMinutes(slot.startHour + slot.durationHours);
+      if (startMinutes < 0 || endMinutes > MINUTES_PER_DAY || startMinutes >= endMinutes) {
+        console.warn('Skipping invalid work slot:', slot);
+        continue;
+      }
+      await this.api.invoke(createWorkSlot, {
+        body: {
+          organizationId: slot.organizationId,
+          dayOfWeek: DAY_OF_WEEK_NAMES[slot.dayIndex],
+          startTime: this.toLocalTimeString(startMinutes),
+          endTime: this.toLocalTimeString(endMinutes),
+        },
+      });
+    }
   }
 
   /** Convert a backend WorkSlotResponse to a frontend TimeSlot. */
@@ -97,7 +82,7 @@ export class WorkSlotPreferenceService {
     ws: WorkSlotResponse,
     orgs: Organization[]
   ): TimeSlot | null {
-    if (!ws.startAt || !ws.endAt || !ws.organizationId) {
+    if (!ws.startTime || !ws.endTime || !ws.organizationId || !ws.dayOfWeek) {
       return null;
     }
 
@@ -106,20 +91,13 @@ export class WorkSlotPreferenceService {
       return null;
     }
 
-    const startDate = new Date(ws.startAt);
-    const endDate = new Date(ws.endAt);
+    const dayIndex = DAY_OF_WEEK_NAMES.indexOf(ws.dayOfWeek as DayOfWeekName);
+    if (dayIndex === -1) return null;
 
-    // Convert UTC day to our dayIndex (0=Mon..6=Sun)
-    const dayOfWeek = startDate.getUTCDay();
-    const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-    const startHour = startDate.getUTCHours() + startDate.getUTCMinutes() / 60;
-    const durationMs = endDate.getTime() - startDate.getTime();
-    const durationHours = durationMs / (1000 * 60 * 60);
-
-    // Snap to 30-minute grid to match the frontend
-    const roundedStartHour = Math.round(startHour * 2) / 2;
-    const roundedDurationHours = Math.max(0.5, Math.round(durationHours * 2) / 2);
+    const startHour = this.parseLocalTime(ws.startTime);
+    const endHour = this.parseLocalTime(ws.endTime);
+    const durationHours = endHour - startHour;
+    if (durationHours <= 0) return null;
 
     const orgIndex = orgs.findIndex((o) => o.id === ws.organizationId);
     const colorClass = COLOR_POOL[orgIndex % COLOR_POOL.length];
@@ -127,8 +105,8 @@ export class WorkSlotPreferenceService {
     return {
       id: ws.id?.toString() ?? this.generateId(),
       dayIndex,
-      startHour: roundedStartHour,
-      durationHours: roundedDurationHours,
+      startHour,
+      durationHours,
       type: 'organization',
       label: org.name,
       colorClass,
@@ -136,21 +114,32 @@ export class WorkSlotPreferenceService {
     };
   }
 
-  /** Convert a frontend TimeSlot to absolute ISO-8601 timestamps. */
-  private toWorkSlotTimes(slot: TimeSlot): { startAt: string; endAt: string } {
-    const targetDate = new Date(this.REFERENCE_MONDAY + slot.dayIndex * 24 * 60 * 60 * 1000);
+  /** Parse a "HH:mm" string to a decimal hour (e.g. "09:30" → 9.5). */
+  private parseLocalTime(time: string): number {
+    const [h, m] = time.split(':').map(Number);
+    return h + m / 60;
+  }
 
-    const hours = Math.floor(slot.startHour);
-    const minutes = Math.round((slot.startHour - hours) * 60);
-    targetDate.setUTCHours(hours, minutes, 0, 0);
+  /** Convert minutes after midnight to a "HH:mm" string. */
+  private toLocalTimeString(totalMinutes: number): string {
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  }
 
-    const startAt = targetDate.toISOString();
+  private toMinutes(hour: number): number {
+    return Math.round(hour * 60);
+  }
 
-    const endDate = new Date(targetDate);
-    endDate.setUTCMinutes(endDate.getUTCMinutes() + Math.round(slot.durationHours * 60));
-    const endAt = endDate.toISOString();
-
-    return { startAt, endAt };
+  /** Fetch and parse work slots from the API, handling Blob responses. */
+  private async fetchSlots(): Promise<WorkSlotResponse[]> {
+    const response = await this.api.invoke(getWorkSlots, {});
+    if (response instanceof Blob) {
+      const jsonText = await response.text();
+      const parsed = JSON.parse(jsonText);
+      return Array.isArray(parsed) ? parsed : [];
+    }
+    return Array.isArray(response) ? (response as WorkSlotResponse[]) : [];
   }
 
   private generateId(): string {
