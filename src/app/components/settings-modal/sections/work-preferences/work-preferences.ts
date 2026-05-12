@@ -24,6 +24,7 @@ interface SavedWorkState {
 /** Default daily work hours */
 const DEFAULT_HOURS_PER_DAY = 8;
 const MIN_SLOT_DURATION = 0.5;
+const DEFAULT_SLOT_DURATION = 1;
 const HOURS_PER_DAY = 24;
 const ROW_HEIGHT = 50;
 const DEFAULT_SCROLL_HOUR = 6;
@@ -363,7 +364,7 @@ export class WorkPreferencesSection implements AfterViewInit {
       this.draggedSlotId = null;
     } else if (this.dragPayload) {
       // Creating new slot from sidebar drag
-      const finalDuration = MIN_SLOT_DURATION;
+      const finalDuration = DEFAULT_SLOT_DURATION;
 
       if (!this.hasCollision(dayIndex, startHour, finalDuration)) {
         const newSlot: TimeSlot = {
