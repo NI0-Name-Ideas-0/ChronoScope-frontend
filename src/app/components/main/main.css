@@ -1,3 +1,17 @@
+@reference "#styles.css";
+
 main {
   background-color: var(--color-chrono);
+}
+
+.split-view-divider {
+  @apply bg-(--color-chrono) h-full w-2;
+}
+
+.list-view {
+  @apply bg-base-100 rounded-lg p-1.5;
+}
+
+.calendar-view {
+  @apply bg-base-100 rounded-lg p-3;
 }
