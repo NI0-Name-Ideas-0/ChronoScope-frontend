@@ -306,6 +306,7 @@ export class TaskService {
         new Date(dynamicTask.startAt!),
         new Date(dynamicTask.endAt!),
         this.parseDurationToMinutes(dynamicTask.duration, 0),
+        this.parseDurationToMinutes(dynamicTask.elapsed, 0),
         dynamicTask.dependencies,
         (dynamicTask.labels as any)?.map((l: any) => l.name || l) || [],
         dynamicTask.organizationId || null,
@@ -381,5 +382,9 @@ export class TaskService {
 
   getAllCalendarEvents(): EventInput[] {
     return [...this.tasks.values()].flatMap((task: any) => this.toCalendarEvents(task));
+  }
+
+  getAllTasks(): Task[] {
+    return [...this.tasks.values()];
   }
 }

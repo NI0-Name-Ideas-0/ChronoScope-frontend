@@ -216,12 +216,12 @@ export class TaskModal {
       this.staticTask = this.emptyStaticTask();
     } else {
       this.mode = 'static';
-      const startDate = task.startAt ? task.startAt.split('T')[0] : '';
-      const startTime = task.startAt
-        ? task.startAt.split('T')[1]?.substring(0, 5) || '00:00'
-        : '00:00';
-      const endDate = task.endAt ? task.endAt.split('T')[0] : '';
-      const endTime = task.endAt ? task.endAt.split('T')[1]?.substring(0, 5) || '00:00' : '00:00';
+      const startDateTime = task.startAt ? new Date(task.startAt) : null;
+      const endDateTime = task.endAt ? new Date(task.endAt) : null;
+      const startDate = startDateTime ? this.formatLocalDate(startDateTime) : '';
+      const startTime = startDateTime ? this.formatLocalTime(startDateTime) : '00:00';
+      const endDate = endDateTime ? this.formatLocalDate(endDateTime) : '';
+      const endTime = endDateTime ? this.formatLocalTime(endDateTime) : '00:00';
 
       this.staticTask = {
         ...baseData,
@@ -467,6 +467,19 @@ export class TaskModal {
 
   getTaskEndDate(): Date {
     return this.stringDateToDate(this.staticTask.endDate, this.staticTask.endTime);
+  }
+
+  private formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private formatLocalTime(date: Date): string {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
   }
 
   close() {
