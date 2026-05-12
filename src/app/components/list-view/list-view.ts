@@ -32,8 +32,12 @@ export class ListView implements OnInit {
   // Tracks which AlgoTask IDs are expanded
   expandedTasks = new Set<number>();
 
-  get searchTask(): string {
-    return this.viewService.searchTask();
+  get activeFilterDesc(): string {
+    const filter = this.viewService.activeFilter();
+    if (filter?.type === 'task') return 'task';
+    if (filter?.type === 'label') return 'label';
+    if (this.viewService.selectedOrganizationId()) return 'organization';
+    return '';
   }
 
   //filters for the automatic Button creation in the .html
@@ -123,12 +127,21 @@ export class ListView implements OnInit {
     return doneScopes / task.scopes.length;
   }
 
-  onSearchChange(value: string) {
-    this.viewService.searchTask.set(value);
-  }
-
-  clearSearch() {
-    this.viewService.searchTask.set('');
+  /**
+   * Returns the scopes to display for an AlgoTask.
+   * In 'today' view only scopes that fall on today are shown.
+   */
+  getVisibleScopes(task: AlgoTask): Scope[] {
+    if (this.activeFilter !== 'today') {
+      return task.scopes;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return task.scopes.filter((scope) => {
+      const scopeDate = new Date(scope.start);
+      scopeDate.setHours(0, 0, 0, 0);
+      return scopeDate.getTime() === today.getTime();
+    });
   }
 
   //used by the Filter-Buttons to set the value
@@ -140,9 +153,20 @@ export class ListView implements OnInit {
   filteringTasks(): Task[] {
     let result = this.tasks;
 
-    if (this.searchTask) {
-      const term = this.searchTask.toLowerCase();
-      result = result.filter((task) => task.title.toLowerCase().includes(term));
+    // Apply organization filter
+    const orgId = this.viewService.selectedOrganizationId();
+    if (orgId) {
+      result = result.filter((task) => task.organizationId === orgId);
+    }
+
+    // Apply active filter (task or label)
+    const activeFilter = this.viewService.activeFilter();
+    if (activeFilter) {
+      if (activeFilter.type === 'task') {
+        result = result.filter((task) => task.id === activeFilter.value);
+      } else if (activeFilter.type === 'label') {
+        result = result.filter((task) => task.labels?.includes(activeFilter.value as string));
+      }
     }
 
     switch (this.activeFilter) {
@@ -156,9 +180,18 @@ export class ListView implements OnInit {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         result = result.filter((task) => {
-          const due = this.getTaskDueDate(task);
-          due.setHours(0, 0, 0, 0);
-          return due.getTime() === today.getTime();
+          if (task instanceof StaticTask) {
+            const due = new Date(task.scope.end);
+            due.setHours(0, 0, 0, 0);
+            return due.getTime() === today.getTime();
+          } else if (task instanceof AlgoTask) {
+            return task.scopes.some((scope) => {
+              const scopeDate = new Date(scope.start);
+              scopeDate.setHours(0, 0, 0, 0);
+              return scopeDate.getTime() === today.getTime();
+            });
+          }
+          return false;
         });
         break;
       default:

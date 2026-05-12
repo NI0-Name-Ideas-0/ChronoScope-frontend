@@ -1,5 +1,10 @@
 import { Injectable, signal } from '@angular/core';
 
+export interface ActiveFilter {
+  type: 'task' | 'label';
+  value: string | number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ViewService {
   /* 
@@ -9,6 +14,11 @@ export class ViewService {
   private _calendarView = true;
   searchTask = signal('');
   jumpToDate = signal<Date | null>(null);
+
+  // New search/filter signals
+  searchQuery = signal('');
+  selectedOrganizationId = signal<string | null>(null);
+  activeFilter = signal<ActiveFilter | null>(null);
 
   get listView(): boolean {
     return this._listView;

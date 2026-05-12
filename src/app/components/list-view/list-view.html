@@ -143,7 +143,7 @@
       <!-- Expanded scopes for AlgoTasks -->
       @if (isAlgoTask(task) && isExpanded(task)) {
         <div class="ml-4 space-y-1">
-          @for (scope of $any(task).scopes; track scope.start.getTime()) {
+          @for (scope of getVisibleScopes($any(task)); track scope.start.getTime()) {
             <div
               class="card bg-base-200 shadow-sm border border-base-300 p-3 flex items-center justify-between"
               [class.opacity-60]="scope.isFinished"
@@ -185,7 +185,7 @@
         <div class="text-6xl mb-4">📝</div>
         <h3 class="text-lg font-semibold mb-2">No tasks found</h3>
         <p class="text-base-content/70">
-          {{ searchTask ? 'Try another name' : '' }}
+          {{ activeFilterDesc ? 'Try another ' + activeFilterDesc : '' }}
         </p>
       </div>
     }
