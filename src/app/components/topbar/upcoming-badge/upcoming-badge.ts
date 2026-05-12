@@ -42,8 +42,14 @@ export class UpcomingBadge implements OnInit, OnDestroy {
     return 'badge-info';
   });
 
-  showCheckmark = computed(() => this.currentEntry()?.state === 'active');
-  showOverdueAction = computed(() => this.currentEntry()?.state === 'overdue');
+  showCheckmark = computed(() => {
+    const entry = this.currentEntry();
+    return !!entry && entry.taskType === 'dynamic' && entry.state !== 'upcoming';
+  });
+  showOverdueAction = computed(() => {
+    const entry = this.currentEntry();
+    return !!entry && entry.taskType === 'dynamic' && entry.state === 'overdue';
+  });
 
   ngOnInit(): void {
     this.subscriptions.add(
@@ -63,7 +69,7 @@ export class UpcomingBadge implements OnInit, OnDestroy {
   }
 
   openOverdueModal(): void {
-    this.additionalMinutes.set(15);
+    this.additionalMinutes.set(this.currentScopeMinutes());
     this.modalError.set(null);
     this.showOverdueModal.set(true);
   }
@@ -90,7 +96,8 @@ export class UpcomingBadge implements OnInit, OnDestroy {
     const entry = this.currentEntry();
     if (!entry || entry.taskType !== 'dynamic') return;
 
-    const additional = this.additionalMinutes();
+    const maxAdditional = this.currentScopeMinutes();
+    const additional = Math.min(this.additionalMinutes(), maxAdditional);
     if (!Number.isFinite(additional) || additional < 0) {
       this.modalError.set('Please enter a valid number of minutes.');
       return;
@@ -214,6 +221,16 @@ export class UpcomingBadge implements OnInit, OnDestroy {
 
   private scopeDurationMinutes(scope: Scope): number {
     return Math.max(0, Math.round((scope.end.getTime() - scope.start.getTime()) / 60000));
+  }
+
+  currentScopeMinutes(): number {
+    const entry = this.currentEntry();
+    if (!entry) return 0;
+    return this.scopeDurationMinutes(entry.scope);
+  }
+
+  clampAdditionalMinutes(value: number): number {
+    return Math.min(value, this.currentScopeMinutes());
   }
 
   private getPendingScopes(task: AlgoTask): Scope[] {

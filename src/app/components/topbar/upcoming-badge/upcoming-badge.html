@@ -38,9 +38,10 @@
         type="number"
         class="input input-bordered"
         min="0"
+        [max]="currentScopeMinutes()"
         step="5"
         [ngModel]="additionalMinutes()"
-        (ngModelChange)="additionalMinutes.set(+$event)"
+        (ngModelChange)="additionalMinutes.set(clampAdditionalMinutes(+$event))"
       />
       @if (modalError()) {
         <span class="text-xs text-error mt-2">{{ modalError() }}</span>
