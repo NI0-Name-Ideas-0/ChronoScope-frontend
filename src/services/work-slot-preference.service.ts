@@ -166,8 +166,13 @@ export class WorkSlotPreferenceService {
     return { dayOfWeek, startTime, endTime };
   }
 
-  /** Formats a decimal hour as HH:mm string. */
+  /** Formats a decimal hour as HH:mm string.
+   *  Caps 24:00 to 23:59 because the backend rejects midnight as an end time.
+   */
   private formatTime(hour: number): string {
+    if (hour >= 24) {
+      return '23:59';
+    }
     const h = Math.floor(hour);
     const m = Math.round((hour - h) * 60);
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
