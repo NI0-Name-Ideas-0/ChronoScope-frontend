@@ -42,11 +42,17 @@
       >
         <!-- Content -->
         <div class="flex-1 min-w-0 flex flex-col justify-center text-center">
-          <div class="flex items-center justify-center gap-2 mb-1">
+          <div
+            class="flex items-center justify-center gap-2 mb-1 px-2 py-1 rounded-lg transition-colors"
+            [class.cursor-pointer]="isAlgoTask(task)"
+            [class.select-none]="isAlgoTask(task)"
+            [class.hover:bg-base-200]="isAlgoTask(task)"
+            (click)="isAlgoTask(task) && toggleExpand(task, $event)"
+          >
             <!-- Expand/Collapse chevron for AlgoTasks -->
             @if (isAlgoTask(task)) {
               <button
-                class="btn btn-ghost btn-xs btn-circle expand-btn"
+                class="btn-ghost"
                 (click)="toggleExpand(task, $event)"
                 [title]="isExpanded(task) ? 'Collapse' : 'Expand'"
               >

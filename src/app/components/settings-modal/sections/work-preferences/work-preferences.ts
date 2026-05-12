@@ -46,6 +46,9 @@ export class WorkPreferencesSection {
   /** Service to persist/retrieve work slots via the backend API */
   private preferenceService = inject(WorkSlotPreferenceService);
 
+  /** localStorage key for work preferences */
+  private readonly STORAGE_KEY = 'chronoscope-work-preferences';
+
   // --- Settings ---
 
   /** Number of hours available for work per day */
@@ -121,17 +124,55 @@ export class WorkPreferencesSection {
     this.loadOrganizations();
   }
 
+  /** Loads work preferences from localStorage */
+  private loadFromLocalStorage(): void {
+    try {
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (typeof data.hoursPerDay === 'number') {
+          this.hoursPerDay.set(data.hoursPerDay);
+        }
+        if (Array.isArray(data.workDays) && data.workDays.length === 7) {
+          this.workDays.set([...data.workDays]);
+        }
+        if (Array.isArray(data.slots)) {
+          this.slots.set(data.slots);
+        }
+        this.savedState = {
+          hoursPerDay: this.hoursPerDay(),
+          workDays: [...this.workDays()],
+          slots: JSON.parse(JSON.stringify(this.slots())),
+        };
+      }
+    } catch (err) {
+      console.error('Failed to load work preferences from localStorage:', err);
+    }
+  }
+
+  /** Saves work preferences to localStorage */
+  private saveToLocalStorage(): void {
+    try {
+      const data = {
+        hoursPerDay: this.hoursPerDay(),
+        workDays: this.workDays(),
+        slots: this.slots(),
+      };
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+    } catch (err) {
+      console.error('Failed to save work preferences to localStorage:', err);
+    }
+  }
+
   /** Loads previously saved work slot preferences from the backend */
   private async loadSlotsFromBackend(): Promise<void> {
     try {
       const slots = await this.preferenceService.loadPreferences();
-      if (slots.length > 0) {
-        this.slots.set(slots);
-        this.savedState = {
-          ...this.savedState,
-          slots: JSON.parse(JSON.stringify(slots)),
-        };
-      }
+      this.slots.set(slots);
+      this.savedState = {
+        ...this.savedState,
+        slots: JSON.parse(JSON.stringify(slots)),
+      };
     } catch (err) {
       console.error('Failed to load work slot preferences:', err);
     }
@@ -147,7 +188,13 @@ export class WorkPreferencesSection {
         colorClass: COLOR_POOL[i % COLOR_POOL.length],
       }));
     this.organizations.set(orgs);
-    this.loadSlotsFromBackend();
+
+    // Load hours/workDays from localStorage, then overwrite slots with backend state
+    // so IDs stay in sync and we don't create duplicates on save
+    this.loadFromLocalStorage();
+    this.loadSlotsFromBackend().then(() => {
+      this.saveToLocalStorage();
+    });
   }
 
   /** Toggles a day between work day and off day; removes all slots when switching to off */
@@ -220,10 +267,17 @@ export class WorkPreferencesSection {
     this.cancelled.emit();
   }
 
-  /** Save button handler: persist slots to backend, store baseline and emit saved event */
+  /** Save button handler: persist slots to backend, reload to get stable IDs, save to localStorage, store baseline and emit saved event */
   async onSave(): Promise<void> {
     try {
       await this.preferenceService.savePreferences(this.slots());
+
+      // Reload from backend so newly created slots get their real IDs
+      // and we don't create duplicates on the next save
+      const reloadedSlots = await this.preferenceService.loadPreferences();
+      this.slots.set(reloadedSlots);
+
+      this.saveToLocalStorage();
       this.storeCurrentState();
       this.saved.emit(this.slots());
     } catch (err) {

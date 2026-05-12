@@ -4,9 +4,9 @@ import { Auth } from './auth';
 import {
   getWorkSlots,
   createWorkSlot,
+  updateWorkSlot,
   deleteWorkSlot,
 } from '../api/functions';
-import { WorkSlotResponse } from '../api/models';
 import { Organization } from '../api/models';
 import { TimeSlot, COLOR_POOL } from '@app/model/work-preference.model';
 
@@ -23,15 +23,14 @@ export class WorkSlotPreferenceService {
   private api = inject(Api);
   private auth = inject(Auth);
 
-  /** Reference Monday used to convert dayIndex (0=Mon..6=Sun) to absolute Instants */
-  private readonly REFERENCE_MONDAY = Date.UTC(2024, 0, 1);
+  private readonly DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
   /** Load organization slots from the backend and map them to TimeSlots. */
   async loadPreferences(): Promise<TimeSlot[]> {
     const orgs = this.auth.getIdentityData()?.organizations ?? [];
     const response = await this.api.invoke(getWorkSlots, {});
 
-    let slotsData: WorkSlotResponse[] = response as WorkSlotResponse[];
+    let slotsData: any[] = response as any[];
     if (response instanceof Blob) {
       const jsonText = await response.text();
       slotsData = JSON.parse(jsonText);
@@ -48,56 +47,81 @@ export class WorkSlotPreferenceService {
 
   /**
    * Persist the given slots to the backend.
-   * This performs a bulk replace: all existing backend slots are deleted and
-   * new organization slots are created from the provided array.
+   * Performs a diff: updates existing slots, creates new ones, deletes removed ones.
    */
   async savePreferences(slots: TimeSlot[]): Promise<void> {
-    // 1. Delete all existing work slots for this identity
+    // 1. Load existing backend slots
     const existing = await this.api.invoke(getWorkSlots, {});
-    let existingData: WorkSlotResponse[] = existing as WorkSlotResponse[];
+    let existingData: any[] = existing as any[];
     if (existing instanceof Blob) {
       const jsonText = await existing.text();
       existingData = JSON.parse(jsonText);
     }
 
+    const existingById = new Map<number, any>();
     if (Array.isArray(existingData)) {
-      await Promise.all(
-        existingData.map((ws) => {
-          if (ws.id != null) {
-            return this.api.invoke(deleteWorkSlot, { id: ws.id });
-          }
-          return Promise.resolve();
-        })
-      );
+      existingData.forEach((ws) => {
+        if (ws.id != null) {
+          existingById.set(Number(ws.id), ws);
+        }
+      });
     }
 
-    // 2. Create new organization slots (breaks are skipped)
     const orgSlots = slots.filter((s) => s.type === 'organization');
-    await Promise.all(
-      orgSlots.map((slot) => {
-        if (!slot.organizationId) {
-          console.warn('Skipping slot without organization:', slot);
-          return Promise.resolve();
-        }
+    const frontendIds = new Set<number>();
+    const createPromises: Promise<any>[] = [];
+    const updatePromises: Promise<any>[] = [];
 
-        const { startAt, endAt } = this.toWorkSlotTimes(slot);
-        return this.api.invoke(createWorkSlot, {
-          body: {
-            organizationId: slot.organizationId,
-            startAt,
-            endAt,
-          },
-        });
-      })
-    );
+    for (const slot of orgSlots) {
+      if (!slot.organizationId) {
+        console.warn('Skipping slot without organization:', slot);
+        continue;
+      }
+
+      const backendId = Number(slot.id);
+      const isExisting = !Number.isNaN(backendId) && existingById.has(backendId);
+      const { dayOfWeek, startTime, endTime } = this.toWorkSlotRequest(slot);
+
+      if (isExisting) {
+        frontendIds.add(backendId);
+        updatePromises.push(
+          this.api.invoke(updateWorkSlot, {
+            id: backendId,
+            body: {
+              dayOfWeek,
+              startTime,
+              endTime,
+            } as any,
+          })
+        );
+      } else {
+        createPromises.push(
+          this.api.invoke(createWorkSlot, {
+            body: {
+              organizationId: slot.organizationId,
+              dayOfWeek,
+              startTime,
+              endTime,
+            } as any,
+          })
+        );
+      }
+    }
+
+    // 3. Delete backend slots that are no longer in the frontend list
+    const deletePromises: Promise<any>[] = [];
+    existingById.forEach((ws, id) => {
+      if (!frontendIds.has(id)) {
+        deletePromises.push(this.api.invoke(deleteWorkSlot, { id }));
+      }
+    });
+
+    await Promise.all([...updatePromises, ...createPromises, ...deletePromises]);
   }
 
   /** Convert a backend WorkSlotResponse to a frontend TimeSlot. */
-  private toTimeSlot(
-    ws: WorkSlotResponse,
-    orgs: Organization[]
-  ): TimeSlot | null {
-    if (!ws.startAt || !ws.endAt || !ws.organizationId) {
+  private toTimeSlot(ws: any, orgs: Organization[]): TimeSlot | null {
+    if (!ws.dayOfWeek || !ws.startTime || !ws.endTime || !ws.organizationId) {
       return null;
     }
 
@@ -106,16 +130,14 @@ export class WorkSlotPreferenceService {
       return null;
     }
 
-    const startDate = new Date(ws.startAt);
-    const endDate = new Date(ws.endAt);
+    const dayIndex = this.DAY_NAMES.indexOf(ws.dayOfWeek);
+    if (dayIndex < 0) {
+      return null;
+    }
 
-    // Convert UTC day to our dayIndex (0=Mon..6=Sun)
-    const dayOfWeek = startDate.getUTCDay();
-    const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-    const startHour = startDate.getUTCHours() + startDate.getUTCMinutes() / 60;
-    const durationMs = endDate.getTime() - startDate.getTime();
-    const durationHours = durationMs / (1000 * 60 * 60);
+    const startHour = this.parseTimeString(ws.startTime);
+    const endHour = this.parseTimeString(ws.endTime);
+    const durationHours = Math.max(0.5, endHour - startHour);
 
     // Snap to 30-minute grid to match the frontend
     const roundedStartHour = Math.round(startHour * 2) / 2;
@@ -136,21 +158,25 @@ export class WorkSlotPreferenceService {
     };
   }
 
-  /** Convert a frontend TimeSlot to absolute ISO-8601 timestamps. */
-  private toWorkSlotTimes(slot: TimeSlot): { startAt: string; endAt: string } {
-    const targetDate = new Date(this.REFERENCE_MONDAY + slot.dayIndex * 24 * 60 * 60 * 1000);
+  /** Convert a frontend TimeSlot to the backend request format. */
+  private toWorkSlotRequest(slot: TimeSlot): { dayOfWeek: string; startTime: string; endTime: string } {
+    const dayOfWeek = this.DAY_NAMES[slot.dayIndex];
+    const startTime = this.formatTime(slot.startHour);
+    const endTime = this.formatTime(slot.startHour + slot.durationHours);
+    return { dayOfWeek, startTime, endTime };
+  }
 
-    const hours = Math.floor(slot.startHour);
-    const minutes = Math.round((slot.startHour - hours) * 60);
-    targetDate.setUTCHours(hours, minutes, 0, 0);
+  /** Formats a decimal hour as HH:mm string. */
+  private formatTime(hour: number): string {
+    const h = Math.floor(hour);
+    const m = Math.round((hour - h) * 60);
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  }
 
-    const startAt = targetDate.toISOString();
-
-    const endDate = new Date(targetDate);
-    endDate.setUTCMinutes(endDate.getUTCMinutes() + Math.round(slot.durationHours * 60));
-    const endAt = endDate.toISOString();
-
-    return { startAt, endAt };
+  /** Parses an HH:mm time string to decimal hours. */
+  private parseTimeString(timeStr: string): number {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h + (m || 0) / 60;
   }
 
   private generateId(): string {
