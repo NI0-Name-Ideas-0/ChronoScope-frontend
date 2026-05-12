@@ -1,7 +1,8 @@
 import { Component, ChangeDetectionStrategy, inject, output } from '@angular/core';
-import { Auth } from '@services/auth'
+import { Auth } from '@services/auth';
 import { TaskModalService } from '@services/task-modal.service';
 import { ViewService } from '@services/view.service';
+import { TaskService } from '@services/task.service';
 
 @Component({
   selector: 'app-navbar',
@@ -12,7 +13,10 @@ import { ViewService } from '@services/view.service';
 })
 export class Navbar {
 
-  constructor(private taskModalService: TaskModalService) { }
+  constructor(
+    private taskModalService: TaskModalService,
+    private taskService: TaskService,
+  ) { }
   private authService = inject(Auth);
 
   settingsRequested = output<void>();
@@ -27,6 +31,10 @@ export class Navbar {
   
   openSettings() {
     this.settingsRequested.emit();
+  }
+
+  planTasks() {
+    this.taskService.planTasks();
   }
   /*
   Import of the View Service for changing the view via the functions

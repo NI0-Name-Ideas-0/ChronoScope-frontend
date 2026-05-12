@@ -128,21 +128,7 @@ export class TaskService {
     const response = await this.api.invoke(createTaskApi, params);
     const createdTask = await this.parseBlob<StaticTaskResponse | DynamicTaskResponse>(response);
 
-    // Call the plan endpoint after task creation
-    try {
-      const organizationId = request.organizationId;
-
-      const planParams: Plan$Params = {
-        body: { organizationId },
-      };
-      await this.api.invoke(planApi, planParams);
-    } catch (error) {
-      console.error('Error calling plan endpoint after task creation:', error);
-      // Don't throw - the task was created successfully, planning failure shouldn't break task creation
-    } finally {
-      // Always reload tasks after task creation, whether planning succeeds or fails
-      await this.loadTasks();
-    }
+    await this.planAndReload(request.organizationId, 'after task creation');
 
     return createdTask;
   }
@@ -163,13 +149,72 @@ export class TaskService {
     };
     const response = await this.api.invoke(updateTaskApi, params);
     const updatedTask = await this.parseBlob<StaticTaskResponse | DynamicTaskResponse>(response);
-    // Update the task in local cache
-    if (updatedTask.id !== undefined) {
-      const modelTask = this.convertApiTaskToModel(updatedTask);
-      this.tasks.set(updatedTask.id, modelTask);
-      this.tasksSubject.next([...this.tasks.values()]);
-    }
+    const organizationId = request.organizationId ?? updatedTask.organizationId ?? null;
+    await this.planAndReload(organizationId, 'after task update');
     return updatedTask;
+  }
+
+  async planTasks(): Promise<void> {
+    const identity = this.authService.getIdentityData();
+    const organizationIds = (identity?.organizations || [])
+      .map((org) => org.id)
+      .filter((orgId): orgId is string => !!orgId);
+
+    if (!organizationIds.length) {
+      console.warn('Skipping manual plan: no organization IDs available.');
+      await this.loadTasks();
+      return;
+    }
+
+    await this.planOrganizationsAndReload(organizationIds, 'manual plan');
+  }
+
+  private async planAndReload(
+    organizationId?: string | null,
+    contextLabel: string = 'planning',
+  ): Promise<void> {
+    if (!organizationId) {
+      console.warn(`Skipping plan endpoint ${contextLabel}: missing organizationId.`);
+      await this.loadTasks();
+      return;
+    }
+
+    try {
+      const planParams: Plan$Params = {
+        body: { organizationId: organizationId ?? undefined },
+      };
+      await this.api.invoke(planApi, planParams);
+    } catch (error) {
+      console.error(`Error calling plan endpoint ${contextLabel}:`, error);
+      // Don't throw - planning failure shouldn't break the caller flow
+    } finally {
+      // Always reload tasks after planning, whether it succeeds or fails
+      await this.loadTasks();
+    }
+  }
+
+  private async planOrganizationsAndReload(
+    organizationIds: string[],
+    contextLabel: string = 'planning',
+  ): Promise<void> {
+    const uniqueOrganizationIds = Array.from(new Set(organizationIds));
+
+    try {
+      await Promise.all(
+        uniqueOrganizationIds.map((organizationId) => {
+          const planParams: Plan$Params = {
+            body: { organizationId },
+          };
+          return this.api.invoke(planApi, planParams);
+        }),
+      );
+    } catch (error) {
+      console.error(`Error calling plan endpoint ${contextLabel}:`, error);
+      // Don't throw - planning failure shouldn't break the caller flow
+    } finally {
+      // Always reload tasks after planning, whether it succeeds or fails
+      await this.loadTasks();
+    }
   }
 
   /**

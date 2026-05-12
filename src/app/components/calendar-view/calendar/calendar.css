@@ -9,6 +9,34 @@
   --fc-today-bg-color: color-mix(in srgb, var(--color-secondary) 20%, transparent);
 }
 
+:host ::ng-deep .fc .work-slot {
+  opacity: 0.18;
+}
+
+:host ::ng-deep .fc .work-slot-primary {
+  background-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
+:host ::ng-deep .fc .work-slot-secondary {
+  background-color: color-mix(in srgb, var(--color-secondary) 35%, transparent);
+}
+
+:host ::ng-deep .fc .work-slot-accent {
+  background-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+:host ::ng-deep .fc .work-slot-info {
+  background-color: color-mix(in srgb, var(--color-info) 35%, transparent);
+}
+
+:host ::ng-deep .fc .work-slot-success {
+  background-color: color-mix(in srgb, var(--color-success) 35%, transparent);
+}
+
+:host ::ng-deep .fc .work-slot-warning {
+  background-color: color-mix(in srgb, var(--color-warning) 35%, transparent);
+}
+
 :host-context(html[data-theme="chrono-dark"]) ::ng-deep .fc-theme-standard .fc-scrollgrid,
 :host-context(html[data-theme="chrono-dark"]) ::ng-deep .fc-theme-standard td,
 :host-context(html[data-theme="chrono-dark"]) ::ng-deep .fc-theme-standard th {
