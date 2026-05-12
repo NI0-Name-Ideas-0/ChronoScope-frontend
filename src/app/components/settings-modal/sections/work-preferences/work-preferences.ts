@@ -82,13 +82,11 @@ export class WorkPreferencesSection implements AfterViewInit {
   private dragPayload: OrgItem | null = null;
   /** ID of an existing slot being moved */
   private draggedSlotId: string | null = null;
+  /** Hours from the slot's top edge where the drag was initiated; used to preserve grab position on drop */
+  private dragSlotOffsetHours = 0;
 
   /** Slot currently being resized via mouse drag */
   private resizingSlot: TimeSlot | null = null;
-  /** Y-coordinate where resize started */
-  private resizeStartY = 0;
-  /** Duration of the slot when resize started */
-  private resizeStartDuration = 0;
 
   // --- Time / Calendar Constants ---
 
@@ -285,6 +283,10 @@ export class WorkPreferencesSection implements AfterViewInit {
 
   /** Initiated when user starts dragging an existing slot to move it */
   onSlotDragStart(event: DragEvent, slot: TimeSlot) {
+    // Record how far down from the slot's top edge the user grabbed, in hours.
+    // This offset is subtracted at drop time so the slot top lands where the grab was.
+    const slotEl = event.currentTarget as HTMLElement;
+    this.dragSlotOffsetHours = (event.clientY - slotEl.getBoundingClientRect().top) / ROW_HEIGHT;
     this.draggedSlotId = slot.id;
     this.dragPayload = null;
     event.dataTransfer!.effectAllowed = 'move';
@@ -329,26 +331,34 @@ export class WorkPreferencesSection implements AfterViewInit {
     const rawY = event.clientY - rect.top + scrollTop;
 
     // Subtract time column width (60px) to get x position within day columns
-    const x = rawX - 60;
+    const timeColumnWidth = 60;
+    const x = rawX - timeColumnWidth;
     if (x < 0) return;
 
-    const dayWidth = (rect.width - 60) / 7;
+    // Use clientWidth to exclude the reserved scrollbar gutter from the column width calculation
+    const dayWidth = (gridEl.clientWidth - timeColumnWidth) / 7;
     const dayIndex = Math.floor(x / dayWidth);
     if (dayIndex < 0 || dayIndex > 6 || !this.workDays()[dayIndex]) return;
 
-    // Snap to 30-minute grid (60px = 1 hour)
-    const rawHour = rawY / 60;
+    // Convert pixel Y to hour using ROW_HEIGHT, then snap to 30-minute grid
+    const rawHour = rawY / ROW_HEIGHT;
     const snappedHour = Math.round(rawHour * 2) / 2;
     const startHour = Math.max(0, Math.min(HOURS_PER_DAY - MIN_SLOT_DURATION, snappedHour));
 
     if (this.draggedSlotId) {
-      // Moving existing slot
+      // Moving existing slot: subtract the grab offset so the top of the slot aligns
+      // with where the user originally grabbed it, not where the mouse cursor is.
       const existing = this.slots().find((s) => s.id === this.draggedSlotId);
-      const duration = existing ? Math.min(existing.durationHours, HOURS_PER_DAY - startHour) : MIN_SLOT_DURATION;
-      if (existing && !this.hasCollision(dayIndex, startHour, duration, this.draggedSlotId)) {
-        this.slots.update((slots) =>
-          slots.map((s) => (s.id === this.draggedSlotId ? { ...s, dayIndex, startHour, durationHours: duration } : s))
-        );
+      if (existing) {
+        const adjustedRawHour = rawHour - this.dragSlotOffsetHours;
+        const snappedStart = Math.round(adjustedRawHour * 2) / 2;
+        // Clamp so the slot stays fully within [0, 24] using its actual duration
+        const clampedStart = Math.max(0, Math.min(HOURS_PER_DAY - existing.durationHours, snappedStart));
+        if (!this.hasCollision(dayIndex, clampedStart, existing.durationHours, this.draggedSlotId)) {
+          this.slots.update((slots) =>
+            slots.map((s) => (s.id === this.draggedSlotId ? { ...s, dayIndex, startHour: clampedStart } : s))
+          );
+        }
       }
       this.draggedSlotId = null;
     } else if (this.dragPayload) {
@@ -379,8 +389,6 @@ export class WorkPreferencesSection implements AfterViewInit {
     event.preventDefault();
     event.stopPropagation();
     this.resizingSlot = slot;
-    this.resizeStartY = event.clientY;
-    this.resizeStartDuration = slot.durationHours;
     document.body.style.cursor = 'ns-resize';
     document.body.style.userSelect = 'none';
   }
@@ -388,12 +396,20 @@ export class WorkPreferencesSection implements AfterViewInit {
   /** Handles mouse movement during resize; updates slot duration in real-time */
   onResizeMove(event: MouseEvent) {
     if (!this.resizingSlot) return;
-    const deltaPixels = event.clientY - this.resizeStartY;
-    const deltaHours = deltaPixels / 60;
-    // Snap to 30-minute increments
-    const maxDuration = HOURS_PER_DAY - this.resizingSlot.startHour;
-    const snappedDuration = Math.round((this.resizeStartDuration + deltaHours) * 2) / 2;
-    const newDuration = Math.min(maxDuration, Math.max(MIN_SLOT_DURATION, snappedDuration));
+
+    // Compute the end hour from the absolute mouse position within the scrollable calendar body
+    const calBody = this.calendarBody.nativeElement;
+    const rect = calBody.getBoundingClientRect();
+    const absoluteY = event.clientY - rect.top + calBody.scrollTop;
+    const rawEndHour = absoluteY / ROW_HEIGHT;
+
+    // Snap to 30-minute increments and clamp to valid range
+    const snappedEndHour = Math.round(rawEndHour * 2) / 2;
+    const clampedEndHour = Math.max(
+      this.resizingSlot.startHour + MIN_SLOT_DURATION,
+      Math.min(HOURS_PER_DAY, snappedEndHour)
+    );
+    const newDuration = clampedEndHour - this.resizingSlot.startHour;
 
     // Only apply if no collision would occur
     if (!this.hasCollision(this.resizingSlot.dayIndex, this.resizingSlot.startHour, newDuration, this.resizingSlot.id)) {
