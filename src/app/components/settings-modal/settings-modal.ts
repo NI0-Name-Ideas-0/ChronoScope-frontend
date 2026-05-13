@@ -4,6 +4,7 @@ import {
   input,
   output,
   signal,
+  computed,
 } from '@angular/core';
 import { AccountSecuritySection } from './sections/account-security/account-security';
 import { AppearanceSection } from './sections/appearance/appearance';
@@ -44,6 +45,9 @@ export class SettingsModal {
 
   isLeaving = signal(false);
   activeCategory = signal<SettingsCategory>('account');
+
+  /** True when work preferences section is active (needs more space) */
+  isWorkPreferencesActive = computed(() => this.activeCategory() === 'work');
 
   readonly navItems: NavItem[] = [
     {
@@ -95,12 +99,6 @@ export class SettingsModal {
 
   onBackdropClick(event: MouseEvent) {
     if (event.target === event.currentTarget) {
-      this.close();
-    }
-  }
-
-  onKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
       this.close();
     }
   }
