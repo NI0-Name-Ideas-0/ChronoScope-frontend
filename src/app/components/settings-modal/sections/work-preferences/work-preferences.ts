@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, inject, AfterViewInit, ViewChild, ElementRef, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { output } from '@angular/core';
@@ -23,6 +23,11 @@ interface SavedWorkState {
 
 /** Default daily work hours */
 const DEFAULT_HOURS_PER_DAY = 8;
+const MIN_SLOT_DURATION = 0.5;
+const DEFAULT_SLOT_DURATION = 1;
+const HOURS_PER_DAY = 24;
+const ROW_HEIGHT = 50;
+const DEFAULT_SCROLL_HOUR = 6;
 
 @Component({
   selector: 'app-settings-work-preferences',
@@ -35,19 +40,19 @@ const DEFAULT_HOURS_PER_DAY = 8;
     '(document:mouseup)': 'onResizeEnd()',
   },
 })
-export class WorkPreferencesSection {
+export class WorkPreferencesSection implements AfterViewInit {
   /** Emits the final slot array when the user clicks Save */
   saved = output<TimeSlot[]>();
   /** Emits when the user clicks Cancel to discard changes */
   cancelled = output<void>();
 
+  /** Hour to scroll to on initialization (0-23). Defaults to 6 (6:00 AM). */
+  scrollHour = input(DEFAULT_SCROLL_HOUR);
+
   /** Injected auth service to retrieve user organizations */
   private auth = inject(Auth);
   /** Service to persist/retrieve work slots via the backend API */
   private preferenceService = inject(WorkSlotPreferenceService);
-
-  /** localStorage key for work preferences */
-  private readonly STORAGE_KEY = 'chronoscope-work-preferences';
 
   // --- Settings ---
 
@@ -78,13 +83,11 @@ export class WorkPreferencesSection {
   private dragPayload: OrgItem | null = null;
   /** ID of an existing slot being moved */
   private draggedSlotId: string | null = null;
+  /** Hours from the slot's top edge where the drag was initiated; used to preserve grab position on drop */
+  private dragSlotOffsetHours = 0;
 
   /** Slot currently being resized via mouse drag */
   private resizingSlot: TimeSlot | null = null;
-  /** Y-coordinate where resize started */
-  private resizeStartY = 0;
-  /** Duration of the slot when resize started */
-  private resizeStartDuration = 0;
 
   // --- Time / Calendar Constants ---
 
@@ -94,6 +97,9 @@ export class WorkPreferencesSection {
   dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   /** Day metadata for the calendar grid */
   weekDays = Array.from({ length: 7 }, (_, i) => ({ index: i, short: this.dayNames[i] }));
+
+  /** Reference to the 6:00 hour row element for scrolling into view */
+  @ViewChild('calendarBody') calendarBody!: ElementRef<HTMLElement>;
 
   // --- Computed Values ---
 
@@ -124,55 +130,27 @@ export class WorkPreferencesSection {
     this.loadOrganizations();
   }
 
-  /** Loads work preferences from localStorage */
-  private loadFromLocalStorage(): void {
-    try {
-      const raw = localStorage.getItem(this.STORAGE_KEY);
-      if (raw) {
-        const data = JSON.parse(raw);
-        if (typeof data.hoursPerDay === 'number') {
-          this.hoursPerDay.set(data.hoursPerDay);
-        }
-        if (Array.isArray(data.workDays) && data.workDays.length === 7) {
-          this.workDays.set([...data.workDays]);
-        }
-        if (Array.isArray(data.slots)) {
-          this.slots.set(data.slots);
-        }
-        this.savedState = {
-          hoursPerDay: this.hoursPerDay(),
-          workDays: [...this.workDays()],
-          slots: JSON.parse(JSON.stringify(this.slots())),
-        };
-      }
-    } catch (err) {
-      console.error('Failed to load work preferences from localStorage:', err);
-    }
-  }
-
-  /** Saves work preferences to localStorage */
-  private saveToLocalStorage(): void {
-    try {
-      const data = {
-        hoursPerDay: this.hoursPerDay(),
-        workDays: this.workDays(),
-        slots: this.slots(),
-      };
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
-    } catch (err) {
-      console.error('Failed to save work preferences to localStorage:', err);
-    }
+  /** Lifecycle hook: scroll to configured hour after view is initialized */
+  ngAfterViewInit(): void {
+    // Use setTimeout to ensure the view is fully rendered before scrolling
+    setTimeout(() => {
+      const targetHour = this.scrollHour();
+      const scrollTop = targetHour * ROW_HEIGHT;
+      this.calendarBody?.nativeElement.scrollTo({ top: scrollTop, behavior: 'instant' });
+    }, 0);
   }
 
   /** Loads previously saved work slot preferences from the backend */
   private async loadSlotsFromBackend(): Promise<void> {
     try {
       const slots = await this.preferenceService.loadPreferences();
-      this.slots.set(slots);
-      this.savedState = {
-        ...this.savedState,
-        slots: JSON.parse(JSON.stringify(slots)),
-      };
+      if (slots.length > 0) {
+        this.slots.set(slots);
+        this.savedState = {
+          ...this.savedState,
+          slots: JSON.parse(JSON.stringify(slots)),
+        };
+      }
     } catch (err) {
       console.error('Failed to load work slot preferences:', err);
     }
@@ -188,13 +166,7 @@ export class WorkPreferencesSection {
         colorClass: COLOR_POOL[i % COLOR_POOL.length],
       }));
     this.organizations.set(orgs);
-
-    // Load hours/workDays from localStorage, then overwrite slots with backend state
-    // so IDs stay in sync and we don't create duplicates on save
-    this.loadFromLocalStorage();
-    this.loadSlotsFromBackend().then(() => {
-      this.saveToLocalStorage();
-    });
+    this.loadSlotsFromBackend();
   }
 
   /** Toggles a day between work day and off day; removes all slots when switching to off */
@@ -267,17 +239,10 @@ export class WorkPreferencesSection {
     this.cancelled.emit();
   }
 
-  /** Save button handler: persist slots to backend, reload to get stable IDs, save to localStorage, store baseline and emit saved event */
+  /** Save button handler: persist slots to backend, store baseline and emit saved event */
   async onSave(): Promise<void> {
     try {
       await this.preferenceService.savePreferences(this.slots());
-
-      // Reload from backend so newly created slots get their real IDs
-      // and we don't create duplicates on the next save
-      const reloadedSlots = await this.preferenceService.loadPreferences();
-      this.slots.set(reloadedSlots);
-
-      this.saveToLocalStorage();
       this.storeCurrentState();
       this.saved.emit(this.slots());
     } catch (err) {
@@ -297,6 +262,7 @@ export class WorkPreferencesSection {
    */
   private hasCollision(dayIndex: number, startHour: number, durationHours: number, excludeId?: string): boolean {
     const endHour = startHour + durationHours;
+    if (startHour < 0 || durationHours < MIN_SLOT_DURATION || endHour > HOURS_PER_DAY) return true;
     return this.slots().some((s) => {
       if (s.dayIndex !== dayIndex) return false;
       if (excludeId && s.id === excludeId) return false;
@@ -318,6 +284,10 @@ export class WorkPreferencesSection {
 
   /** Initiated when user starts dragging an existing slot to move it */
   onSlotDragStart(event: DragEvent, slot: TimeSlot) {
+    // Record how far down from the slot's top edge the user grabbed, in hours.
+    // This offset is subtracted at drop time so the slot top lands where the grab was.
+    const slotEl = event.currentTarget as HTMLElement;
+    this.dragSlotOffsetHours = (event.clientY - slotEl.getBoundingClientRect().top) / ROW_HEIGHT;
     this.draggedSlotId = slot.id;
     this.dragPayload = null;
     event.dataTransfer!.effectAllowed = 'move';
@@ -362,30 +332,39 @@ export class WorkPreferencesSection {
     const rawY = event.clientY - rect.top + scrollTop;
 
     // Subtract time column width (60px) to get x position within day columns
-    const x = rawX - 60;
+    const timeColumnWidth = 60;
+    const x = rawX - timeColumnWidth;
     if (x < 0) return;
 
-    const dayWidth = (rect.width - 60) / 7;
+    // Use clientWidth to exclude the reserved scrollbar gutter from the column width calculation
+    const dayWidth = (gridEl.clientWidth - timeColumnWidth) / 7;
     const dayIndex = Math.floor(x / dayWidth);
     if (dayIndex < 0 || dayIndex > 6 || !this.workDays()[dayIndex]) return;
 
-    // Snap to 30-minute grid (60px = 1 hour)
-    const rawHour = rawY / 60;
+    // Convert pixel Y to hour using ROW_HEIGHT, then snap to 30-minute grid
+    const rawHour = rawY / ROW_HEIGHT;
     const snappedHour = Math.round(rawHour * 2) / 2;
-    const startHour = Math.max(0, Math.min(23.5, snappedHour));
+    const startHour = Math.max(0, Math.min(HOURS_PER_DAY - MIN_SLOT_DURATION, snappedHour));
 
     if (this.draggedSlotId) {
-      // Moving existing slot
+      // Moving existing slot: subtract the grab offset so the top of the slot aligns
+      // with where the user originally grabbed it, not where the mouse cursor is.
       const existing = this.slots().find((s) => s.id === this.draggedSlotId);
-      if (existing && !this.hasCollision(dayIndex, startHour, existing.durationHours, this.draggedSlotId)) {
-        this.slots.update((slots) =>
-          slots.map((s) => (s.id === this.draggedSlotId ? { ...s, dayIndex, startHour } : s))
-        );
+      if (existing) {
+        const adjustedRawHour = rawHour - this.dragSlotOffsetHours;
+        const snappedStart = Math.round(adjustedRawHour * 2) / 2;
+        // Clamp so the slot stays fully within [0, 24] using its actual duration
+        const clampedStart = Math.max(0, Math.min(HOURS_PER_DAY - existing.durationHours, snappedStart));
+        if (!this.hasCollision(dayIndex, clampedStart, existing.durationHours, this.draggedSlotId)) {
+          this.slots.update((slots) =>
+            slots.map((s) => (s.id === this.draggedSlotId ? { ...s, dayIndex, startHour: clampedStart } : s))
+          );
+        }
       }
       this.draggedSlotId = null;
     } else if (this.dragPayload) {
       // Creating new slot from sidebar drag
-      const finalDuration = 0.5; // 30 minutes default for all new drops
+      const finalDuration = DEFAULT_SLOT_DURATION;
 
       if (!this.hasCollision(dayIndex, startHour, finalDuration)) {
         const newSlot: TimeSlot = {
@@ -411,8 +390,6 @@ export class WorkPreferencesSection {
     event.preventDefault();
     event.stopPropagation();
     this.resizingSlot = slot;
-    this.resizeStartY = event.clientY;
-    this.resizeStartDuration = slot.durationHours;
     document.body.style.cursor = 'ns-resize';
     document.body.style.userSelect = 'none';
   }
@@ -420,10 +397,20 @@ export class WorkPreferencesSection {
   /** Handles mouse movement during resize; updates slot duration in real-time */
   onResizeMove(event: MouseEvent) {
     if (!this.resizingSlot) return;
-    const deltaPixels = event.clientY - this.resizeStartY;
-    const deltaHours = deltaPixels / 60;
-    // Snap to 30-minute increments
-    const newDuration = Math.max(0.5, Math.round((this.resizeStartDuration + deltaHours) * 2) / 2);
+
+    // Compute the end hour from the absolute mouse position within the scrollable calendar body
+    const calBody = this.calendarBody.nativeElement;
+    const rect = calBody.getBoundingClientRect();
+    const absoluteY = event.clientY - rect.top + calBody.scrollTop;
+    const rawEndHour = absoluteY / ROW_HEIGHT;
+
+    // Snap to 30-minute increments and clamp to valid range
+    const snappedEndHour = Math.round(rawEndHour * 2) / 2;
+    const clampedEndHour = Math.max(
+      this.resizingSlot.startHour + MIN_SLOT_DURATION,
+      Math.min(HOURS_PER_DAY, snappedEndHour)
+    );
+    const newDuration = clampedEndHour - this.resizingSlot.startHour;
 
     // Only apply if no collision would occur
     if (!this.hasCollision(this.resizingSlot.dayIndex, this.resizingSlot.startHour, newDuration, this.resizingSlot.id)) {

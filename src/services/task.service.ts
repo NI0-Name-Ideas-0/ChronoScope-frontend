@@ -54,12 +54,10 @@ export class TaskService {
     });
   }
 
-  private async parseResponse<T>(response: T | Blob): Promise<T> {
-    if (response instanceof Blob) {
-      const jsonText = await response.text();
-      return JSON.parse(jsonText) as T;
-    }
-    return response;
+  private async parseBlob<T>(response: T): Promise<T> {
+    const blob = response as Blob;
+    const jsonText = await blob.text();
+    return JSON.parse(jsonText) as T;
   }
 
   private parseDurationToMinutes(duration?: string, fallback: number = 0): number {
@@ -89,21 +87,14 @@ export class TaskService {
   }
 
   /**
-   * Formats minutes as an ISO 8601 duration string (e.g. PT30M)
-   */
-  formatMinutesToDuration(minutes: number): string {
-    return `PT${minutes}M`;
-  }
-
-  /**
    * Loads all tasks from the backend and updates the subject
    */
   async loadTasks(): Promise<void> {
     try {
-      const params: GetTasks$Params = {};
-      const response = await this.api.invoke(getTasksApi, params);
+      const task_params: GetTasks$Params = {};
+      const task_response = await this.api.invoke(getTasksApi, task_params);
       const tasks =
-        await this.parseResponse<(StaticTaskResponse | DynamicTaskResponse)[]>(response);
+        await this.parseBlob<(StaticTaskResponse | DynamicTaskResponse)[]>(task_response);
 
       // Ensure tasks is an array
       if (!Array.isArray(tasks)) {
@@ -111,15 +102,12 @@ export class TaskService {
       }
 
       this.tasks.clear();
-      const loadedIds: number[] = [];
       tasks.forEach((apiTask) => {
         if (apiTask.id !== undefined) {
           const modelTask = this.convertApiTaskToModel(apiTask);
           this.tasks.set(apiTask.id, modelTask);
-          loadedIds.push(apiTask.id);
         }
       });
-      this.cleanupCompletionState(loadedIds);
       this.tasksSubject.next([...this.tasks.values()]);
     } catch (error) {
       console.error('Error loading tasks from backend:', error);
@@ -138,9 +126,7 @@ export class TaskService {
       body: request,
     };
     const response = await this.api.invoke(createTaskApi, params);
-    const createdTask = await this.parseResponse<StaticTaskResponse | DynamicTaskResponse>(
-      response,
-    );
+    const createdTask = await this.parseBlob<StaticTaskResponse | DynamicTaskResponse>(response);
 
     // Call the plan endpoint after task creation
     try {
@@ -176,9 +162,7 @@ export class TaskService {
       body: request,
     };
     const response = await this.api.invoke(updateTaskApi, params);
-    const updatedTask = await this.parseResponse<StaticTaskResponse | DynamicTaskResponse>(
-      response,
-    );
+    const updatedTask = await this.parseBlob<StaticTaskResponse | DynamicTaskResponse>(response);
     // Update the task in local cache
     if (updatedTask.id !== undefined) {
       const modelTask = this.convertApiTaskToModel(updatedTask);
@@ -196,7 +180,7 @@ export class TaskService {
   async getTask(id: number): Promise<StaticTaskResponse | DynamicTaskResponse> {
     const params: GetTask$Params = { id };
     const response = await this.api.invoke(getTaskApi, params);
-    const task = await this.parseResponse<StaticTaskResponse | DynamicTaskResponse>(response);
+    const task = await this.parseBlob<StaticTaskResponse | DynamicTaskResponse>(response);
     // Cache the task locally
     if (task.id !== undefined) {
       const modelTask = this.convertApiTaskToModel(task);
@@ -211,9 +195,9 @@ export class TaskService {
    * @returns Promise with array of task responses
    */
   async getTasks(): Promise<(StaticTaskResponse | DynamicTaskResponse)[]> {
-    const params: GetTasks$Params = {};
-    const response = await this.api.invoke(getTasksApi, params);
-    const tasks = await this.parseResponse<(StaticTaskResponse | DynamicTaskResponse)[]>(response);
+    const task_params: GetTasks$Params = {};
+    const task_response = await this.api.invoke(getTasksApi, task_params);
+    const tasks = await this.parseBlob<(StaticTaskResponse | DynamicTaskResponse)[]>(task_response);
 
     // Ensure tasks is an array
     if (!Array.isArray(tasks)) {
@@ -240,66 +224,16 @@ export class TaskService {
   async deleteTask(id: number): Promise<void> {
     const params: DeleteTask$Params = { id };
     await this.api.invoke(deleteTaskApi, params);
-    // Remove from local cache and localStorage
+    // Remove from local cache
     this.tasks.delete(id);
-    this.removeTaskCompletion(id);
     this.tasksSubject.next([...this.tasks.values()]);
   }
 
   /**
-   * Loads completion state from localStorage.
-   */
-  private loadCompletionState(): Record<number, { isFinished: boolean; scopes: boolean[] }> {
-    try {
-      return JSON.parse(localStorage.getItem('chronoscope-completion') || '{}');
-    } catch {
-      return {};
-    }
-  }
-
-  /**
-   * Saves completion state to localStorage.
-   */
-  saveTaskCompletion(taskId: number, isFinished: boolean, scopeStates?: boolean[]): void {
-    const state = this.loadCompletionState();
-    state[taskId] = { isFinished, scopes: scopeStates || [] };
-    localStorage.setItem('chronoscope-completion', JSON.stringify(state));
-  }
-
-  /**
-   * Removes completion state from localStorage.
-   */
-  removeTaskCompletion(taskId: number): void {
-    const state = this.loadCompletionState();
-    delete state[taskId];
-    localStorage.setItem('chronoscope-completion', JSON.stringify(state));
-  }
-
-  /**
-   * Cleans up localStorage entries for task IDs that no longer exist.
-   */
-  private cleanupCompletionState(loadedTaskIds: number[]): void {
-    const state = this.loadCompletionState();
-    const loadedIds = new Set(loadedTaskIds);
-    let changed = false;
-    for (const key of Object.keys(state)) {
-      if (!loadedIds.has(Number(key))) {
-        delete state[Number(key)];
-        changed = true;
-      }
-    }
-    if (changed) {
-      localStorage.setItem('chronoscope-completion', JSON.stringify(state));
-    }
-  }
-
-  /**
-   * Converts API response objects to proper Task class instances.
-   * Restores completion state from localStorage so it survives reloads.
+   * Converts API response objects to proper Task class instances
    */
   private convertApiTaskToModel(apiTask: StaticTaskResponse | DynamicTaskResponse): Task {
-    const isStatic = apiTask.type === 'static' || !('duration' in apiTask);
-    const completionState = apiTask.id !== undefined ? this.loadCompletionState()[apiTask.id] : undefined;
+    const isStatic = apiTask.type === 'static';
 
     if (isStatic) {
       const staticTask = apiTask as StaticTaskResponse;
@@ -311,22 +245,15 @@ export class TaskService {
         new Scope(new Date(staticTask.startAt!), new Date(staticTask.endAt!)),
         staticTask.organizationId || null,
         staticTask.difficulty!,
-        completionState?.isFinished ?? false,
+        false, // isFinished
         staticTask.rrule || '',
       );
     } else {
       const dynamicTask = apiTask as DynamicTaskResponse;
       const scopes = (dynamicTask.scopes || [])
         .filter((scope) => scope.startAt && scope.endAt)
-        .map((scope, index) => {
-          return new Scope(
-            new Date(scope.startAt!),
-            new Date(scope.endAt!),
-            completionState?.scopes?.[index] ?? false,
-          );
-        });
+        .map((scope) => new Scope(new Date(scope.startAt!), new Date(scope.endAt!)));
 
-      const allScopesDone = scopes.length > 0 && scopes.every((s) => s.isFinished);
       return new AlgoTask(
         dynamicTask.id!,
         dynamicTask.name!,
@@ -334,12 +261,12 @@ export class TaskService {
         new Date(dynamicTask.startAt!),
         new Date(dynamicTask.endAt!),
         this.parseDurationToMinutes(dynamicTask.duration, 0),
-        [], // dependencies - TODO: resolve actual task dependencies if needed
+        dynamicTask.dependencies,
         (dynamicTask.labels as any)?.map((l: any) => l.name || l) || [],
         dynamicTask.organizationId || null,
         scopes,
         dynamicTask.difficulty!,
-        completionState?.isFinished ?? allScopesDone,
+        false, // isFinished
         this.parseDurationToMinutes(dynamicTask.minScopeDuration, 30),
         this.parseDurationToMinutes(dynamicTask.maxScopeDuration, 120),
       );
@@ -360,7 +287,7 @@ export class TaskService {
               id: task.id.toString(),
               title: task.title,
               rrule: task.rrule,
-              duration:{hours, minutes},
+              duration: { hours, minutes },
               extendedProps: {
                 description: task.description,
                 difficulty: task.difficulty,

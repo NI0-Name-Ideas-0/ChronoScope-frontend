@@ -76,7 +76,7 @@ export class Calendar implements OnChanges {
 
     api.setOption('eventClick', async (info: EventClickArg) => {
       try {
-        const task = await this.taskService.getTask(Number(info.event.id));
+        const task = await this.taskService.getTask(Number(info.event.id.split('-')[0]));
         if (task) this.taskModalService.openForEdit(task);
       } catch (error) {
         console.error('Error fetching task:', error);

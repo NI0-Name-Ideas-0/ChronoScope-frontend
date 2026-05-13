@@ -5,7 +5,7 @@ export class AlgoTask extends Task {
   startDate: Date;
   dueDate: Date;
   duration: number;
-  dependencies: Task[];
+  dependencies: number[];
   scopes: Scope[];
   minScopeMinutes: number;
   maxScopeMinutes: number;
@@ -17,7 +17,7 @@ export class AlgoTask extends Task {
     startDate: Date,
     dueDate: Date,
     duration: number,
-    dependencies: Task[] = [],
+    dependencies: number[] = [],
     labels: string[] = [],
     organizationId: string | null,
     scopes: Scope[] = [],
