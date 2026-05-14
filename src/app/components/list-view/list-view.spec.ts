@@ -167,12 +167,7 @@ function createStaticTask(id: number, title: string, isFinished = false): Task {
   );
 }
 
-function createAlgoTask(
-  id: number,
-  title: string,
-  scopes: Scope[] = [],
-  isFinished = false,
-): Task {
+function createAlgoTask(id: number, title: string, scopes: Scope[] = [], isFinished = false): Task {
   return new AlgoTask(
     id,
     title,
@@ -180,9 +175,10 @@ function createAlgoTask(
     new Date(),
     new Date(),
     120,
+    0,
     [],
     [],
-    null,
+    'uuid',
     scopes,
     'EASY',
     isFinished,
