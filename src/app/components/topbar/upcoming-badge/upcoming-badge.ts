@@ -83,12 +83,15 @@ export class UpcomingBadge implements OnInit, OnDestroy {
     const entry = this.currentEntry();
     if (!entry || entry.taskType !== 'dynamic') return;
 
-    const scopeMinutes = this.scopeDurationMinutes(entry.scope);
-    const newElapsed = Math.min(
-      entry.task.elapsedMinutes + scopeMinutes,
-      entry.task.duration,
+    entry.scope.isFinished = true;
+    entry.task.isFinished = entry.task.scopes.every((scope) => scope.isFinished);
+    this.taskService.saveTaskCompletion(
+      entry.task.id,
+      entry.task.isFinished,
+      entry.task.scopes.map((scope) => scope.isFinished),
     );
 
+    const newElapsed = this.calculateElapsedMinutes(entry.task);
     await this.submitElapsedUpdate(entry.task, newElapsed);
   }
 
@@ -105,11 +108,17 @@ export class UpcomingBadge implements OnInit, OnDestroy {
 
     const scopeMinutes = this.scopeDurationMinutes(entry.scope);
     const gainedMinutes = Math.max(scopeMinutes - additional, 0);
-    const newElapsed = Math.min(
-      entry.task.elapsedMinutes + gainedMinutes,
-      entry.task.duration,
+
+    const elapsedMinutes = this.calculateElapsedMinutes(entry.task) + gainedMinutes;
+    entry.scope.isFinished = true;
+    entry.task.isFinished = entry.task.scopes.every((scope) => scope.isFinished);
+    this.taskService.saveTaskCompletion(
+      entry.task.id,
+      entry.task.isFinished,
+      entry.task.scopes.map((scope) => scope.isFinished),
     );
 
+    const newElapsed = Math.min(elapsedMinutes, entry.task.duration);
     await this.submitElapsedUpdate(entry.task, newElapsed);
     this.closeOverdueModal();
   }
@@ -239,19 +248,20 @@ export class UpcomingBadge implements OnInit, OnDestroy {
     );
     if (!scopes.length) return [];
 
-    const taskElapsed = Math.min(task.elapsedMinutes, task.duration);
-    let remainingElapsed = Math.max(0, taskElapsed);
-
     for (let i = 0; i < scopes.length; i += 1) {
-      const scopeMinutes = this.scopeDurationMinutes(scopes[i]);
-      if (remainingElapsed >= scopeMinutes) {
-        remainingElapsed -= scopeMinutes;
+      if (scopes[i].isFinished) {
         continue;
       }
       return scopes.slice(i);
     }
 
     return [];
+  }
+
+  private calculateElapsedMinutes(task: AlgoTask): number {
+    return task.scopes
+      .filter((scope) => scope.isFinished)
+      .reduce((sum, scope) => sum + this.scopeDurationMinutes(scope), 0);
   }
 }
 

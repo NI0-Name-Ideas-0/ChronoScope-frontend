@@ -299,6 +299,7 @@ export class TaskService {
     const state = this.loadCompletionState();
     state[taskId] = { isFinished, scopes: scopeStates || [] };
     localStorage.setItem('chronoscope-completion', JSON.stringify(state));
+    this.tasksSubject.next([...this.tasks.values()]);
   }
 
   /**
@@ -412,7 +413,7 @@ export class TaskService {
           description: task.description,
           difficulty: task.difficulty,
           taskType: 'dynamic',
-          isDone: task.elapsedMinutes >= task.duration && task.duration > 0,
+          isDone: scope.isFinished,
         },
       }));
     }
