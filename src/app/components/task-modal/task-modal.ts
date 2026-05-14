@@ -323,7 +323,7 @@ export class TaskModal {
       const t = this.dynamicTask;
       if (!t.startDate || !t.dueDate) return false;
       if (t.startDate > t.dueDate) return false;
-      if (t.duration <= 0 || t.minScopeDuration <= 0) return false;
+      if (t.duration < 15 || t.minScopeDuration < 15) return false;
       if (t.maxScopeDuration < t.minScopeDuration) return false;
     }
 
