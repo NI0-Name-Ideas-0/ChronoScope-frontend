@@ -1,0 +1,8 @@
+.task-done {
+  opacity: 0.55;
+}
+
+.task-done h3 {
+  text-decoration: line-through;
+}
+
