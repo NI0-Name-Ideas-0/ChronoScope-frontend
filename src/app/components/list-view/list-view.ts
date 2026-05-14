@@ -67,6 +67,16 @@ export class ListView implements OnInit {
     return task instanceof AlgoTask;
   }
 
+  taskTypeIcon(task: Task): 'static' | 'static-blocker' | 'dynamic' {
+    if (task instanceof StaticTask) {
+      return task.isBlocker ? 'static-blocker' : 'static';
+    }
+    if (task instanceof AlgoTask) {
+      return 'dynamic';
+    }
+    return 'static';
+  }
+
   onSearchChange() {}
 
   clearSearch() {}

@@ -292,6 +292,7 @@ export class TaskService {
         staticTask.difficulty!,
         false, // isFinished
         staticTask.rrule || '',
+        Boolean(staticTask.isBlocker),
       );
     } else {
       const dynamicTask = apiTask as DynamicTaskResponse;
@@ -338,7 +339,8 @@ export class TaskService {
                 description: task.description,
                 difficulty: task.difficulty,
                 labels: task.labels,
-                isBlocker: (task as any).isBlocker,
+                isBlocker: task.isBlocker,
+                taskType: task.isBlocker ? 'static-blocker' : 'static',
               },
             },
           ];
@@ -358,6 +360,8 @@ export class TaskService {
             description: task.description,
             difficulty: task.difficulty,
             labels: task.labels,
+            isBlocker: task.isBlocker,
+            taskType: task.isBlocker ? 'static-blocker' : 'static',
           },
         },
       ];
@@ -372,6 +376,8 @@ export class TaskService {
         extendedProps: {
           description: task.description,
           difficulty: task.difficulty,
+          taskType: 'dynamic',
+          isDone: task.elapsedMinutes >= task.duration && task.duration > 0,
         },
       }));
     }
