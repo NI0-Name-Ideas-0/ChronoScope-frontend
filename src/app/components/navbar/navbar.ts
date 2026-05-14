@@ -1,6 +1,14 @@
-import { Component, ChangeDetectionStrategy, inject, output } from '@angular/core';
 import { Auth } from '@services/auth';
-import { AfterViewInit, Component, ChangeDetectionStrategy, DestroyRef, ElementRef, inject, output, viewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ChangeDetectionStrategy,
+  DestroyRef,
+  ElementRef,
+  inject,
+  output,
+  viewChild,
+} from '@angular/core';
 import { TaskModalService } from '@services/task-modal.service';
 import { ThemeService } from '@services/theme.service';
 import { ViewService } from '@services/view.service';
@@ -14,11 +22,10 @@ import { TaskService } from '@services/task.service';
   styleUrl: './navbar.css',
 })
 export class Navbar implements AfterViewInit {
-
   constructor(
     private taskModalService: TaskModalService,
     private taskService: TaskService,
-  ) { }
+  ) {}
   private authService = inject(Auth);
   private themeService = inject(ThemeService);
   private destroyRef = inject(DestroyRef);
@@ -61,18 +68,18 @@ export class Navbar implements AfterViewInit {
   Import of the View Service for changing the view via the functions
   */
   viewService = inject(ViewService);
-  setCalendarView(){
-    if(this.viewService.listView){
+  setCalendarView() {
+    if (this.viewService.listView) {
       this.viewService.toggleCalendar();
-    }else{
+    } else {
       this.viewService.setCalendarView(true);
     }
   }
 
-  setListView(){
-    if(this.viewService.calendarView){
+  setListView() {
+    if (this.viewService.calendarView) {
       this.viewService.toggleList();
-    }else{
+    } else {
       this.viewService.setListView(true);
     }
   }

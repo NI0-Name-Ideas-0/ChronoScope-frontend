@@ -1,4 +1,12 @@
-import { Component, ViewChild, Input, OnChanges, SimpleChanges, inject, effect } from '@angular/core';
+import {
+  Component,
+  ViewChild,
+  Input,
+  OnChanges,
+  SimpleChanges,
+  inject,
+  effect,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { FullCalendarComponent } from '@fullcalendar/angular';
