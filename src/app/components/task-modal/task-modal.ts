@@ -102,30 +102,34 @@ export class TaskModal {
   }
 
   emptyStaticTask(): StaticTaskForm {
+    const now = new Date();
+    const end = new Date(now.getTime() + 60 * 60 * 1000);
     return {
       title: '',
       description: '',
       labels: [],
       organizationId: undefined,
       difficulty: 'MEDIUM',
-      startDate: '',
-      startTime: '09:00',
-      endDate: '',
-      endTime: '10:00',
+      startDate: this.formatLocalDate(now),
+      startTime: this.formatLocalTime(now),
+      endDate: this.formatLocalDate(end),
+      endTime: this.formatLocalTime(end),
       rrule: '',
       isBlocker: false,
     };
   }
 
   emptyDynamicTask(): DynamicTaskForm {
+    const now = new Date();
+    const end = new Date(now.getTime() + 60 * 60 * 1000);
     return {
       title: '',
       description: '',
       labels: [],
       organizationId: undefined,
       difficulty: 'MEDIUM',
-      startDate: '',
-      dueDate: '',
+      startDate: this.formatLocalDate(now),
+      dueDate: this.formatLocalDate(end),
       duration: 60,
       minScopeDuration: 30,
       maxScopeDuration: 120,
