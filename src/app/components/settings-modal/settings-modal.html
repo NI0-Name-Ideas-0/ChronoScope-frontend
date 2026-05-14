@@ -6,12 +6,12 @@
     role="dialog"
     aria-modal="true"
     aria-label="Settings"
-    (click)="onBackdropClick($event)"
-    (keydown)="onKeydown($event)"
+    (mousedown)="onBackdropClick($event)"
+    (keydown.escape)="close()"
     tabindex="-1"
   >
     <!-- Modal panel -->
-    <div class="settings-panel" [class.settings-panel--leaving]="isLeaving()" role="document">
+    <div class="settings-panel" [class.settings-panel--leaving]="isLeaving()" [class.settings-panel--work-preferences]="isWorkPreferencesActive()" role="document">
 
       <!-- Header -->
       <div class="settings-header">
@@ -70,8 +70,8 @@
               <app-settings-organizations />
             }
             @case ('work') {
-              <app-settings-work-preferences 
-                (saved)="onWorkSaved($event)" 
+              <app-settings-work-preferences
+                (saved)="onWorkSaved($event)"
                 (cancelled)="onWorkCancelled()" />
             }
           }

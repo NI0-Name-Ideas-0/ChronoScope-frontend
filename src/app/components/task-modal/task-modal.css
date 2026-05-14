@@ -38,7 +38,7 @@
 
 /* ── Mode Toggle ──────────────────────────────────────────────────────────── */
 .task-mode-toggle {
-  @apply flex shrink-0 rounded-xl overflow-hidden border border-base-300;
+  @apply flex shrink-0 rounded-xl overflow-hidden border border-base-300 m-5 mb-1;
 }
 
 .task-mode-btn {
@@ -58,4 +58,3 @@
 .task-field--disabled {
   @apply opacity-60;
 }
-

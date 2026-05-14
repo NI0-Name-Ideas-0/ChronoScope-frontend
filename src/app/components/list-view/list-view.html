@@ -37,6 +37,7 @@
     @for (task of filteringTasks(); track task.id) {
       <div
         class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-base-200"
+        [class.task-done]="isTaskFinished(task)"
         (click)="onTaskClick(task)"
       >
         <!-- Content -->
@@ -61,37 +62,80 @@
                 }
               }
             </span>
+          <div
+            class="flex items-center justify-center gap-2 mb-1 px-2 py-1 rounded-lg transition-colors"
+            [class.cursor-pointer]="isAlgoTask(task)"
+            [class.select-none]="isAlgoTask(task)"
+            [class.hover:bg-base-200]="isAlgoTask(task)"
+            (click)="isAlgoTask(task) && toggleExpand(task, $event)"
+          >
+            <!-- Expand/Collapse chevron for AlgoTasks -->
+            @if (isAlgoTask(task)) {
+              <button
+                class="btn-ghost"
+                (click)="toggleExpand(task, $event)"
+                [title]="isExpanded(task) ? 'Collapse' : 'Expand'"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 transition-transform"
+                  [class.rotate-180]="isExpanded(task)"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+            }
             <h3 class="font-semibold text-lg truncate">{{ task.title }}</h3>
           </div>
           <p class="text-sm text-base-content/70 truncate">{{ task.description }}</p>
           <p class="text-xs text-base-content/50 mt-1">
             DueDate: {{ getTaskDueDate(task) | date: 'dd/MM/yyyy' }}
           </p>
+          <!-- Progress bar for AlgoTasks -->
+          @if (isAlgoTask(task)) {
+            <div class="w-full max-w-xs mx-auto mt-2">
+              <div class="flex justify-between text-xs text-base-content/60 mb-0.5">
+                <span>Progress</span>
+                <span>{{ (getCompletionRatio($any(task)) * 100).toFixed(0) }}%</span>
+              </div>
+              <progress
+                class="progress progress-success w-full"
+                [value]="getCompletionRatio($any(task)) * 100"
+                max="100"
+              ></progress>
+            </div>
+          }
         </div>
 
         <!-- Actions -->
         <div class="shrink-0 flex gap-1">
-          <!-- Edit -->
-          <button
-            class="btn btn-ghost btn-sm btn-circle"
-            (click)="onEdit(task, $event)"
-            title="Edit"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <!-- Mark as done (only for StaticTasks) -->
+          @if (isStaticTask(task)) {
+            <button
+              class="btn btn-ghost btn-sm btn-circle"
+              [class.text-warning]="!task.isFinished"
+              [class.text-success]="task.isFinished"
+              (click)="onMarkDone(task, $event)"
+              [title]="task.isFinished ? 'Mark as open' : 'Mark as done'"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <circle cx="12" cy="12" r="10" />
+              </svg>
+            </button>
+          }
           <!-- Delete -->
           <button
             class="btn btn-ghost btn-sm btn-circle text-error"
@@ -115,12 +159,57 @@
           </button>
         </div>
       </div>
+
+      <!-- Expanded scopes for AlgoTasks -->
+      @if (isAlgoTask(task) && isExpanded(task)) {
+        <div class="ml-4 space-y-1">
+          @for (scope of getVisibleScopes($any(task)); track scope.start.getTime()) {
+            <div
+              class="card bg-base-200 shadow-sm border border-base-300 p-3 flex items-center justify-between"
+              [class.opacity-60]="scope.isFinished"
+            >
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-medium">
+                  {{ scope.start | date: 'dd/MM/yyyy HH:mm' }} -
+                  {{ scope.end | date: 'HH:mm' }}
+                </span>
+                <span class="text-xs text-base-content/50">
+                  ({{ getScopeDurationMinutes(scope) }} min)
+                </span>
+                @if (scope.isFinished) {
+                  <span class="badge badge-success badge-sm">Done</span>
+                }
+              </div>
+              <button
+                class="btn btn-ghost btn-sm btn-circle"
+                [class.text-warning]="!scope.isFinished"
+                [class.text-success]="scope.isFinished"
+                (click)="onMarkScopeDone($any(task), scope, $event)"
+                [title]="scope.isFinished ? 'Mark as open' : 'Mark as done'"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      }
     } @empty {
-      <div class="text-center py-12">
-        <div class="text-6xl mb-4">📝</div>
+      <div class="mt-12 flex flex-col items-center justify-center gap-4">
+        <svg width="50px" height="50px" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+          <path d="M864 512a32 32 0 0 0-32 32v96a32 32 0 0 0 64 0v-96a32 32 0 0 0-32-32zM881.92 389.44a23.68 23.68 0 0 0-5.76-2.88 19.84 19.84 0 0 0-6.08-1.92 32 32 0 0 0-28.8 8.64A32 32 0 0 0 832 416a32 32 0 1 0 64 0 33.6 33.6 0 0 0-9.28-22.72z" />
+          <path d="M800 128h-32a96 96 0 0 0-96-96H352a96 96 0 0 0-96 96H224a96 96 0 0 0-96 93.44v677.12A96 96 0 0 0 224 992h576a96 96 0 0 0 96-93.44V736a32 32 0 0 0-64 0v162.56a32 32 0 0 1-32 29.44H224a32 32 0 0 1-32-29.44V221.44A32 32 0 0 1 224 192h32a96 96 0 0 0 96 96h320a96 96 0 0 0 96-96h32a32 32 0 0 1 32 29.44V288a32 32 0 0 0 64 0V221.44A96 96 0 0 0 800 128z m-96 64a32 32 0 0 1-32 32H352a32 32 0 0 1-32-32V128a32 32 0 0 1 32-32h320a32 32 0 0 1 32 32z" />
+          <path d="M712.32 426.56L448 721.6l-137.28-136.32A32 32 0 0 0 265.6 630.4l160 160a32 32 0 0 0 22.4 9.6 32 32 0 0 0 23.04-10.56l288-320a32 32 0 0 0-47.68-42.88z" />
+        </svg>
         <h3 class="text-lg font-semibold mb-2">No tasks found</h3>
         <p class="text-base-content/70">
-          {{ searchTask ? 'Try another name' : '' }}
+          {{ activeFilterDesc ? 'Try another ' + activeFilterDesc : '' }}
         </p>
       </div>
     }

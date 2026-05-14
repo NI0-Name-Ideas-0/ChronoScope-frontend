@@ -1,11 +1,14 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '@services/task.service';
 import { TaskModalService } from '@services/task-modal.service';
+import { ViewService } from '@services/view.service';
 import { Task } from '@app/model/task';
 import { StaticTask } from '@app/model/static-task';
 import { AlgoTask } from '@app/model/algo-task';
+import { Scope } from '@app/model/scope';
+import { DynamicTaskUpdateRequest } from '../../../api/models';
 
 @Component({
   selector: 'app-list-view',
@@ -21,9 +24,21 @@ export class ListView implements OnInit {
     private cdr: ChangeDetectorRef,
   ) {}
 
+  private viewService = inject(ViewService);
+
   tasks: Task[] = [];
-  searchTask: string = '';
   activeFilter: 'all' | 'todo' | 'today' | 'done' = 'today';
+
+  // Tracks which AlgoTask IDs are expanded
+  expandedTasks = new Set<number>();
+
+  get activeFilterDesc(): string {
+    const filter = this.viewService.activeFilter();
+    if (filter?.type === 'task') return 'task';
+    if (filter?.type === 'label') return 'label';
+    if (this.viewService.selectedOrganizationId()) return 'organization';
+    return '';
+  }
 
   //filters for the automatic Button creation in the .html
   filters = [
@@ -78,8 +93,67 @@ export class ListView implements OnInit {
   }
 
   onSearchChange() {}
+  /**
+   * Returns the duration of a scope in minutes
+   */
+  getScopeDurationMinutes(scope: Scope): number {
+    return Math.round((scope.end.getTime() - scope.start.getTime()) / 60000);
+  }
 
-  clearSearch() {}
+  /**
+   * Calculates total elapsed minutes for finished scopes of an AlgoTask
+   */
+  calculateElapsedMinutes(task: AlgoTask): number {
+    return task.scopes
+      .filter((s) => s.isFinished)
+      .reduce((sum, s) => sum + this.getScopeDurationMinutes(s), 0);
+  }
+
+  /**
+   * Toggles expansion of an AlgoTask to show/hide its scopes
+   */
+  toggleExpand(task: Task, event: Event) {
+    event.stopPropagation();
+    if (this.expandedTasks.has(task.id)) {
+      this.expandedTasks.delete(task.id);
+    } else {
+      this.expandedTasks.add(task.id);
+    }
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Checks if an AlgoTask is currently expanded
+   */
+  isExpanded(task: Task): boolean {
+    return this.expandedTasks.has(task.id);
+  }
+
+  /**
+   * Returns the completion ratio of an AlgoTask (0 to 1)
+   */
+  getCompletionRatio(task: AlgoTask): number {
+    if (task.scopes.length === 0) return 0;
+    const doneScopes = task.scopes.filter((s) => s.isFinished).length;
+    return doneScopes / task.scopes.length;
+  }
+
+  /**
+   * Returns the scopes to display for an AlgoTask.
+   * In 'today' view only scopes that fall on today are shown.
+   */
+  getVisibleScopes(task: AlgoTask): Scope[] {
+    if (this.activeFilter !== 'today') {
+      return task.scopes;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return task.scopes.filter((scope) => {
+      const scopeDate = new Date(scope.start);
+      scopeDate.setHours(0, 0, 0, 0);
+      return scopeDate.getTime() === today.getTime();
+    });
+  }
 
   //used by the Filter-Buttons to set the value
   setFilter(filterValue: 'todo' | 'today' | 'done' | 'all') {
@@ -90,20 +164,45 @@ export class ListView implements OnInit {
   filteringTasks(): Task[] {
     let result = this.tasks;
 
+    // Apply organization filter
+    const orgId = this.viewService.selectedOrganizationId();
+    if (orgId) {
+      result = result.filter((task) => task.organizationId === orgId);
+    }
+
+    // Apply active filter (task or label)
+    const activeFilter = this.viewService.activeFilter();
+    if (activeFilter) {
+      if (activeFilter.type === 'task') {
+        result = result.filter((task) => task.id === activeFilter.value);
+      } else if (activeFilter.type === 'label') {
+        result = result.filter((task) => task.labels?.includes(activeFilter.value as string));
+      }
+    }
+
     switch (this.activeFilter) {
       case 'todo':
-        result = result.filter((task) => task.isFinished === false);
+        result = result.filter((task) => !this.isTaskFinished(task));
         break;
       case 'done':
-        result = result.filter((task) => task.isFinished === true);
+        result = result.filter((task) => this.isTaskFinished(task));
         break;
       case 'today':
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         result = result.filter((task) => {
-          const due = this.getTaskDueDate(task);
-          due.setHours(0, 0, 0, 0);
-          return due.getTime() === today.getTime();
+          if (task instanceof StaticTask) {
+            const due = new Date(task.scope.end);
+            due.setHours(0, 0, 0, 0);
+            return due.getTime() === today.getTime();
+          } else if (task instanceof AlgoTask) {
+            return task.scopes.some((scope) => {
+              const scopeDate = new Date(scope.start);
+              scopeDate.setHours(0, 0, 0, 0);
+              return scopeDate.getTime() === today.getTime();
+            });
+          }
+          return false;
         });
         break;
       default:
@@ -113,14 +212,25 @@ export class ListView implements OnInit {
     return result;
   }
 
+  /**
+   * Checks if a task is finished.
+   * For AlgoTasks, returns true only when ALL scopes are finished.
+   */
+  isTaskFinished(task: Task): boolean {
+    if (task instanceof AlgoTask) {
+      return task.scopes.length > 0 && task.scopes.every((s) => s.isFinished);
+    }
+    return task.isFinished;
+  }
+
   //returns the overall number of open tasks
   openCount(): number {
-    return this.tasks.filter((task) => task.isFinished === false).length;
+    return this.tasks.filter((task) => !this.isTaskFinished(task)).length;
   }
 
   //returns the overall number of done tasks
   doneCount(): number {
-    return this.tasks.filter((task) => task.isFinished === true).length;
+    return this.tasks.filter((task) => this.isTaskFinished(task)).length;
   }
 
   onTaskClick(task: Task) {
@@ -130,12 +240,38 @@ export class ListView implements OnInit {
     });
   }
 
-  onEdit(task: Task, event: Event) {
+  onMarkDone(task: Task, event: Event) {
     event.stopPropagation();
-    // Fetch the full task from the service and open for editing
-    this.taskService.getTask(task.id).then((apiTask) => {
-      this.taskModalService.openForEdit(apiTask);
-    });
+    task.isFinished = !task.isFinished;
+    this.taskService.saveTaskCompletion(task.id, task.isFinished);
+    this.cdr.detectChanges();
+  }
+
+  onMarkScopeDone(task: AlgoTask, scope: Scope, event: Event) {
+    event.stopPropagation();
+    scope.isFinished = !scope.isFinished;
+
+    // Derive task-level completion from all scopes
+    task.isFinished = task.scopes.every((s) => s.isFinished);
+
+    // Persist completion state locally so it survives reloads
+    this.taskService.saveTaskCompletion(
+      task.id,
+      task.isFinished,
+      task.scopes.map((s) => s.isFinished),
+    );
+
+    // Calculate elapsed time from finished scopes and send to backend
+    const elapsedMinutes = this.calculateElapsedMinutes(task);
+    const updateRequest: DynamicTaskUpdateRequest = {
+      type: 'dynamic',
+      elapsed: this.taskService.formatMinutesToDuration(elapsedMinutes),
+    };
+    this.taskService
+      .updateTask(task.id, updateRequest)
+      .catch((error) => console.error('Error updating elapsed time:', error));
+
+    this.cdr.detectChanges();
   }
 
   async onDelete(task: Task, event: Event) {

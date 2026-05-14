@@ -87,6 +87,13 @@ export class TaskService {
   }
 
   /**
+   * Formats minutes as an ISO 8601 duration string (e.g. PT30M)
+   */
+  formatMinutesToDuration(minutes: number): string {
+    return `PT${minutes}M`;
+  }
+
+  /**
    * Loads all tasks from the backend and updates the subject
    */
   async loadTasks(): Promise<void> {
@@ -275,10 +282,31 @@ export class TaskService {
   }
 
   /**
+   * Loads completion state from localStorage.
+   */
+  private loadCompletionState(): Record<number, { isFinished: boolean; scopes: boolean[] }> {
+    try {
+      return JSON.parse(localStorage.getItem('chronoscope-completion') || '{}');
+    } catch {
+      return {};
+    }
+  }
+
+  /**
+   * Saves completion state to localStorage.
+   */
+  saveTaskCompletion(taskId: number, isFinished: boolean, scopeStates?: boolean[]): void {
+    const state = this.loadCompletionState();
+    state[taskId] = { isFinished, scopes: scopeStates || [] };
+    localStorage.setItem('chronoscope-completion', JSON.stringify(state));
+  }
+
+  /**
    * Converts API response objects to proper Task class instances
    */
   private convertApiTaskToModel(apiTask: StaticTaskResponse | DynamicTaskResponse): Task {
     const isStatic = apiTask.type === 'static';
+    const completionState = apiTask.id !== undefined ? this.loadCompletionState()[apiTask.id] : undefined;
 
     if (isStatic) {
       const staticTask = apiTask as StaticTaskResponse;
@@ -290,7 +318,7 @@ export class TaskService {
         new Scope(new Date(staticTask.startAt!), new Date(staticTask.endAt!)),
         staticTask.organizationId || null,
         staticTask.difficulty!,
-        false, // isFinished
+        completionState?.isFinished ?? false,
         staticTask.rrule || '',
         Boolean(staticTask.isBlocker),
       );
@@ -298,8 +326,15 @@ export class TaskService {
       const dynamicTask = apiTask as DynamicTaskResponse;
       const scopes = (dynamicTask.scopes || [])
         .filter((scope) => scope.startAt && scope.endAt)
-        .map((scope) => new Scope(new Date(scope.startAt!), new Date(scope.endAt!)));
+        .map((scope, index) => {
+          return new Scope(
+            new Date(scope.startAt!),
+            new Date(scope.endAt!),
+            completionState?.scopes?.[index] ?? false,
+          );
+        });
 
+      const allScopesDone = scopes.length > 0 && scopes.every((s) => s.isFinished);
       return new AlgoTask(
         dynamicTask.id!,
         dynamicTask.name!,
@@ -313,7 +348,7 @@ export class TaskService {
         dynamicTask.organizationId || null,
         scopes,
         dynamicTask.difficulty!,
-        false, // isFinished
+        completionState?.isFinished ?? allScopesDone,
         this.parseDurationToMinutes(dynamicTask.minScopeDuration, 30),
         this.parseDurationToMinutes(dynamicTask.maxScopeDuration, 120),
       );

@@ -494,6 +494,12 @@ export class TaskModal {
     }, 200);
   }
 
+  onBackdropClick(event: MouseEvent) {
+    if (event.target === event.currentTarget) {
+      this.close();
+    }
+  }
+
   get Identity() {
     return this.auth.identity$;
   }
