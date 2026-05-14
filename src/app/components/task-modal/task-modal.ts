@@ -373,7 +373,7 @@ export class TaskModal {
       } else {
         const t = this.dynamicTask;
         const startDate = this.stringDateToDate(t.startDate);
-        const dueDate = this.stringDateToDate(t.dueDate);
+        const dueDate = this.stringDateToDate(t.dueDate, '23:59');
 
         if (this.isEditing && this.editingTask) {
           const request: DynamicTaskUpdateRequest = {
