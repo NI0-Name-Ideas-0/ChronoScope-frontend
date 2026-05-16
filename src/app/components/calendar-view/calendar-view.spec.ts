@@ -5,6 +5,8 @@ import { TaskService } from '@services/task.service';
 import { Auth } from '@services/auth';
 import { OAuthService } from 'angular-oauth2-oidc';
 import { Api } from '../../../api/api';
+import { TaskModalService } from '@services/task-modal.service';
+import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
 import { of } from 'rxjs';
 
 const mockOAuthService = {
@@ -23,6 +25,16 @@ const mockAuth = {
 const mockTaskService = {
   tasks$: of([]),
   getTask: vi.fn(),
+  getAllCalendarEvents: vi.fn().mockReturnValue([]),
+};
+
+const mockTaskModalService = {
+  openForEdit: vi.fn(),
+};
+
+const mockWorkSlotPreferenceService = {
+  loadPreferences: vi.fn().mockResolvedValue([]),
+  preferencesChanged$: of(undefined),
 };
 
 const mockApi = {
@@ -42,6 +54,8 @@ describe('CalendarView', () => {
         { provide: OAuthService, useValue: mockOAuthService },
         { provide: Auth, useValue: mockAuth },
         { provide: TaskService, useValue: mockTaskService },
+        { provide: TaskModalService, useValue: mockTaskModalService },
+        { provide: WorkSlotPreferenceService, useValue: mockWorkSlotPreferenceService },
         { provide: Api, useValue: mockApi },
       ],
     }).compileComponents();

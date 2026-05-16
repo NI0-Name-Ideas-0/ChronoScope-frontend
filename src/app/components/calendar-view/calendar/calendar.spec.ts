@@ -6,7 +6,8 @@ import { ViewService } from '@services/view.service';
 import { OAuthService } from 'angular-oauth2-oidc';
 import { Api } from '@api/api';
 import { Auth } from '@services/auth';
-import { BehaviorSubject } from 'rxjs';
+import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
+import { BehaviorSubject, of } from 'rxjs';
 import { Task } from '@app/model/task';
 import { StaticTask } from '@app/model/static-task';
 import { Scope } from '@app/model/scope';
@@ -48,6 +49,12 @@ describe('Calendar', () => {
       subscribe: vi.fn(),
     },
     getAccounts: vi.fn().mockReturnValue([]),
+    getIdentityData: vi.fn().mockReturnValue({ organizations: [] }),
+  };
+
+  const mockWorkSlotPreferenceService = {
+    loadPreferences: vi.fn().mockResolvedValue([]),
+    preferencesChanged$: of(undefined),
   };
 
   const createMockCalendarRef = () => {
@@ -77,6 +84,7 @@ describe('Calendar', () => {
         { provide: OAuthService, useValue: mockOAuthService },
         { provide: Api, useValue: mockApi },
         { provide: Auth, useValue: mockAuth },
+        { provide: WorkSlotPreferenceService, useValue: mockWorkSlotPreferenceService },
       ],
     }).compileComponents();
 
