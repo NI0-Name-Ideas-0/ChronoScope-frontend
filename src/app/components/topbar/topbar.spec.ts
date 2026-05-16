@@ -8,6 +8,9 @@ import { of } from 'rxjs';
 
 class MockTaskService {
   tasks$ = of([]);
+  getAllTasks() {
+    return [];
+  }
 }
 
 class MockAuth {

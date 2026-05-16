@@ -37,7 +37,13 @@
       <!--End Date Input-->
       <div class="form-control" *ngIf="config.frequency !== 'none'">
         <label class="label"><span class="label-text">End Date</span></label>
-        <input type="date" class="input input-bordered w-full" [class.input-error]="endDateError" [(ngModel)]="endDateInput" />
+        <input
+          type="date"
+          class="input input-bordered w-full"
+          [class.input-error]="endDateError"
+          [(ngModel)]="endDateInput"
+          [min]="minimumEndDateInput"
+        />
       </div>
       <!--Special Buttons for Weekly Day Selection-->
       <div class="form-control" *ngIf="config.frequency === 'weekly'">

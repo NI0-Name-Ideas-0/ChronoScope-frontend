@@ -1,1 +1,60 @@
-<div class="badge badge-accent badge-md">TEST</div>
+<div class="upcoming-badge" [class.is-overdue]="currentEntry()?.state === 'overdue'">
+  <div class="badge badge-md" [ngClass]="badgeStatusClass()">
+    <span class="truncate">{{ badgeText() }}</span>
+    @if (showCheckmark()) {
+      <button
+        type="button"
+        class="badge-action"
+        title="Mark scope as done"
+        (click)="markScopeDone()"
+      >
+        ✓
+      </button>
+    }
+    @if (showOverdueAction()) {
+      <button
+        type="button"
+        class="badge-action is-overdue"
+        title="Update remaining time"
+        (click)="openOverdueModal()"
+      >
+        ✕
+      </button>
+    }
+  </div>
+</div>
+
+<dialog class="modal" [class.modal-open]="showOverdueModal()">
+  <div class="modal-box">
+    <h3 class="font-bold text-lg">Running late?</h3>
+    <p class="text-sm text-base-content/70 mt-2">
+      How many more minutes do you need to finish "{{ badgeText() }}"?
+    </p>
+    <div class="form-control mt-4">
+      <label class="label">
+        <span class="label-text">Additional minutes needed</span>
+      </label>
+      <input
+        type="number"
+        class="input input-bordered"
+        min="0"
+        [max]="currentScopeMinutes()"
+        step="5"
+        [ngModel]="additionalMinutes()"
+        (ngModelChange)="additionalMinutes.set(clampAdditionalMinutes(+$event))"
+      />
+      @if (modalError()) {
+        <span class="text-xs text-error mt-2">{{ modalError() }}</span>
+      }
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-ghost" type="button" (click)="closeOverdueModal()">Cancel</button>
+      <button class="btn btn-primary" type="button" [disabled]="isSubmitting()" (click)="submitOverdue()">
+        Update plan
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop" (click)="closeOverdueModal()">
+    <button>close</button>
+  </form>
+</dialog>

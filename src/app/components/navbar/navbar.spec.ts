@@ -2,10 +2,20 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Navbar } from './navbar';
 import { Auth } from '@services/auth';
+import { TaskService } from '@services/task.service';
+import { of } from 'rxjs';
 
 const mockAuthService = {
   logout: vi.fn(),
 };
+
+class MockTaskService {
+  tasks$ = of([]);
+  getAllTasks() {
+    return [];
+  }
+  planTasks = vi.fn();
+}
 
 describe('Navbar', () => {
   let component: Navbar;
@@ -15,7 +25,8 @@ describe('Navbar', () => {
     await TestBed.configureTestingModule({
       imports: [Navbar],
       providers: [
-        { provide: Auth, useValue: mockAuthService }
+        { provide: Auth, useValue: mockAuthService },
+        { provide: TaskService, useClass: MockTaskService },
       ]
     }).compileComponents();
 

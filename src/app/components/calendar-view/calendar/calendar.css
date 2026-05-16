@@ -326,6 +326,92 @@
   background: var(--color-base-100);
 }
 
+:host ::ng-deep .fc .fc-task-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  line-height: 1.1;
+}
+
+:host ::ng-deep .fc .fc-task-content--month {
+  align-items: center;
+  width: 100%;
+}
+
+:host ::ng-deep .fc .fc-task-icon {
+  display: inline-flex;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-top: 0.1rem;
+}
+
+:host ::ng-deep .fc .fc-task-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+:host ::ng-deep .fc .fc-task-title {
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 auto;
+}
+
+:host ::ng-deep .fc .fc-task-done {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.85rem;
+  height: 0.85rem;
+  color: currentColor;
+}
+
+:host ::ng-deep .fc .fc-task-done svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+:host ::ng-deep .fc .fc-task-done--corner {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  margin-left: 0;
+}
+
+:host ::ng-deep .fc .work-slot {
+  opacity: 0.18;
+}
+
+:host ::ng-deep .fc .work-slot-primary {
+  background-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
+:host ::ng-deep .fc .work-slot-secondary {
+  background-color: color-mix(in srgb, var(--color-secondary) 35%, transparent);
+}
+
+:host ::ng-deep .fc .work-slot-accent {
+  background-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
+}
+
+:host ::ng-deep .fc .work-slot-info {
+  background-color: color-mix(in srgb, var(--color-info) 35%, transparent);
+}
+
+:host ::ng-deep .fc .work-slot-success {
+  background-color: color-mix(in srgb, var(--color-success) 35%, transparent);
+}
+
+:host ::ng-deep .fc .work-slot-warning {
+  background-color: color-mix(in srgb, var(--color-warning) 35%, transparent);
+}
+
+:host-context(html[data-theme="chrono-dark"]) ::ng-deep .fc-theme-standard .fc-scrollgrid,
+:host-context(html[data-theme="chrono-dark"]) ::ng-deep .fc-theme-standard td,
+:host-context(html[data-theme="chrono-dark"]) ::ng-deep .fc-theme-standard th {
+  @apply border-base-300;
+}
 :host ::ng-deep .fc .fc-popover-header {
   background: var(--color-base-200);
   border-radius: 0.5rem 0.5rem 0 0;
