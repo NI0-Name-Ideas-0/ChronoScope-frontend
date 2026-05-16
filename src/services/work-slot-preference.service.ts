@@ -194,8 +194,8 @@ export class WorkSlotPreferenceService {
   }
 
   private check(dayTimeToMinutes: number): number{
-    if(dayTimeToMinutes >= 1440){
-      return 1439;
+    if(dayTimeToMinutes >= MINUTES_PER_DAY){
+      return MINUTES_PER_DAY-1;
     }
     return dayTimeToMinutes;
   }
