@@ -54,9 +54,9 @@ export class RepetitionFieldComponent {
       this.dateError = 'Please select a correct date and time.';
       return;
     }
-    if (this.endDate === null || !this.isDateValid(this.endDate)) {
-      this.endDateError = 'Please select a correct date and time.';
-      return;
+    const minEndDate = this.getMinimumEndDate();
+    if (this.endDate === null || !this.isDateValid(this.endDate) || this.endDate < minEndDate) {
+      this.endDate = minEndDate;
     }
     this.syncEndDateInput();
     this.isOpen = true;
@@ -92,8 +92,27 @@ export class RepetitionFieldComponent {
     if (!this.isDateValid(parsed)) {
       return false;
     }
+    const minEndDate = this.getMinimumEndDate();
+    if (parsed < minEndDate) {
+      return false;
+    }
     this.endDate = parsed;
     return true;
+  }
+
+  get minimumEndDateInput(): string {
+    const min = this.getMinimumEndDate();
+    const y = min.getFullYear();
+    const m = String(min.getMonth() + 1).padStart(2, '0');
+    const d = String(min.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  private getMinimumEndDate(): Date {
+    const min = new Date(this.dtstart);
+    min.setHours(0, 0, 0, 0);
+    min.setDate(min.getDate() + 1);
+    return min;
   }
 
   validateInterval(): boolean {
