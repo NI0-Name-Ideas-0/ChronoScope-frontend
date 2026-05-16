@@ -28,8 +28,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run tests
-        run: pnpm test --watch=false
+      - name: Run tests with coverage
+        run: pnpm test:coverage
+
+      - name: Add branch coverage to job summary
+        if: always()
+        run: node .github/scripts/add-branch-coverage-summary.js
 
   deploy:
     name: Deploy to Production
