@@ -5,6 +5,7 @@ import { Auth } from '@services/auth';
 import { TaskModalService } from '@services/task-modal.service';
 import { ThemeService } from '@services/theme.service';
 import { ViewService } from '@services/view.service';
+import { TaskService } from '@services/task.service';
 import { of } from 'rxjs';
 
 const mockAuthService = {
@@ -22,6 +23,14 @@ const mockThemeService = {
   applyCurrentThemeToElement: vi.fn().mockReturnValue(vi.fn()),
 };
 
+class MockTaskService {
+  tasks$ = of([]);
+  getAllTasks() {
+    return [];
+  }
+  planTasks = vi.fn();
+}
+
 describe('Navbar', () => {
   let component: Navbar;
   let fixture: ComponentFixture<Navbar>;
@@ -35,6 +44,7 @@ describe('Navbar', () => {
         { provide: TaskModalService, useValue: mockTaskModalService },
         { provide: ThemeService, useValue: mockThemeService },
         ViewService,
+        { provide: TaskService, useClass: MockTaskService },
       ],
     }).compileComponents();
 

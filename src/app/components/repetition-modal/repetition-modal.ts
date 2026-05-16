@@ -54,9 +54,9 @@ export class RepetitionFieldComponent {
       this.dateError = 'Please select a correct date and time.';
       return;
     }
-    if (this.endDate === null || !this.isDateValid(this.endDate)) {
-      this.endDateError = 'Please select a correct date and time.';
-      return;
+    const minEndDate = this.getMinimumEndDate();
+    if (this.endDate === null || !this.isDateValid(this.endDate) || this.endDate < minEndDate) {
+      this.endDate = minEndDate;
     }
     this.syncEndDateInput();
     this.isOpen = true;
@@ -92,8 +92,27 @@ export class RepetitionFieldComponent {
     if (!this.isDateValid(parsed)) {
       return false;
     }
+    const minEndDate = this.getMinimumEndDate();
+    if (parsed < minEndDate) {
+      return false;
+    }
     this.endDate = parsed;
     return true;
+  }
+
+  get minimumEndDateInput(): string {
+    const min = this.getMinimumEndDate();
+    const y = min.getFullYear();
+    const m = String(min.getMonth() + 1).padStart(2, '0');
+    const d = String(min.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  private getMinimumEndDate(): Date {
+    const min = new Date(this.dtstart);
+    min.setHours(0, 0, 0, 0);
+    min.setDate(min.getDate() + 1);
+    return min;
   }
 
   validateInterval(): boolean {
@@ -161,8 +180,50 @@ export class RepetitionFieldComponent {
     try {
       const rule = rrulestr(rrule);
       const options = rule.options;
-      // mapping to config
+      const freqMap: Partial<Record<number, 'daily' | 'weekly' | 'monthly'>> = {
+        [RRule.DAILY]: 'daily',
+        [RRule.WEEKLY]: 'weekly',
+        [RRule.MONTHLY]: 'monthly',
+      };
+
+      const frequency = freqMap[options.freq as number];
+      if (!frequency) {
+        this.config.frequency = 'none';
+        this.config.weekdays = [];
+        this.displayText = 'no repetition';
+        return;
+      }
+      this.config.frequency = frequency;
       this.config.interval = Math.max(1, Math.round(options.interval || 1));
+
+      const weekdaysRaw = Array.isArray(options.byweekday)
+        ? options.byweekday
+        : options.byweekday
+          ? [options.byweekday]
+          : [];
+      this.config.weekdays = weekdaysRaw
+        .map((day: any) => (typeof day === 'number' ? day : day?.weekday))
+        .filter((day: number) => Number.isFinite(day));
+
+      if (this.config.frequency === 'daily') {
+        this.displayText = this.config.interval === 1
+          ? 'daily'
+          : `every ${this.config.interval} days`;
+      } else if (this.config.frequency === 'weekly') {
+        const days = this.config.weekdays
+          .slice()
+          .sort()
+          .map((d) => this.weekDays.find((w) => w.value === d)?.label)
+          .filter(Boolean)
+          .join(', ');
+        this.displayText = this.config.interval === 1
+          ? `weekly${days ? ' on ' + days : ''}`
+          : `every ${this.config.interval} weeks${days ? ' on ' + days : ''}`;
+      } else {
+        this.displayText = this.config.interval === 1
+          ? 'monthly'
+          : `every ${this.config.interval} months`;
+      }
     } catch {
       // ignore invalid string
     }

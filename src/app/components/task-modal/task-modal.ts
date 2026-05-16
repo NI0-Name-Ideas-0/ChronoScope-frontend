@@ -102,30 +102,34 @@ export class TaskModal {
   }
 
   emptyStaticTask(): StaticTaskForm {
+    const now = new Date();
+    const end = new Date(now.getTime() + 60 * 60 * 1000);
     return {
       title: '',
       description: '',
       labels: [],
       organizationId: undefined,
       difficulty: 'MEDIUM',
-      startDate: '',
-      startTime: '09:00',
-      endDate: '',
-      endTime: '10:00',
+      startDate: this.formatLocalDate(now),
+      startTime: this.formatLocalTime(now),
+      endDate: this.formatLocalDate(end),
+      endTime: this.formatLocalTime(end),
       rrule: '',
       isBlocker: false,
     };
   }
 
   emptyDynamicTask(): DynamicTaskForm {
+    const now = new Date();
+    const end = new Date(now.getTime() + 60 * 60 * 1000);
     return {
       title: '',
       description: '',
       labels: [],
       organizationId: undefined,
       difficulty: 'MEDIUM',
-      startDate: '',
-      dueDate: '',
+      startDate: this.formatLocalDate(now),
+      dueDate: this.formatLocalDate(end),
       duration: 60,
       minScopeDuration: 30,
       maxScopeDuration: 120,
@@ -216,12 +220,12 @@ export class TaskModal {
       this.staticTask = this.emptyStaticTask();
     } else {
       this.mode = 'static';
-      const startDate = task.startAt ? task.startAt.split('T')[0] : '';
-      const startTime = task.startAt
-        ? task.startAt.split('T')[1]?.substring(0, 5) || '00:00'
-        : '00:00';
-      const endDate = task.endAt ? task.endAt.split('T')[0] : '';
-      const endTime = task.endAt ? task.endAt.split('T')[1]?.substring(0, 5) || '00:00' : '00:00';
+      const startDateTime = task.startAt ? new Date(task.startAt) : null;
+      const endDateTime = task.endAt ? new Date(task.endAt) : null;
+      const startDate = startDateTime ? this.formatLocalDate(startDateTime) : '';
+      const startTime = startDateTime ? this.formatLocalTime(startDateTime) : '00:00';
+      const endDate = endDateTime ? this.formatLocalDate(endDateTime) : '';
+      const endTime = endDateTime ? this.formatLocalTime(endDateTime) : '00:00';
 
       this.staticTask = {
         ...baseData,
@@ -319,7 +323,7 @@ export class TaskModal {
       const t = this.dynamicTask;
       if (!t.startDate || !t.dueDate) return false;
       if (t.startDate > t.dueDate) return false;
-      if (t.duration <= 0 || t.minScopeDuration <= 0) return false;
+      if (t.duration < 15 || t.minScopeDuration < 15) return false;
       if (t.maxScopeDuration < t.minScopeDuration) return false;
     }
 
@@ -369,7 +373,7 @@ export class TaskModal {
       } else {
         const t = this.dynamicTask;
         const startDate = this.stringDateToDate(t.startDate);
-        const dueDate = this.stringDateToDate(t.dueDate);
+        const dueDate = this.stringDateToDate(t.dueDate, '23:59');
 
         if (this.isEditing && this.editingTask) {
           const request: DynamicTaskUpdateRequest = {
@@ -467,6 +471,19 @@ export class TaskModal {
 
   getTaskEndDate(): Date {
     return this.stringDateToDate(this.staticTask.endDate, this.staticTask.endTime);
+  }
+
+  private formatLocalDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private formatLocalTime(date: Date): string {
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
   }
 
   close() {

@@ -13,6 +13,8 @@ describe('StaticTask', () => {
         'uuid', // organizationId
         'MEDIUM', // difficulty
         false, // isFinished
+        '', // rrule
+        false, // isBlocker
       ),
     ).toBeTruthy();
   });

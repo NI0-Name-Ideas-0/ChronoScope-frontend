@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { Subject } from 'rxjs';
 import { Api } from '../api/api';
 import { Auth } from './auth';
 import {
@@ -28,6 +29,8 @@ const MINUTES_PER_DAY = 24 * 60;
 export class WorkSlotPreferenceService {
   private api = inject(Api);
   private auth = inject(Auth);
+  private preferencesChanged = new Subject<void>();
+  preferencesChanged$ = this.preferencesChanged.asObservable();
 
   /** Load organization slots from the backend and map them to TimeSlots. */
   async loadPreferences(): Promise<TimeSlot[]> {
@@ -75,6 +78,8 @@ export class WorkSlotPreferenceService {
         },
       });
     }
+
+    this.preferencesChanged.next();
   }
 
   /** Convert a backend WorkSlotResponse to a frontend TimeSlot. */

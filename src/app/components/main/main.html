@@ -1,16 +1,16 @@
 <main class="main flex flex-col h-full">
   <app-topbar></app-topbar>
-  <div class="flex-1 flex items-stretch">
+  <div class="flex-1 flex items-stretch min-h-0">
     <div>
       <app-navbar (settingsRequested)="openSettings()"></app-navbar>
     </div>
-    <div class="flex-1 flex mb-1.5 mr-1.5">
+    <div class="flex-1 flex mb-1.5 mr-1.5 min-h-0">
       <!--Container for the switching Views-->
       @if (viewService.calendarView && viewService.listView) {
         <!--SplitView-->
-        <div class="flex-1 flex flex-row items-stretch">
-          <div class="flex flex-col w-[30%] shrink-0 grow-0 overflow-hidden list-view">
-            <app-list-view class="block w-full h-full overflow-auto"></app-list-view>
+        <div class="flex-1 flex flex-row items-stretch min-h-0">
+          <div class="flex flex-col w-[30%] shrink-0 grow-0 overflow-hidden list-view min-h-0">
+            <app-list-view class="block w-full h-full"></app-list-view>
           </div>
           <div class="split-view-divider"></div>
           <div class="flex flex-col min-w-0 grow overflow-hidden calendar-view">
@@ -20,7 +20,7 @@
       }
       @else if(viewService.listView){
         <!--ListView-->
-        <div class="flex-1 list-view">
+        <div class="flex-1 list-view min-h-0">
           <app-list-view></app-list-view>
         </div>
       }

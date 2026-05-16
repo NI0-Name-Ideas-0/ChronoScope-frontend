@@ -14,6 +14,7 @@ import { Scope } from '@app/model/scope';
 class MockTaskService {
   tasks$ = new BehaviorSubject<Task[]>([]);
   toCalendarEvents = vi.fn().mockReturnValue([]);
+  getAllCalendarEvents = vi.fn().mockReturnValue([]);
   getTask = vi.fn().mockResolvedValue({});
 }
 
@@ -134,7 +135,7 @@ describe('Calendar', () => {
 
   // --- filterEffect ---
   it('should refresh events when filter signals change', () => {
-    const refreshSpy = vi.spyOn(component as any, 'refreshEvents');
+    const refreshSpy = vi.spyOn(component as any, 'renderCalendarEvents');
 
     viewService.selectedOrganizationId.set('org-1');
     fixture.detectChanges();

@@ -12,6 +12,7 @@ import { Scope } from '@app/model/scope';
 
 class MockTaskService {
   tasks$ = new BehaviorSubject<Task[]>([]);
+  getAllTasks = vi.fn().mockReturnValue([]);
 }
 
 class MockAuth {
@@ -174,6 +175,7 @@ describe('Topbar', () => {
       new Date(),
       new Date(),
       5,
+      0,
       [],
       [],
       'org-1',

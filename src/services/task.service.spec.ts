@@ -276,7 +276,9 @@ describe('TaskService', () => {
         rrule: '',
       };
 
-      mockApi.invoke.mockResolvedValue(createBlobResponse(updatedResponse));
+      mockApi.invoke
+        .mockResolvedValueOnce(createBlobResponse(updatedResponse))
+        .mockResolvedValueOnce(createBlobResponse([updatedResponse]));
 
       let tasks: unknown[] = [];
       service.tasks$.subscribe((t) => {
@@ -485,6 +487,7 @@ describe('TaskService', () => {
         new Date('2026-05-01'),
         new Date('2026-05-05'),
         120,
+        0,
         [],
         [],
         null,

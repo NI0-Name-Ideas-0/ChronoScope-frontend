@@ -5,6 +5,7 @@ export class AlgoTask extends Task {
   startDate: Date;
   dueDate: Date;
   duration: number;
+  elapsedMinutes: number;
   dependencies: number[];
   scopes: Scope[];
   minScopeMinutes: number;
@@ -17,6 +18,7 @@ export class AlgoTask extends Task {
     startDate: Date,
     dueDate: Date,
     duration: number,
+    elapsedMinutes: number,
     dependencies: number[] = [],
     labels: string[] = [],
     organizationId: string | null,
@@ -31,6 +33,7 @@ export class AlgoTask extends Task {
     this.startDate = startDate;
     this.dueDate = dueDate;
     this.duration = duration;
+    this.elapsedMinutes = elapsedMinutes;
     this.dependencies = dependencies;
     this.scopes = scopes;
     this.minScopeMinutes = minScopeMinutes;
