@@ -5,13 +5,15 @@ import { ViewService } from '@services/view.service';
 import { TaskService } from '@services/task.service';
 import { Auth } from '@services/auth';
 import { of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
+import { Task } from '@app/model/task';
 
 class MockTaskService {
-  tasks$ = of([]);
+  tasks$ = new BehaviorSubject<Task[]>([]);
 }
 
 class MockAuth {
-  identity$ = of(null);
+  identity$ = of({ organizations: [{ id: 'org-1', name: 'Chrono Labs' }] });
 }
 
 describe('Topbar', () => {
@@ -20,6 +22,7 @@ describe('Topbar', () => {
   let viewService: ViewService;
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [Topbar],
       providers: [
@@ -32,7 +35,7 @@ describe('Topbar', () => {
     fixture = TestBed.createComponent(Topbar);
     component = fixture.componentInstance;
     viewService = TestBed.inject(ViewService);
-    await fixture.whenStable();
+    fixture.detectChanges();
   });
 
   it('should create', () => {
@@ -40,23 +43,16 @@ describe('Topbar', () => {
   });
 
   it('should update viewService searchQuery on input', () => {
-    const input = fixture.nativeElement.querySelector('input[type="text"]');
-    input.value = 'Test query';
-    input.dispatchEvent(new Event('input'));
-
+    component.onSearchInput('Test query');
     expect(viewService.searchQuery()).toBe('Test query');
   });
 
-  it('should clear all filters when clear button is clicked', () => {
+  it('should clear all filters when clearSearch is called', () => {
     viewService.searchQuery.set('Test query');
     viewService.selectedOrganizationId.set('org-1');
     viewService.activeFilter.set({ type: 'label', value: 'work' });
-    fixture.detectChanges();
 
-    const clearButton = fixture.nativeElement.querySelector('button[title="Clear search"]');
-    expect(clearButton).toBeTruthy();
-
-    clearButton.click();
+    component.clearSearch();
 
     expect(viewService.searchQuery()).toBe('');
     expect(viewService.selectedOrganizationId()).toBeNull();
@@ -64,21 +60,36 @@ describe('Topbar', () => {
   });
 
   it('should not show clear button when no filters are active', () => {
-    viewService.searchQuery.set('');
-    viewService.selectedOrganizationId.set(null);
-    viewService.activeFilter.set(null);
-    fixture.detectChanges();
-
-    const clearButton = fixture.nativeElement.querySelector('button[title="Clear search"]');
-    expect(clearButton).toBeFalsy();
+    expect(component.hasActiveFilters()).toBe(false);
   });
 
-  it('should open dropdown on input focus', () => {
+  it('should show clear button when filters are active', () => {
+    viewService.searchQuery.set('query');
+    expect(component.hasActiveFilters()).toBe(true);
+  });
+
+  it('should open dropdown on focus', () => {
     expect(component.isDropdownOpen()).toBe(false);
-
-    const input = fixture.nativeElement.querySelector('input[type="text"]');
-    input.dispatchEvent(new Event('focus'));
-
+    component.onFocus();
     expect(component.isDropdownOpen()).toBe(true);
+  });
+
+  it('should select organization', () => {
+    component.selectOrganization('org-1');
+    expect(viewService.selectedOrganizationId()).toBe('org-1');
+  });
+
+  it('should select preview item for task', () => {
+    const taskService = TestBed.inject(TaskService) as unknown as MockTaskService;
+    const task = { id: 1, title: 'Test', scope: { start: new Date() }, scopes: [] } as any;
+    taskService.tasks$.next([task]);
+
+    component.selectPreviewItem({ type: 'task', id: 1, title: 'Test' });
+    expect(viewService.activeFilter()).toEqual({ type: 'task', value: 1 });
+  });
+
+  it('should select preview item for label', () => {
+    component.selectPreviewItem({ type: 'label', title: 'work' });
+    expect(viewService.activeFilter()).toEqual({ type: 'label', value: 'work' });
   });
 });

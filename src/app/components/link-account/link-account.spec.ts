@@ -18,6 +18,7 @@ describe('LinkAccount', () => {
   };
 
   beforeEach(async () => {
+    TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
       imports: [LinkAccount],
       providers: [
@@ -28,10 +29,36 @@ describe('LinkAccount', () => {
 
     fixture = TestBed.createComponent(LinkAccount);
     component = fixture.componentInstance;
-    await fixture.whenStable();
+    fixture.detectChanges();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should set linked signal to true on successful confirm', async () => {
+    mockAuth.confirmLink.mockResolvedValue({});
+    await fixture.whenStable();
+    expect(component.linked()).toBe(true);
+    expect(component.error()).toBe(false);
+  });
+
+  it('should set error signal to true when token is missing', async () => {
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [LinkAccount],
+      providers: [
+        { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
+        { provide: Auth, useValue: mockAuth },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(LinkAccount);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.error()).toBe(true);
+    expect(component.linked()).toBe(false);
   });
 });
