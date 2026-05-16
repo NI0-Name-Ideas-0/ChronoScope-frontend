@@ -62,8 +62,8 @@ describe('RepetitionFieldComponent', () => {
       component.dtstart = new Date('2026-04-26T09:00:00');
       component.endDate = null;
       component.openModal();
-      expect(component.isOpen).toBe(false);
-      expect(component.endDateError).toBe('Please select a correct date and time.');
+      expect(component.isOpen).toBe(true);
+      expect(component.endDate).not.toBeNull();
     });
   });
 
