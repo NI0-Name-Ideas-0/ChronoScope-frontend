@@ -20,3 +20,10 @@
 .task-done h3 {
   text-decoration: line-through;
 }
+
+/* Hacky way to put scrollbar outside of container */
+.task-list-scroll-container {
+  padding-right: 3px; /* Distance the content from the scroll bar a bit */
+  scrollbar-gutter: stable; /* 15px on Chrome*/
+  margin-right: -18px; /* 15px - 3px */
+}
