@@ -66,4 +66,90 @@ describe('Auth', () => {
   it('should return identity data', () => {
     expect(service.getIdentityData()).toBeNull();
   });
+
+  // --- Constructor with valid token ---
+  it('should load identity and emit authReady when valid token exists', async () => {
+    const validOAuth = {
+      ...mockOAuthService,
+      hasValidAccessToken: vi.fn().mockReturnValue(true),
+    };
+    const identityApi = {
+      invoke: vi.fn().mockResolvedValue({ organizations: [{ id: 'org-1', name: 'Test' }] }),
+    };
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        Auth,
+        { provide: OAuthService, useValue: validOAuth },
+        { provide: Api, useValue: identityApi },
+      ],
+    });
+    const newService = TestBed.inject(Auth);
+
+    const readySpy = vi.fn();
+    newService.authReady$.subscribe(readySpy);
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(identityApi.invoke).toHaveBeenCalled();
+    expect(newService.getIdentityData()).toEqual({ organizations: [{ id: 'org-1', name: 'Test' }] });
+    expect(readySpy).toHaveBeenCalledWith(true);
+  });
+
+  // --- Constructor loadIdentity blob handling ---
+  it('should parse blob response when loading identity in constructor', async () => {
+    const identity = { organizations: [{ id: 'org-1', name: 'Blob Org' }] };
+    const blob = new Blob([JSON.stringify(identity)], { type: 'application/json' });
+    const validOAuth = {
+      ...mockOAuthService,
+      hasValidAccessToken: vi.fn().mockReturnValue(true),
+    };
+    const blobApi = {
+      invoke: vi.fn().mockResolvedValue(blob),
+    };
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        Auth,
+        { provide: OAuthService, useValue: validOAuth },
+        { provide: Api, useValue: blobApi },
+      ],
+    });
+    const newService = TestBed.inject(Auth);
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(newService.getIdentityData()).toEqual(identity);
+  });
+
+  // --- login token_received event ---
+  it('should load user profile and identity on token_received event', () => {
+    const subscribeFn = vi.fn((cb) => {
+      cb({ type: 'token_received' });
+    });
+    const eventOAuth = {
+      ...mockOAuthService,
+      events: {
+        pipe: vi.fn().mockReturnValue({ subscribe: subscribeFn }),
+      },
+      loadUserProfile: vi.fn(),
+    };
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        Auth,
+        { provide: OAuthService, useValue: eventOAuth },
+        { provide: Api, useValue: mockApi },
+      ],
+    });
+    const newService = TestBed.inject(Auth);
+
+    newService.login();
+
+    expect(eventOAuth.loadUserProfile).toHaveBeenCalled();
+    expect(mockApi.invoke).toHaveBeenCalled();
+  });
 });

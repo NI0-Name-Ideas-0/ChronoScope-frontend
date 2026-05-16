@@ -212,4 +212,265 @@ describe('WorkPreferencesSection', () => {
 
     expect(newComponent.slots()).toEqual(backendSlots);
   });
+
+  // --- hasCollision boundary checks ---
+  it('should return true for hasCollision boundary checks', () => {
+    component.slots.set([
+      { id: 's1', dayIndex: 0, startHour: 9, durationHours: 1, type: 'organization', label: 'A', colorClass: 'primary', organizationId: 'org-1' },
+    ]);
+
+    const hasCollision = (component as any).hasCollision.bind(component);
+
+    expect(hasCollision(0, -1, 1)).toBe(true);
+    expect(hasCollision(0, 9, 0.25)).toBe(true);
+    expect(hasCollision(0, 23, 1.5)).toBe(true);
+  });
+
+  it('should exclude slot by id in hasCollision', () => {
+    component.slots.set([
+      { id: 's1', dayIndex: 0, startHour: 9, durationHours: 1, type: 'organization', label: 'A', colorClass: 'primary', organizationId: 'org-1' },
+    ]);
+
+    const hasCollision = (component as any).hasCollision.bind(component);
+
+    expect(hasCollision(0, 9, 1)).toBe(true);
+    expect(hasCollision(0, 9, 1, 's1')).toBe(false);
+  });
+
+  // --- Error handling ---
+  it('should log error when onSave fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockPreferenceService.savePreferences.mockRejectedValue(new Error('Save failed'));
+
+    await component.onSave();
+
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to save work slot preferences:', expect.any(Error));
+    consoleSpy.mockRestore();
+  });
+
+  it('should log error when loading slots fails', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockPreferenceService.loadPreferences.mockRejectedValue(new Error('Load failed'));
+
+    TestBed.resetTestingModule();
+    await TestBed.configureTestingModule({
+      imports: [WorkPreferencesSection],
+      providers: [
+        { provide: Auth, useValue: mockAuth },
+        { provide: WorkSlotPreferenceService, useValue: mockPreferenceService },
+      ],
+    }).compileComponents();
+
+    const newFixture = TestBed.createComponent(WorkPreferencesSection);
+    const newComponent = newFixture.componentInstance;
+    newFixture.detectChanges();
+    if (newComponent.calendarBody?.nativeElement) {
+      newComponent.calendarBody.nativeElement.scrollTo = vi.fn();
+    }
+    await newFixture.whenStable();
+
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to load work slot preferences:', expect.any(Error));
+    consoleSpy.mockRestore();
+  });
+
+  // --- getDayColor ---
+  it('should return correct day colors for all branches', () => {
+    component.workDays.set([false, true, true, true, true, false, false]);
+
+    // Off day with hours > 0
+    component.slots.set([
+      { id: 's1', dayIndex: 0, startHour: 9, durationHours: 1, type: 'organization', label: 'A', colorClass: 'primary', organizationId: 'org-1' },
+    ]);
+    expect(component.getDayColor(0)).toContain('text-error');
+
+    // Off day with no hours
+    component.slots.set([]);
+    expect(component.getDayColor(0)).toContain('text-base-content/30');
+
+    // Work day under limit
+    component.workDays.set([true, true, true, true, true, false, false]);
+    component.hoursPerDay.set(8);
+    component.slots.set([
+      { id: 's1', dayIndex: 0, startHour: 9, durationHours: 1, type: 'organization', label: 'A', colorClass: 'primary', organizationId: 'org-1' },
+    ]);
+    expect(component.getDayColor(0)).toContain('text-success');
+
+    // Work day near limit (>90%)
+    component.slots.set([
+      { id: 's1', dayIndex: 0, startHour: 9, durationHours: 7.5, type: 'organization', label: 'A', colorClass: 'primary', organizationId: 'org-1' },
+    ]);
+    expect(component.getDayColor(0)).toContain('text-warning');
+
+    // Work day over limit (>100%)
+    component.slots.set([
+      { id: 's1', dayIndex: 0, startHour: 9, durationHours: 10, type: 'organization', label: 'A', colorClass: 'primary', organizationId: 'org-1' },
+    ]);
+    expect(component.getDayColor(0)).toContain('text-error');
+  });
+
+  // --- validationMessage ---
+  it('should compute validationMessage correctly', () => {
+    component.hoursPerDay.set(8);
+    component.workDays.set([true, true, true, true, true, false, false]);
+
+    // Null case
+    expect(component.validationMessage()).toBeNull();
+
+    // Near limit
+    component.slots.set([
+      { id: 's1', dayIndex: 0, startHour: 9, durationHours: 8, type: 'organization', label: 'A', colorClass: 'primary', organizationId: 'org-1' },
+      { id: 's2', dayIndex: 1, startHour: 9, durationHours: 8, type: 'organization', label: 'B', colorClass: 'secondary', organizationId: 'org-1' },
+      { id: 's3', dayIndex: 2, startHour: 9, durationHours: 8, type: 'organization', label: 'C', colorClass: 'accent', organizationId: 'org-1' },
+      { id: 's4', dayIndex: 3, startHour: 9, durationHours: 8, type: 'organization', label: 'D', colorClass: 'info', organizationId: 'org-1' },
+      { id: 's5', dayIndex: 4, startHour: 9, durationHours: 5, type: 'organization', label: 'E', colorClass: 'success', organizationId: 'org-1' },
+    ]);
+    expect(component.validationMessage()).toBe('Near limit');
+
+    // Overbooked
+    component.slots.set([
+      { id: 's1', dayIndex: 0, startHour: 9, durationHours: 10, type: 'organization', label: 'A', colorClass: 'primary', organizationId: 'org-1' },
+      { id: 's2', dayIndex: 1, startHour: 9, durationHours: 10, type: 'organization', label: 'B', colorClass: 'secondary', organizationId: 'org-1' },
+      { id: 's3', dayIndex: 2, startHour: 9, durationHours: 10, type: 'organization', label: 'C', colorClass: 'accent', organizationId: 'org-1' },
+      { id: 's4', dayIndex: 3, startHour: 9, durationHours: 10, type: 'organization', label: 'D', colorClass: 'info', organizationId: 'org-1' },
+      { id: 's5', dayIndex: 4, startHour: 9, durationHours: 10, type: 'organization', label: 'E', colorClass: 'success', organizationId: 'org-1' },
+    ]);
+    expect(component.validationMessage()).toBe('Overbooked by 10.0h');
+  });
+
+  // --- Drag & Drop ---
+  it('should move existing slot on grid drop', () => {
+    const existingSlot: TimeSlot = { id: 's1', dayIndex: 0, startHour: 9, durationHours: 1, type: 'organization', label: 'A', colorClass: 'primary', organizationId: 'org-1' };
+    component.slots.set([existingSlot]);
+    component.workDays.set([true, true, true, true, true, false, false]);
+
+    const slotEl = document.createElement('div');
+    slotEl.getBoundingClientRect = () => ({ top: 450, left: 60, right: 123, bottom: 500, width: 63, height: 50, x: 60, y: 450, toJSON: () => ({}) });
+    const dragStartEvent = {
+      clientX: 60,
+      clientY: 450,
+      currentTarget: slotEl,
+      dataTransfer: { effectAllowed: '', setData: vi.fn() },
+    } as unknown as DragEvent;
+    component.onSlotDragStart(dragStartEvent, existingSlot);
+
+    const gridEl = document.createElement('div');
+    Object.defineProperty(gridEl, 'clientWidth', { value: 500, writable: true });
+    Object.defineProperty(gridEl, 'scrollTop', { value: 0, writable: true });
+    gridEl.getBoundingClientRect = () => ({ left: 0, top: 0, right: 500, bottom: 1200, width: 500, height: 1200, x: 0, y: 0, toJSON: () => ({}) });
+
+    const dropEvent = {
+      preventDefault: vi.fn(),
+      clientX: 90,
+      clientY: 500,
+      currentTarget: gridEl,
+    } as unknown as DragEvent;
+
+    component.onGridDrop(dropEvent);
+
+    const movedSlot = component.slots().find((s) => s.id === 's1');
+    expect(movedSlot?.startHour).toBe(10);
+  });
+
+  it('should create new slot on grid drop from sidebar', () => {
+    component.workDays.set([true, true, true, true, true, false, false]);
+    component.slots.set([]);
+
+    const orgItem = { id: 'org-1', name: 'Chrono Labs', colorClass: 'primary' };
+    const sidebarDragEvent = {
+      dataTransfer: { effectAllowed: '', setData: vi.fn() },
+    } as unknown as DragEvent;
+    component.onSidebarDragStart(sidebarDragEvent, orgItem);
+
+    const gridEl = document.createElement('div');
+    Object.defineProperty(gridEl, 'clientWidth', { value: 500, writable: true });
+    Object.defineProperty(gridEl, 'scrollTop', { value: 0, writable: true });
+    gridEl.getBoundingClientRect = () => ({ left: 0, top: 0, right: 500, bottom: 1200, width: 500, height: 1200, x: 0, y: 0, toJSON: () => ({}) });
+
+    const dropEvent = {
+      preventDefault: vi.fn(),
+      clientX: 160,
+      clientY: 450,
+      currentTarget: gridEl,
+    } as unknown as DragEvent;
+
+    component.onGridDrop(dropEvent);
+
+    expect(component.slots().length).toBe(1);
+    const newSlot = component.slots()[0];
+    expect(newSlot.dayIndex).toBe(1);
+    expect(newSlot.startHour).toBe(9);
+    expect(newSlot.label).toBe('Chrono Labs');
+    expect(newSlot.organizationId).toBe('org-1');
+  });
+
+  it('should handle day drag over and drag leave', () => {
+    component.workDays.set([true, false, true, true, true, false, false]);
+
+    const dragOverEvent = { preventDefault: vi.fn() } as unknown as DragEvent;
+
+    component.onDayDragOver(dragOverEvent, 0);
+    expect(component.dragOverDay()).toBe(0);
+
+    component.onDayDragOver(dragOverEvent, 1);
+    expect(component.dragOverDay()).toBe(0);
+
+    const dayEl = document.createElement('div');
+    dayEl.getBoundingClientRect = () => ({ left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100, x: 0, y: 0, toJSON: () => ({}) });
+    const dragLeaveEvent = {
+      clientX: 150,
+      clientY: 50,
+      currentTarget: dayEl,
+    } as unknown as DragEvent;
+
+    component.dragOverDay.set(2);
+    component.onDayDragLeave(dragLeaveEvent);
+    expect(component.dragOverDay()).toBeNull();
+
+    const dragLeaveInside = {
+      clientX: 50,
+      clientY: 50,
+      currentTarget: dayEl,
+    } as unknown as DragEvent;
+
+    component.dragOverDay.set(2);
+    component.onDayDragLeave(dragLeaveInside);
+    expect(component.dragOverDay()).toBe(2);
+  });
+
+  it('should allow grid drag over', () => {
+    const event = { preventDefault: vi.fn() } as unknown as DragEvent;
+    component.onGridDragOver(event);
+    expect(event.preventDefault).toHaveBeenCalled();
+  });
+
+  // --- Resize ---
+  it('should resize slot on mouse move', () => {
+    const slot: TimeSlot = { id: 's1', dayIndex: 0, startHour: 9, durationHours: 1, type: 'organization', label: 'A', colorClass: 'primary', organizationId: 'org-1' };
+    component.slots.set([slot]);
+    component.workDays.set([true, true, true, true, true, false, false]);
+
+    (component as any).resizingSlot = slot;
+    component.calendarBody.nativeElement.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 500, bottom: 1200, width: 500, height: 1200, x: 0, y: 0, toJSON: () => ({}) });
+    Object.defineProperty(component.calendarBody.nativeElement, 'scrollTop', { value: 0, writable: true });
+
+    const moveEvent = { clientY: 550 } as MouseEvent;
+    component.onResizeMove(moveEvent);
+
+    const resizedSlot = component.slots().find((s) => s.id === 's1');
+    expect(resizedSlot?.durationHours).toBe(2);
+  });
+
+  it('should clean up on resize end', () => {
+    const slot = { id: 's1', dayIndex: 0, startHour: 9, durationHours: 1, type: 'organization', label: 'A', colorClass: 'primary', organizationId: 'org-1' };
+    (component as any).resizingSlot = slot;
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+
+    component.onResizeEnd();
+
+    expect((component as any).resizingSlot).toBeNull();
+    expect(document.body.style.cursor).toBe('');
+    expect(document.body.style.userSelect).toBe('');
+  });
 });

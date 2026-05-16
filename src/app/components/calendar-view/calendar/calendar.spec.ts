@@ -8,6 +8,8 @@ import { Api } from '@api/api';
 import { Auth } from '@services/auth';
 import { BehaviorSubject } from 'rxjs';
 import { Task } from '@app/model/task';
+import { StaticTask } from '@app/model/static-task';
+import { Scope } from '@app/model/scope';
 
 class MockTaskService {
   tasks$ = new BehaviorSubject<Task[]>([]);
@@ -128,5 +130,59 @@ describe('Calendar', () => {
 
     expect(mockCalendarRef.getApi().gotoDate).toHaveBeenCalledWith(new Date('2026-06-01'));
     expect(viewService.jumpToDate()).toBeNull();
+  });
+
+  // --- filterEffect ---
+  it('should refresh events when filter signals change', () => {
+    const refreshSpy = vi.spyOn(component as any, 'refreshEvents');
+
+    viewService.selectedOrganizationId.set('org-1');
+    fixture.detectChanges();
+    expect(refreshSpy).toHaveBeenCalled();
+
+    refreshSpy.mockClear();
+    viewService.activeFilter.set({ type: 'label', value: 'work' });
+    fixture.detectChanges();
+    expect(refreshSpy).toHaveBeenCalled();
+  });
+
+  // --- getFilteredEvents ---
+  it('should filter events by organization', () => {
+    component.tasks = [
+      new StaticTask(1, 'Task 1', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy'),
+      new StaticTask(2, 'Task 2', '', [], new Scope(new Date(), new Date()), 'org-2', 'easy'),
+    ];
+    mockTaskService.toCalendarEvents.mockImplementation((task: Task) => [{ id: task.id }]);
+
+    viewService.selectedOrganizationId.set('org-1');
+    const result = (component as any).getFilteredEvents();
+
+    expect(result).toEqual([{ id: 1 }]);
+  });
+
+  it('should filter events by label', () => {
+    component.tasks = [
+      new StaticTask(1, 'Task 1', '', ['work'], new Scope(new Date(), new Date()), 'org-1', 'easy'),
+      new StaticTask(2, 'Task 2', '', ['personal'], new Scope(new Date(), new Date()), 'org-1', 'easy'),
+    ];
+    mockTaskService.toCalendarEvents.mockImplementation((task: Task) => [{ id: task.id }]);
+
+    viewService.activeFilter.set({ type: 'label', value: 'work' });
+    const result = (component as any).getFilteredEvents();
+
+    expect(result).toEqual([{ id: 1 }]);
+  });
+
+  it('should filter events by task id', () => {
+    component.tasks = [
+      new StaticTask(1, 'Task 1', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy'),
+      new StaticTask(2, 'Task 2', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy'),
+    ];
+    mockTaskService.toCalendarEvents.mockImplementation((task: Task) => [{ id: task.id }]);
+
+    viewService.activeFilter.set({ type: 'task', value: 2 });
+    const result = (component as any).getFilteredEvents();
+
+    expect(result).toEqual([{ id: 2 }]);
   });
 });
