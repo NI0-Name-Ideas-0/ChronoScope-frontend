@@ -54,6 +54,7 @@ export class Calendar implements OnChanges {
     plugins: [dayGridPlugin, timeGridPlugin, rrulePlugin],
     height: '100%',
     locale: 'en-GB',
+    firstDay: 1,
     slotLabelFormat: {
       hour: '2-digit',
       minute: '2-digit',
