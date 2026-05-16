@@ -90,7 +90,11 @@ describe('WorkPreferencesSection', () => {
 
     await component.onSave();
 
-    expect(mockPreferenceService.savePreferences).toHaveBeenCalledWith(slots);
+    expect(mockPreferenceService.savePreferences).toHaveBeenCalledWith(
+      slots,
+      8,
+      [true, true, true, true, true, false, false]
+    );
     expect(savedSpy).toHaveBeenCalledWith(slots);
   });
 

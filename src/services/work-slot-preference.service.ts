@@ -6,8 +6,10 @@ import {
   getWorkSlots,
   createWorkSlot,
   deleteWorkSlot,
+  getSettings,
+  updateSettings
 } from '../api/functions';
-import { WorkSlotResponse } from '../api/models';
+import { WorkSlotResponse, WorkSettings, SettingsResponse } from '../api/models';
 import { Organization } from '../api/models';
 import { TimeSlot, COLOR_POOL } from '@app/model/work-preference.model';
 
@@ -16,7 +18,11 @@ const DAY_OF_WEEK_NAMES = [
   'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
 ] as const;
 
+/** Ordered mapping from dayIndex (0=Mon..6=Sun) to the WorkSettings day codes (mo..so) */
+const WORK_SETTINGS_DAY_CODES = ['mo', 'di', 'mi', 'do', 'fr', 'sa', 'so'] as const;
+
 type DayOfWeekName = typeof DAY_OF_WEEK_NAMES[number];
+type WorkSettingsDayCode = typeof WORK_SETTINGS_DAY_CODES[number];
 const MINUTES_PER_DAY = 24 * 60;
 
 /**
@@ -47,7 +53,17 @@ export class WorkSlotPreferenceService {
    * Bulk replace: all existing backend slots are deleted first, then the new
    * organization slots are created sequentially (to avoid race conditions).
    */
-  async savePreferences(slots: TimeSlot[]): Promise<void> {
+  async savePreferences(slots: TimeSlot[], hours: number, workDays: boolean[]): Promise<void> {
+    const workSettings: WorkSettings = {
+      dailyWorkTimeMinutes: Math.round(hours * 60),
+      workDays: WORK_SETTINGS_DAY_CODES.filter((_, index) => workDays[index] === true),
+    };
+
+    await this.api.invoke(updateSettings, {
+      body: {
+        workSettings,
+      },
+    });
     // 1. Delete all existing work slots
     const existingData = await this.fetchSlots();
     for (const ws of existingData) {
@@ -64,7 +80,7 @@ export class WorkSlotPreferenceService {
         continue;
       }
       const startMinutes = this.toMinutes(slot.startHour);
-      const endMinutes = this.toMinutes(slot.startHour + slot.durationHours);
+      const endMinutes = this.check(this.toMinutes(slot.startHour + slot.durationHours));
       if (startMinutes < 0 || endMinutes > MINUTES_PER_DAY || startMinutes >= endMinutes) {
         console.warn('Skipping invalid work slot:', slot);
         continue;
@@ -136,6 +152,32 @@ export class WorkSlotPreferenceService {
     return Math.round(hour * 60);
   }
 
+  /** Load work schedule settings from the backend. */
+  async loadWorkSettings(): Promise<{ hoursPerDay: number; workDays: boolean[] } | null> {
+    const response = await this.api.invoke(getSettings, {});
+
+    let parsed: SettingsResponse;
+    if (response instanceof Blob) {
+      const jsonText = await response.text();
+      parsed = JSON.parse(jsonText);
+    } else {
+      parsed = response as SettingsResponse;
+    }
+
+    if (!parsed.workSettings) {
+      return null;
+    }
+
+    const { dailyWorkTimeMinutes, workDays } = parsed.workSettings;
+    const hoursPerDay = dailyWorkTimeMinutes / 60;
+    const workDaysBoolean = WORK_SETTINGS_DAY_CODES.map((day) => workDays.includes(day));
+
+    return {
+      hoursPerDay,
+      workDays: workDaysBoolean,
+    };
+  }
+
   /** Fetch and parse work slots from the API, handling Blob responses. */
   private async fetchSlots(): Promise<WorkSlotResponse[]> {
     const response = await this.api.invoke(getWorkSlots, {});
@@ -149,5 +191,12 @@ export class WorkSlotPreferenceService {
 
   private generateId(): string {
     return Date.now().toString() + Math.random().toString(36).substring(2, 5);
+  }
+
+  private check(dayTimeToMinutes: number): number{
+    if(dayTimeToMinutes >= MINUTES_PER_DAY){
+      return MINUTES_PER_DAY-1;
+    }
+    return dayTimeToMinutes;
   }
 }

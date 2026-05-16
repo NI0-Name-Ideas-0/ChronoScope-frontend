@@ -20,12 +20,15 @@ export type { OrganizationMembersResponse } from './models/organization-members-
 export type { PlanRequest } from './models/plan-request';
 export type { ProblemDetail } from './models/problem-detail';
 export type { ScopeResponse } from './models/scope-response';
+export type { SettingsResponse } from './models/settings-response';
+export type { SettingsUpdateRequest } from './models/settings-update-request';
 export type { StaticTaskCreateRequest } from './models/static-task-create-request';
 export type { StaticTaskResponse } from './models/static-task-response';
 export type { StaticTaskUpdateRequest } from './models/static-task-update-request';
 export type { TaskCreateRequest } from './models/task-create-request';
 export type { TaskResponse } from './models/task-response';
 export type { TaskUpdateRequest } from './models/task-update-request';
+export type { WorkSettings } from './models/work-settings';
 export type { WorkSlotCreateRequest } from './models/work-slot-create-request';
 export type { WorkSlotResponse } from './models/work-slot-response';
 export type { WorkSlotUpdateRequest } from './models/work-slot-update-request';

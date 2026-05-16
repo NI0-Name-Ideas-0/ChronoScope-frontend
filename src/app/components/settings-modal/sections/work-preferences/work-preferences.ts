@@ -146,11 +146,19 @@ export class WorkPreferencesSection implements AfterViewInit {
       const slots = await this.preferenceService.loadPreferences();
       if (slots.length > 0) {
         this.slots.set(slots);
-        this.savedState = {
-          ...this.savedState,
-          slots: JSON.parse(JSON.stringify(slots)),
-        };
       }
+
+      const settings = await this.preferenceService.loadWorkSettings();
+      if (settings) {
+        this.hoursPerDay.set(settings.hoursPerDay);
+        this.workDays.set([...settings.workDays]);
+      }
+
+      this.savedState = {
+        hoursPerDay: this.hoursPerDay(),
+        workDays: [...this.workDays()],
+        slots: JSON.parse(JSON.stringify(this.slots())),
+      };
     } catch (err) {
       console.error('Failed to load work slot preferences:', err);
     }
@@ -242,7 +250,7 @@ export class WorkPreferencesSection implements AfterViewInit {
   /** Save button handler: persist slots to backend, store baseline and emit saved event */
   async onSave(): Promise<void> {
     try {
-      await this.preferenceService.savePreferences(this.slots());
+      await this.preferenceService.savePreferences(this.slots(), this.hoursPerDay(), this.workDays());
       this.storeCurrentState();
       this.saved.emit(this.slots());
     } catch (err) {

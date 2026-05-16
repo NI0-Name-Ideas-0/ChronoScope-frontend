@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { Api } from '../api/api';
-import { createWorkSlot, deleteWorkSlot, getWorkSlots } from '../api/functions';
+import { createWorkSlot, deleteWorkSlot, getWorkSlots, updateSettings, getSettings } from '../api/functions';
 import { WorkSlotResponse } from '../api/models';
 import { TimeSlot } from '../app/model/work-preference.model';
 import { Auth } from './auth';
@@ -69,13 +69,25 @@ describe('WorkSlotPreferenceService', () => {
       return Promise.resolve({});
     });
 
-    await service.savePreferences([
-      slot({ dayIndex: 0, startHour: 8, durationHours: 1 }),
-      slot({ dayIndex: 6, startHour: 14.5, durationHours: 1.5 }),
-    ]);
+    await service.savePreferences(
+      [
+        slot({ dayIndex: 0, startHour: 8, durationHours: 1 }),
+        slot({ dayIndex: 6, startHour: 14.5, durationHours: 1.5 }),
+      ],
+      8,
+      [true, true, true, true, true, false, false]
+    );
 
-    expect(mockApi.invoke).toHaveBeenNthCalledWith(1, getWorkSlots, {});
-    expect(mockApi.invoke).toHaveBeenNthCalledWith(2, createWorkSlot, {
+    expect(mockApi.invoke).toHaveBeenNthCalledWith(1, updateSettings, {
+      body: {
+        workSettings: {
+          dailyWorkTimeMinutes: 480,
+          workDays: ['mo', 'di', 'mi', 'do', 'fr'],
+        },
+      },
+    });
+    expect(mockApi.invoke).toHaveBeenNthCalledWith(2, getWorkSlots, {});
+    expect(mockApi.invoke).toHaveBeenNthCalledWith(3, createWorkSlot, {
       body: {
         organizationId: 'org-1',
         dayOfWeek: 'MONDAY',
@@ -83,7 +95,7 @@ describe('WorkSlotPreferenceService', () => {
         endTime: '09:00',
       },
     });
-    expect(mockApi.invoke).toHaveBeenNthCalledWith(3, createWorkSlot, {
+    expect(mockApi.invoke).toHaveBeenNthCalledWith(4, createWorkSlot, {
       body: {
         organizationId: 'org-1',
         dayOfWeek: 'SUNDAY',
@@ -99,12 +111,28 @@ describe('WorkSlotPreferenceService', () => {
       return Promise.resolve({});
     });
 
-    await service.savePreferences([slot({ dayIndex: 1, startHour: 10, durationHours: 2 })]);
+    await service.savePreferences([slot({ dayIndex: 1, startHour: 10, durationHours: 2 })], 8, [
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+    ]);
 
-    expect(mockApi.invoke).toHaveBeenNthCalledWith(1, getWorkSlots, {});
-    expect(mockApi.invoke).toHaveBeenNthCalledWith(2, deleteWorkSlot, { id: 10 });
-    expect(mockApi.invoke).toHaveBeenNthCalledWith(3, deleteWorkSlot, { id: 11 });
-    expect(mockApi.invoke).toHaveBeenNthCalledWith(4, createWorkSlot, {
+    expect(mockApi.invoke).toHaveBeenNthCalledWith(1, updateSettings, {
+      body: {
+        workSettings: {
+          dailyWorkTimeMinutes: 480,
+          workDays: ['mo', 'di', 'mi', 'do', 'fr'],
+        },
+      },
+    });
+    expect(mockApi.invoke).toHaveBeenNthCalledWith(2, getWorkSlots, {});
+    expect(mockApi.invoke).toHaveBeenNthCalledWith(3, deleteWorkSlot, { id: 10 });
+    expect(mockApi.invoke).toHaveBeenNthCalledWith(4, deleteWorkSlot, { id: 11 });
+    expect(mockApi.invoke).toHaveBeenNthCalledWith(5, createWorkSlot, {
       body: {
         organizationId: 'org-1',
         dayOfWeek: 'TUESDAY',
@@ -114,21 +142,33 @@ describe('WorkSlotPreferenceService', () => {
     });
   });
 
-  it('skips break slots and cross-midnight organization slots when saving', async () => {
+  it('skips break slots and creates capped organization slots when saving', async () => {
     mockApi.invoke.mockImplementation((fn: unknown) => {
       if (fn === getWorkSlots) return Promise.resolve([]);
       return Promise.resolve({});
     });
 
-    await service.savePreferences([
-      slot({ type: 'break', dayIndex: 0, startHour: 12, durationHours: 1, organizationId: '' }),
-      slot({ dayIndex: 0, startHour: 23.5, durationHours: 1 }),
-      slot({ dayIndex: 2, startHour: 9, durationHours: 1 }),
-    ]);
+    await service.savePreferences(
+      [
+        slot({ type: 'break', dayIndex: 0, startHour: 12, durationHours: 1, organizationId: '' }),
+        slot({ dayIndex: 0, startHour: 23.5, durationHours: 1 }),
+        slot({ dayIndex: 2, startHour: 9, durationHours: 1 }),
+      ],
+      8,
+      [true, true, true, true, true, false, false]
+    );
 
     const createCalls = mockApi.invoke.mock.calls.filter(([fn]) => fn === createWorkSlot);
-    expect(createCalls).toHaveLength(1);
+    expect(createCalls).toHaveLength(2);
     expect(createCalls[0][1]).toEqual({
+      body: {
+        organizationId: 'org-1',
+        dayOfWeek: 'MONDAY',
+        startTime: '23:30',
+        endTime: '23:59',
+      },
+    });
+    expect(createCalls[1][1]).toEqual({
       body: {
         organizationId: 'org-1',
         dayOfWeek: 'WEDNESDAY',
@@ -138,20 +178,29 @@ describe('WorkSlotPreferenceService', () => {
     });
   });
 
-  it('currently emits 24:00 for a slot ending exactly at midnight', async () => {
+  it('caps a slot ending exactly at midnight to 23:59', async () => {
     mockApi.invoke.mockImplementation((fn: unknown) => {
       if (fn === getWorkSlots) return Promise.resolve([]);
       return Promise.resolve({});
     });
 
-    await service.savePreferences([slot({ dayIndex: 4, startHour: 23.5, durationHours: 0.5 })]);
+    await service.savePreferences([slot({ dayIndex: 4, startHour: 23.5, durationHours: 0.5 })], 8, [
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+    ]);
 
-    expect(mockApi.invoke).toHaveBeenNthCalledWith(2, createWorkSlot, {
+    expect(mockApi.invoke).toHaveBeenNthCalledWith(2, getWorkSlots, {});
+    expect(mockApi.invoke).toHaveBeenNthCalledWith(3, createWorkSlot, {
       body: {
         organizationId: 'org-1',
         dayOfWeek: 'FRIDAY',
         startTime: '23:30',
-        endTime: '24:00',
+        endTime: '23:59',
       },
     });
   });
@@ -166,6 +215,31 @@ describe('WorkSlotPreferenceService', () => {
       ...overrides,
     };
   }
+
+  it('loads work settings from the backend', async () => {
+    mockApi.invoke.mockResolvedValue({
+      workSettings: {
+        dailyWorkTimeMinutes: 300,
+        workDays: ['mo', 'mi', 'fr'],
+      },
+    });
+
+    const result = await service.loadWorkSettings();
+
+    expect(mockApi.invoke).toHaveBeenCalledWith(getSettings, {});
+    expect(result).toEqual({
+      hoursPerDay: 5,
+      workDays: [true, false, true, false, true, false, false],
+    });
+  });
+
+  it('returns null when no work settings exist', async () => {
+    mockApi.invoke.mockResolvedValue({});
+
+    const result = await service.loadWorkSettings();
+
+    expect(result).toBeNull();
+  });
 
   function slot(overrides: Partial<TimeSlot> = {}): TimeSlot {
     return {
