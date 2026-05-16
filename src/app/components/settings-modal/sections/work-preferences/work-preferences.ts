@@ -250,7 +250,7 @@ export class WorkPreferencesSection implements AfterViewInit {
   /** Save button handler: persist slots to backend, store baseline and emit saved event */
   async onSave(): Promise<void> {
     try {
-      await this.preferenceService.savePreferences(this.slots(),this.hoursPerDay() ,this.workDays());
+      await this.preferenceService.savePreferences(this.slots(), this.hoursPerDay(), this.workDays());
       this.storeCurrentState();
       this.saved.emit(this.slots());
     } catch (err) {
