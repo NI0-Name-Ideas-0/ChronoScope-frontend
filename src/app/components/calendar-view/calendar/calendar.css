@@ -270,6 +270,11 @@
   border-color: var(--color-base-300);
 }
 
+/* Disable text selection on grid cells to prevent accidental highlights during drag or click */
+:host ::ng-deep .fc .fc-scrollgrid {
+  user-select: none;
+}
+
 /* ─── Phase 4b: Timegrid Enhancements ─────────────────────────────────────── */
 
 /* Time labels */
