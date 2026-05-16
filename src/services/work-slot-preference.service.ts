@@ -61,7 +61,7 @@ export class WorkSlotPreferenceService {
         continue;
       }
       const startMinutes = this.toMinutes(slot.startHour);
-      const endMinutes = this.toMinutes(slot.startHour + slot.durationHours);
+      const endMinutes = this.check(this.toMinutes(slot.startHour + slot.durationHours));
       if (startMinutes < 0 || endMinutes > MINUTES_PER_DAY || startMinutes >= endMinutes) {
         console.warn('Skipping invalid work slot:', slot);
         continue;
@@ -144,5 +144,12 @@ export class WorkSlotPreferenceService {
 
   private generateId(): string {
     return Date.now().toString() + Math.random().toString(36).substring(2, 5);
+  }
+
+  private check(dayTimeToMinutes: number): number{
+    if(dayTimeToMinutes >= 1440){
+      return 1439;
+    }
+    return dayTimeToMinutes;
   }
 }
