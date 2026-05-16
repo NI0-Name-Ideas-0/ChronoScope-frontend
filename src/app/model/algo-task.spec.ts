@@ -10,6 +10,7 @@ describe('AlgoTask', () => {
         new Date(), // startDate
         new Date(), // dueDate
         60, // duration
+        0, // elapsedMinutes
         [], // dependencies
         [], // labels
         'uuid', // organizationId

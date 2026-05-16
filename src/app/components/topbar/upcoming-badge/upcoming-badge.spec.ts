@@ -1,6 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { of } from 'rxjs';
 import { UpcomingBadge } from './upcoming-badge';
+import { TaskService } from '@services/task.service';
+import { Auth } from '@services/auth';
+
+class MockTaskService {
+  tasks$ = of([]);
+  getAllTasks() {
+    return [];
+  }
+}
+
+class MockAuth {
+  authReady$ = of(false);
+  identity$ = of(null);
+}
 
 describe('UpcomingBadge', () => {
   let component: UpcomingBadge;
@@ -9,6 +23,10 @@ describe('UpcomingBadge', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [UpcomingBadge],
+      providers: [
+        { provide: TaskService, useClass: MockTaskService },
+        { provide: Auth, useClass: MockAuth },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(UpcomingBadge);

@@ -7,7 +7,7 @@ export interface ActiveFilter {
 
 @Injectable({ providedIn: 'root' })
 export class ViewService {
-  /* 
+  /*
     Provides the functionality for switching between the diffrent views
   */
   private _listView = true;
@@ -44,3 +44,4 @@ export class ViewService {
     this._calendarView = value;
   }
 }
+

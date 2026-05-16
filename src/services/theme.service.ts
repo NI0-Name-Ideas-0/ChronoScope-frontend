@@ -25,7 +25,7 @@ export class ThemeService {
   constructor() {
     effect(() => {
       const resolved = this.resolvedTheme();
-      this.trackedElements.forEach(el => el.setAttribute('data-theme', resolved));
+      this.trackedElements.forEach((el) => el.setAttribute('data-theme', resolved));
     });
   }
 

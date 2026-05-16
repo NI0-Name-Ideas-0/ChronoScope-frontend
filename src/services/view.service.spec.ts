@@ -6,6 +6,7 @@ describe('ViewService', () => {
   let service: ViewService;
 
   beforeEach(() => {
+    TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [ViewService]
     });
@@ -23,6 +24,26 @@ describe('ViewService', () => {
 
     it('should have calendarView enabled by default', () => {
       expect(service.calendarView).toBe(true);
+    });
+
+    it('should have empty searchQuery by default', () => {
+      expect(service.searchQuery()).toBe('');
+    });
+
+    it('should have null selectedOrganizationId by default', () => {
+      expect(service.selectedOrganizationId()).toBeNull();
+    });
+
+    it('should have null activeFilter by default', () => {
+      expect(service.activeFilter()).toBeNull();
+    });
+
+    it('should have empty searchTask by default', () => {
+      expect(service.searchTask()).toBe('');
+    });
+
+    it('should have null jumpToDate by default', () => {
+      expect(service.jumpToDate()).toBeNull();
     });
   });
 
@@ -69,6 +90,35 @@ describe('ViewService', () => {
 
       service.setCalendarView(true);
       expect(service.calendarView).toBe(true);
+    });
+  });
+
+  describe('Signal State', () => {
+    it('should update searchQuery', () => {
+      service.searchQuery.set('test query');
+      expect(service.searchQuery()).toBe('test query');
+    });
+
+    it('should update selectedOrganizationId', () => {
+      service.selectedOrganizationId.set('org-1');
+      expect(service.selectedOrganizationId()).toBe('org-1');
+    });
+
+    it('should update activeFilter', () => {
+      const filter = { type: 'label' as const, value: 'work' };
+      service.activeFilter.set(filter);
+      expect(service.activeFilter()).toEqual(filter);
+    });
+
+    it('should update searchTask', () => {
+      service.searchTask.set('task 1');
+      expect(service.searchTask()).toBe('task 1');
+    });
+
+    it('should update jumpToDate', () => {
+      const date = new Date('2026-05-01');
+      service.jumpToDate.set(date);
+      expect(service.jumpToDate()).toBe(date);
     });
   });
 });
