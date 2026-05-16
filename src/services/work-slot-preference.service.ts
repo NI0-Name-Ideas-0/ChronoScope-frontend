@@ -53,9 +53,7 @@ export class WorkSlotPreferenceService {
   async savePreferences(slots: TimeSlot[], hours: number, workDays: boolean[]): Promise<void> {
     const workSettings: WorkSettings = {
       dailyWorkTimeMinutes: Math.round(hours * 60),
-      workDays: workDays
-        .map((active, index) => (active ? WORK_SETTINGS_DAY_CODES[index] : null))
-        .filter((day): day is WorkSettingsDayCode => day !== null),
+      workDays: WORK_SETTINGS_DAY_CODES.filter((_, index) => workDays[index] === true),
     };
 
     await this.api.invoke(updateSettings, {
