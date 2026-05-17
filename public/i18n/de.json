@@ -121,5 +121,12 @@
   "UPCOMING_OVERDUE_LABEL": "Zusätzlich benötigte Minuten",
   "UPCOMING_OVERDUE_SUBMIT": "Plan aktualisieren",
   "UPCOMING_MARK_DONE": "Sitzung als erledigt markieren",
-  "UPCOMING_UPDATE_TIME": "Restzeit aktualisieren"
+  "UPCOMING_UPDATE_TIME": "Restzeit aktualisieren",
+  "TOAST_TASK_CREATED": "Aufgabe erstellt",
+  "TOAST_TASK_UPDATED": "Aufgabe aktualisiert",
+  "TOAST_TASK_DELETED": "Aufgabe gelöscht",
+  "TOAST_WORK_SCHEDULE_SAVED": "Arbeitsplan gespeichert",
+  "TOAST_PLANNING_SUCCEEDED": "Planung erfolgreich",
+  "TOAST_CONNECTION_ERROR_TITLE": "Verbindungsfehler",
+  "TOAST_CONNECTION_ERROR_MESSAGE": "Server nicht erreichbar. Bitte überprüfen Sie Ihre Verbindung."
 }
