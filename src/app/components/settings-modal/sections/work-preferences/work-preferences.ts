@@ -94,8 +94,8 @@ export class WorkPreferencesSection implements AfterViewInit {
 
   /** Hour labels from 0 to 23 for the time column */
   hours = Array.from({ length: 24 }, (_, i) => i);
-  /** Short day names for the calendar header */
-  dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  /** Short day names as translation keys for the calendar header */
+  dayNames = ['WEEKDAY_MON', 'WEEKDAY_TUE', 'WEEKDAY_WED', 'WEEKDAY_THU', 'WEEKDAY_FRI', 'WEEKDAY_SAT', 'WEEKDAY_SUN'];
   /** Day metadata for the calendar grid */
   weekDays = Array.from({ length: 7 }, (_, i) => ({ index: i, short: this.dayNames[i] }));
 

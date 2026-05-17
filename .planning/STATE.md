@@ -35,6 +35,7 @@ Last activity: 2026-05-17 -- Phase 01 planning complete
 
 - Milestone v0.2 started: Internationalization (EN and DE only)
 - Phase 4 added: Set language in FullCalendar properly (see note)
+- Phase 5 added: Localize upcoming badge text and weekday abbreviations in work settings
 
 ### Decisions
 

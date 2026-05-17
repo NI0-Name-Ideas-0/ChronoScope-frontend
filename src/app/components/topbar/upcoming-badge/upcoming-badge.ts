@@ -1,6 +1,8 @@
-import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { TranslocoService } from '@jsverse/transloco';
 import { Subscription, interval } from 'rxjs';
 import { TaskService } from '@services/task.service';
 import { Task } from '@app/model/task';
@@ -11,13 +13,15 @@ import { DynamicTaskUpdateRequest } from '@api/models';
 
 @Component({
   selector: 'app-upcoming-badge',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './upcoming-badge.html',
   styleUrl: './upcoming-badge.css',
 })
 export class UpcomingBadge implements OnInit, OnDestroy {
   constructor(private taskService: TaskService) {}
+
+  private transloco = inject(TranslocoService);
 
   private subscriptions = new Subscription();
   private now = signal(new Date());
@@ -30,7 +34,7 @@ export class UpcomingBadge implements OnInit, OnDestroy {
 
   badgeText = computed(() => {
     const entry = this.currentEntry();
-    if (!entry) return 'No upcoming tasks';
+    if (!entry) return this.transloco.translate('UPCOMING_NO_TASKS');
     return entry.task.title;
   });
 

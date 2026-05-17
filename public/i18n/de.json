@@ -106,5 +106,19 @@
   "COMMON_DELETE": "Löschen",
   "COMMON_CLOSE": "Schließen",
   "SETTINGS_APPEARANCE_LANGUAGE_TITLE": "Sprache",
-  "SETTINGS_APPEARANCE_LANGUAGE_DESC": "Wähle deine bevorzugte Anzeigesprache."
+  "SETTINGS_APPEARANCE_LANGUAGE_DESC": "Wähle deine bevorzugte Anzeigesprache.",
+  "WEEKDAY_MON": "Mo",
+  "WEEKDAY_TUE": "Di",
+  "WEEKDAY_WED": "Mi",
+  "WEEKDAY_THU": "Do",
+  "WEEKDAY_FRI": "Fr",
+  "WEEKDAY_SAT": "Sa",
+  "WEEKDAY_SUN": "So",
+  "UPCOMING_NO_TASKS": "Keine anstehenden Aufgaben",
+  "UPCOMING_OVERDUE_TITLE": "Verspätet?",
+  "UPCOMING_OVERDUE_DESC": "Wie viele Minuten brauchst du noch, um \"{{task}}\" abzuschließen?",
+  "UPCOMING_OVERDUE_LABEL": "Zusätzlich benötigte Minuten",
+  "UPCOMING_OVERDUE_SUBMIT": "Plan aktualisieren",
+  "UPCOMING_MARK_DONE": "Sitzung als erledigt markieren",
+  "UPCOMING_UPDATE_TIME": "Restzeit aktualisieren"
 }

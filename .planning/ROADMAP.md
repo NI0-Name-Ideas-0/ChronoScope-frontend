@@ -1,7 +1,7 @@
 # Roadmap: ChronoScope v0.2 — Internationalization (EN and DE only)
 
 **Milestone:** v0.2
-**Phases:** 4
+**Phases:** 5
 **Requirements:** 10
 
 ---
@@ -97,6 +97,28 @@ Plans:
 
 Plans:
 - [ ] 04-01-PLAN.md — Wire FullCalendar locale to LanguageService with reactive switching and buttonText workaround
+
+**UI hint**: yes
+
+---
+
+## Phase 5: Localize upcoming badge text and weekday abbreviations in work settings
+
+**Goal:** The upcoming task badge and work-preferences weekday labels display properly translated text in the active locale.
+
+**Depends on:** Phase 1
+
+**Requirements:** TRANS-01, TRANS-02
+
+**Success criteria:**
+1. Upcoming badge text is displayed in the active language (EN or DE)
+2. Weekday abbreviations in work settings render in the active language
+3. Switching language updates badge and weekday text without page reload
+
+**Plans:** 0 plans
+
+Plans:
+(none yet)
 
 **UI hint**: yes
 
