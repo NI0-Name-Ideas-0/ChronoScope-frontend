@@ -108,9 +108,6 @@ export class TaskService {
         throw new Error('Expected tasks to be an array, got: ' + typeof tasks);
       }
 
-      this.cleanupCompletionState(tasks);
-      this.cleanupScopeHistory(tasks);
-
       this.tasks.clear();
       tasks.forEach((apiTask) => {
         if (apiTask.id !== undefined) {
@@ -137,21 +134,6 @@ export class TaskService {
     };
     const response = await this.api.invoke(createTaskApi, params);
     const createdTask = await this.parseBlob<StaticTaskResponse | DynamicTaskResponse>(response);
-
-    // Clear any stale history for a reused ID so the new task doesn't inherit
-    // old scopes from a previously deleted task.
-    if (createdTask.id !== undefined) {
-      const history = this.loadScopeHistory();
-      if (history[createdTask.id]) {
-        delete history[createdTask.id];
-        this.saveScopeHistory(history);
-      }
-      const state = this.loadCompletionState();
-      if (state[createdTask.id] !== undefined) {
-        delete (state as Record<string, unknown>)[createdTask.id.toString()];
-        localStorage.setItem('chronoscope-completion', JSON.stringify(state));
-      }
-    }
 
     await this.planAndReload(request.organizationId, 'after task creation');
 
@@ -274,9 +256,6 @@ export class TaskService {
       throw new Error('Expected tasks to be an array, got: ' + typeof tasks);
     }
 
-    this.cleanupCompletionState(tasks);
-    this.cleanupScopeHistory(tasks);
-
     // Update local cache
     this.tasks.clear();
     tasks.forEach((apiTask) => {
@@ -299,143 +278,15 @@ export class TaskService {
     await this.api.invoke(deleteTaskApi, params);
     // Remove from local cache
     this.tasks.delete(id);
-    // Remove orphaned completion and scope history so a future task with the
-    // same ID doesn't inherit stale done-scopes.
-    const state = this.loadCompletionState();
-    if (state[id] !== undefined) {
-      delete (state as Record<string, unknown>)[id.toString()];
-      localStorage.setItem('chronoscope-completion', JSON.stringify(state));
-    }
-    const history = this.loadScopeHistory();
-    if (history[id]) {
-      delete (history as Record<string, unknown>)[id.toString()];
-      this.saveScopeHistory(history);
-    }
     this.tasksSubject.next([...this.tasks.values()]);
   }
 
   /**
-   * Removes localStorage completion entries for task IDs that no longer exist
-   * in the backend response. This prevents stale data from attaching to new
-   * tasks when IDs are reused (e.g. H2 in-memory DB).
-   */
-  private cleanupCompletionState(tasks: (StaticTaskResponse | DynamicTaskResponse)[]): void {
-    const currentIds = new Set(tasks.map((t) => t.id).filter((id): id is number => id !== undefined));
-    const state = this.loadCompletionState();
-    let changed = false;
-    for (const key of Object.keys(state)) {
-      const id = Number(key);
-      if (!currentIds.has(id)) {
-        delete (state as Record<string, unknown>)[key];
-        changed = true;
-      }
-    }
-    if (changed) {
-      localStorage.setItem('chronoscope-completion', JSON.stringify(state));
-    }
-  }
-
-  /**
-   * Loads completion state from localStorage.
-   */
-  private loadCompletionState(): Record<number, { isFinished: boolean; scopes: boolean[] }> {
-    try {
-      return JSON.parse(localStorage.getItem('chronoscope-completion') || '{}');
-    } catch {
-      return {};
-    }
-  }
-
-  /**
-   * Saves completion state to localStorage.
+   * Notifies subscribers that task data may have changed.
+   * (Local persistence for dynamic tasks is handled via the backend elapsed field.)
    */
   saveTaskCompletion(taskId: number, isFinished: boolean, scopeStates?: boolean[]): void {
-    const state = this.loadCompletionState();
-    state[taskId] = { isFinished, scopes: scopeStates || [] };
-    localStorage.setItem('chronoscope-completion', JSON.stringify(state));
-
-    // Sync scope history for dynamic tasks so scope done-states survive replanning.
-    const task = this.tasks.get(taskId);
-    if (task instanceof AlgoTask) {
-      const history = this.loadScopeHistory();
-      history[taskId] = task.scopes.map((s) => ({
-        start: s.start.toISOString(),
-        end: s.end.toISOString(),
-        isFinished: s.isFinished,
-      }));
-      this.saveScopeHistory(history);
-    }
-
     this.tasksSubject.next([...this.tasks.values()]);
-  }
-
-  /**
-   * Merges backend scopes with locally stored scope history so that scopes
-   * removed by backend replanning remain visible with their done-state.
-   * Historical future scopes that don't match a backend scope are only kept
-   * if they were finished; past scopes are always preserved.
-   */
-  private mergeScopesWithHistory(
-    taskId: number,
-    backendScopes: Scope[],
-    completionState?: { isFinished: boolean; scopes: boolean[] },
-  ): Scope[] {
-    const history = this.loadScopeHistory()[taskId] || [];
-    const scopeMap = new Map<string, Scope>();
-
-    for (let i = 0; i < backendScopes.length; i++) {
-      const s = backendScopes[i];
-      const key = s.start.toISOString();
-      const historical = history.find((h) => h.start === key);
-      const isFinished = historical?.isFinished ?? completionState?.scopes?.[i] ?? s.isFinished;
-      scopeMap.set(key, new Scope(s.start, s.end, isFinished));
-    }
-
-    const now = Date.now();
-    for (const h of history) {
-      if (!scopeMap.has(h.start)) {
-        const scopeEnd = new Date(h.end).getTime();
-        // Keep historical past scopes (they happened) and finished future scopes.
-        if (scopeEnd < now || h.isFinished) {
-          scopeMap.set(h.start, new Scope(new Date(h.start), new Date(h.end), h.isFinished));
-        }
-      }
-    }
-
-    return Array.from(scopeMap.values()).sort((a, b) => a.start.getTime() - b.start.getTime());
-  }
-
-  /**
-   * Removes scope-history entries for task IDs that no longer exist.
-   */
-  private cleanupScopeHistory(tasks: (StaticTaskResponse | DynamicTaskResponse)[]): void {
-    const currentIds = new Set(tasks.map((t) => t.id).filter((id): id is number => id !== undefined));
-    const history = this.loadScopeHistory();
-    let changed = false;
-    for (const key of Object.keys(history)) {
-      const id = Number(key);
-      if (!currentIds.has(id)) {
-        delete (history as Record<string, unknown>)[key];
-        changed = true;
-      }
-    }
-    if (changed) {
-      this.saveScopeHistory(history);
-    }
-  }
-
-  private loadScopeHistory(): Record<number, Array<{ start: string; end: string; isFinished: boolean }>> {
-    try {
-      return JSON.parse(localStorage.getItem('chronoscope-scope-history') || '{}');
-    } catch {
-      return {};
-    }
-  }
-
-  private saveScopeHistory(
-    history: Record<number, Array<{ start: string; end: string; isFinished: boolean }>>,
-  ): void {
-    localStorage.setItem('chronoscope-scope-history', JSON.stringify(history));
   }
 
   /**
@@ -443,7 +294,6 @@ export class TaskService {
    */
   private convertApiTaskToModel(apiTask: StaticTaskResponse | DynamicTaskResponse): Task {
     const isStatic = apiTask.type === 'static';
-    const completionState = apiTask.id !== undefined ? this.loadCompletionState()[apiTask.id] : undefined;
 
     if (isStatic) {
       const staticTask = apiTask as StaticTaskResponse;
@@ -463,13 +313,22 @@ export class TaskService {
       );
     } else {
       const dynamicTask = apiTask as DynamicTaskResponse;
-      const backendScopes = (dynamicTask.scopes || [])
+      const rawScopes = (dynamicTask.scopes || [])
         .filter((scope) => scope.startAt && scope.endAt)
         .map((scope) => new Scope(new Date(scope.startAt!), new Date(scope.endAt!)));
 
-      const scopes = this.mergeScopesWithHistory(dynamicTask.id!, backendScopes, completionState);
+      // Sort chronologically and derive done-state from the backend's elapsed time.
+      const scopes = rawScopes.sort((a, b) => a.start.getTime() - b.start.getTime());
+      const elapsedMinutes = this.parseDurationToMinutes(dynamicTask.elapsed, 0);
+      let accumulatedMinutes = 0;
+      for (const scope of scopes) {
+        const durationMinutes = Math.round((scope.end.getTime() - scope.start.getTime()) / 60000);
+        accumulatedMinutes += durationMinutes;
+        scope.isFinished = accumulatedMinutes <= elapsedMinutes;
+      }
 
       const allScopesDone = scopes.length > 0 && scopes.every((s) => s.isFinished);
+      const isFinished = allScopesDone || elapsedMinutes >= this.parseDurationToMinutes(dynamicTask.duration, 0);
       return new AlgoTask(
         dynamicTask.id!,
         dynamicTask.name!,
@@ -483,7 +342,7 @@ export class TaskService {
         dynamicTask.organizationId || null,
         scopes,
         dynamicTask.difficulty!,
-        completionState?.isFinished ?? allScopesDone,
+        isFinished,
         this.parseDurationToMinutes(dynamicTask.minScopeDuration, 30),
         this.parseDurationToMinutes(dynamicTask.maxScopeDuration, 120),
       );

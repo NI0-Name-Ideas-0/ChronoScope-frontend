@@ -168,6 +168,7 @@ export class ListView implements OnInit, OnDestroy {
     if (scope.isFinished) return false;
     const scopeIndex = task.scopes.indexOf(scope);
     if (scopeIndex === -1) return false;
+    if (scope.start.getTime() > Date.now()) return false;
     if (scopeIndex === 0) return true;
     return task.scopes[scopeIndex - 1].isFinished;
   }
@@ -236,7 +237,10 @@ export class ListView implements OnInit, OnDestroy {
    */
   isTaskFinished(task: Task): boolean {
     if (task instanceof AlgoTask) {
-      return task.scopes.length > 0 && task.scopes.every((s) => s.isFinished);
+      return (
+        task.elapsedMinutes >= task.duration ||
+        (task.scopes.length > 0 && task.scopes.every((s) => s.isFinished))
+      );
     }
     if (task instanceof StaticTask) {
       if (task.rrule && task.rrule.trim()) {
@@ -279,14 +283,9 @@ export class ListView implements OnInit, OnDestroy {
     // Derive task-level completion from all scopes
     task.isFinished = task.scopes.every((s) => s.isFinished);
 
-    // Persist completion state locally so it survives reloads
-    this.taskService.saveTaskCompletion(
-      task.id,
-      task.isFinished,
-      task.scopes.map((s) => s.isFinished),
-    );
-
-    // Calculate elapsed time from finished scopes and send to backend
+    // Calculate elapsed time from finished scopes and send to backend.
+    // The backend stores elapsed time; on the next reload done-states are
+    // derived from that elapsed value.
     const elapsedMinutes = this.calculateElapsedMinutes(task);
     const updateRequest: DynamicTaskUpdateRequest = {
       type: 'dynamic',

@@ -124,18 +124,14 @@ describe('TaskService', () => {
   });
 
   describe('saveTaskCompletion', () => {
-    it('should persist completion state to localStorage', () => {
+    it('should notify subscribers without writing to localStorage', () => {
+      let emitted = false;
+      service.tasks$.subscribe(() => {
+        emitted = true;
+      });
       service.saveTaskCompletion(1, true, [true, false]);
-      const parsed = JSON.parse(store['chronoscope-completion']);
-      expect(parsed['1']).toEqual({ isFinished: true, scopes: [true, false] });
-    });
-
-    it('should update existing completion state', () => {
-      service.saveTaskCompletion(1, true);
-      service.saveTaskCompletion(2, false, [false]);
-      const parsed = JSON.parse(store['chronoscope-completion']);
-      expect(parsed['1']).toEqual({ isFinished: true, scopes: [] });
-      expect(parsed['2']).toEqual({ isFinished: false, scopes: [false] });
+      expect(emitted).toBe(true);
+      expect(store['chronoscope-completion']).toBeUndefined();
     });
   });
 
@@ -448,11 +444,7 @@ describe('TaskService', () => {
       expect((tasks[0] as StaticTask).isFinished).toBe(false);
     });
 
-    it('should map dynamic task scopes with completion state', async () => {
-      store['chronoscope-completion'] = JSON.stringify({
-        77: { isFinished: false, scopes: [true, false] },
-      });
-
+    it('should derive dynamic task scope done-state from elapsed time', async () => {
       const dynamicTaskResponse = {
         type: 'dynamic',
         id: 77,
@@ -461,6 +453,7 @@ describe('TaskService', () => {
         startAt: '2026-05-01T00:00:00Z',
         endAt: '2026-05-05T00:00:00Z',
         duration: 'PT2H',
+        elapsed: 'PT1H',
         difficulty: 'MEDIUM',
         organizationId: null,
         labels: [],
@@ -484,7 +477,9 @@ describe('TaskService', () => {
       expect(tasks.length).toBe(1);
       const algoTask = tasks[0] as AlgoTask;
       expect(algoTask.scopes.length).toBe(2);
+      // First scope is 60 min, elapsed is 60 min -> done
       expect(algoTask.scopes[0].isFinished).toBe(true);
+      // Second scope cumulative is 180 min, elapsed is 60 min -> not done
       expect(algoTask.scopes[1].isFinished).toBe(false);
       expect(algoTask.duration).toBe(120);
     });

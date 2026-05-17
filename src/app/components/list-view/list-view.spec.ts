@@ -81,7 +81,6 @@ describe('ListView', () => {
     fixture.detectChanges();
 
     expect((task as AlgoTask).scopes[0].isFinished).toBe(true);
-    expect(mockTaskService.saveTaskCompletion).toHaveBeenCalledWith(1, true, [true]);
     expect(mockTaskService.updateTask).toHaveBeenCalledWith(1, {
       type: 'dynamic',
       elapsed: 'PT60M',
