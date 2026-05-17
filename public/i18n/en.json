@@ -135,5 +135,20 @@
   "TOAST_WORK_SCHEDULE_SAVED": "Work schedule saved",
   "TOAST_PLANNING_SUCCEEDED": "Planning succeeded",
   "TOAST_CONNECTION_ERROR_TITLE": "Connection Error",
-  "TOAST_CONNECTION_ERROR_MESSAGE": "Unable to reach the server. Please check your connection."
+  "TOAST_CONNECTION_ERROR_MESSAGE": "Unable to reach the server. Please check your connection.",
+  "ERROR_TITLE_API_NOT_IMPLEMENTED": "Not Implemented",
+  "ERROR_TITLE_INSUFFICIENT_SLOTS": "Planning Failed",
+  "ERROR_TITLE_RESOURCE_NOT_FOUND": "Not Found",
+  "ERROR_TITLE_VALIDATION_ERROR": "Validation Failed",
+  "ERROR_TITLE_INVALID_REQUEST": "Invalid Request",
+  "ERROR_TITLE_ACCESS_DENIED": "Access Denied",
+  "ERROR_TITLE_ACCOUNT_NOT_FOUND": "Account Not Found",
+  "ERROR_TITLE_INTERNAL_SERVER_ERROR": "Internal Server Error",
+  "ERROR_FALLBACK_SERVER": "Server Error",
+  "ERROR_FALLBACK_NOT_FOUND": "Not Found",
+  "ERROR_FALLBACK_FORBIDDEN": "Access Denied",
+  "ERROR_FALLBACK_UNAUTHORIZED": "Unauthorized",
+  "ERROR_FALLBACK_REQUEST": "Request Error",
+  "ERROR_FALLBACK_GENERIC": "Error",
+  "ERROR_FALLBACK_MESSAGE": "An unexpected error occurred"
 }
