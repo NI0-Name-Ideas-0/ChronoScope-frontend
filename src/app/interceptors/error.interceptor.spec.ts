@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { errorInterceptor, SKIP_ERROR_TOAST } from './error.interceptor';
 import { NotificationService } from '@services/notification.service';
 import { ChronoscopeError } from '@app/model/chronoscope-error.model';
+import { getTranslocoTestingModule } from '@test-utils/transloco-testing';
 
 describe('errorInterceptor', () => {
   let http: HttpClient;
@@ -12,6 +13,7 @@ describe('errorInterceptor', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
+      imports: [getTranslocoTestingModule()],
       providers: [
         provideHttpClient(withInterceptors([errorInterceptor])),
         provideHttpClientTesting(),
