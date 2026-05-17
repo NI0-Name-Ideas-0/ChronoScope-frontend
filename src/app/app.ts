@@ -8,6 +8,7 @@ import {
 import { RouterOutlet } from '@angular/router';
 import { Auth } from '@services/auth';
 import { ThemeService } from '@services/theme.service';
+import { LanguageService } from '@services/language.service';
 import { NotificationsContainer } from '@app/components/notifications/notifications-container/notifications-container';
 
 @Component({
@@ -21,9 +22,11 @@ export class App implements OnInit {
   protected readonly title = signal('ChronoScope-frontend');
   private authService = inject(Auth);
   private themeService = inject(ThemeService);
+  private languageService = inject(LanguageService);
 
   ngOnInit() {
     this.themeService.initialize();
+    this.languageService.initialize();
     this.login();
   }
 
