@@ -78,7 +78,7 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Error model, errorCode mapping, and interceptor enhancement
+- [x] 04-01-PLAN.md — Error model, errorCode mapping, and interceptor enhancement
 - [ ] 04-02-PLAN.md — Toast field errors display and test coverage
 
 ---

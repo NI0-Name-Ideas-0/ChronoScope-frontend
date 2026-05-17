@@ -35,9 +35,9 @@ Requirements for milestone v0.1: Toast Notifications.
 
 ### Enhanced Error Display
 
-- [ ] **ERRX-01**: Error toasts use errorCode-mapped user-friendly messages synced with backend titles
+- [x] **ERRX-01**: Error toasts use errorCode-mapped user-friendly messages synced with backend titles
 - [ ] **ERRX-02**: Validation error toasts display per-field errors (field name + error message) inline
-- [ ] **ERRX-03**: errorCode and type URI from ProblemDetail are exposed to callers for programmatic error handling
+- [x] **ERRX-03**: errorCode and type URI from ProblemDetail are exposed to callers for programmatic error handling
 - [ ] **ERRX-04**: All new error parsing paths have minimal test coverage
 
 ## Future Requirements
@@ -73,9 +73,9 @@ Requirements for milestone v0.1: Toast Notifications.
 | MSG-01 | Phase 3 | Pending |
 | MSG-02 | Phase 3 | Pending |
 
-| ERRX-01 | Phase 4 | Pending |
+| ERRX-01 | Phase 4 | Complete |
 | ERRX-02 | Phase 4 | Pending |
-| ERRX-03 | Phase 4 | Pending |
+| ERRX-03 | Phase 4 | Complete |
 | ERRX-04 | Phase 4 | Pending |
 
 **Coverage:**
