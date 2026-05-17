@@ -392,18 +392,14 @@ describe('TaskService', () => {
   });
 
   describe('convertApiTaskToModel', () => {
-    it('should map static task completion state from localStorage', async () => {
-      store['chronoscope-completion'] = JSON.stringify({
-        42: { isFinished: true, scopes: [] },
-      });
-
+    it('should compute static task isFinished from end date (past = done)', async () => {
       const staticTaskResponse = {
         type: 'static',
         id: 42,
-        name: 'Completed Task',
+        name: 'Past Task',
         description: 'Desc',
-        startAt: '2026-05-01T10:00:00Z',
-        endAt: '2026-05-01T11:00:00Z',
+        startAt: '2020-05-01T10:00:00Z',
+        endAt: '2020-05-01T11:00:00Z',
         difficulty: 'EASY',
         organizationId: null,
         labels: [],
@@ -420,6 +416,36 @@ describe('TaskService', () => {
 
       expect(tasks.length).toBe(1);
       expect((tasks[0] as StaticTask).isFinished).toBe(true);
+    });
+
+    it('should compute static task isFinished from end date (future = open)', async () => {
+      store['chronoscope-completion'] = JSON.stringify({
+        42: { isFinished: true, scopes: [] },
+      });
+
+      const staticTaskResponse = {
+        type: 'static',
+        id: 42,
+        name: 'Future Task',
+        description: 'Desc',
+        startAt: '2099-05-01T10:00:00Z',
+        endAt: '2099-05-01T11:00:00Z',
+        difficulty: 'EASY',
+        organizationId: null,
+        labels: [],
+        rrule: '',
+      };
+
+      mockApi.invoke.mockResolvedValue(createBlobResponse([staticTaskResponse]));
+      await service.loadTasks();
+
+      let tasks: unknown[] = [];
+      service.tasks$.subscribe((t) => {
+        tasks = t;
+      });
+
+      expect(tasks.length).toBe(1);
+      expect((tasks[0] as StaticTask).isFinished).toBe(false);
     });
 
     it('should map dynamic task scopes with completion state', async () => {

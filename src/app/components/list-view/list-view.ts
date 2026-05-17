@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService } from '@services/task.service';
@@ -17,7 +17,7 @@ import { DynamicTaskUpdateRequest } from '../../../api/models';
   templateUrl: 'list-view.html',
   styleUrl: 'list-view.css',
 })
-export class ListView implements OnInit {
+export class ListView implements OnInit, OnDestroy {
   constructor(
     private taskService: TaskService,
     private taskModalService: TaskModalService,
@@ -25,6 +25,7 @@ export class ListView implements OnInit {
   ) {}
 
   private viewService = inject(ViewService);
+  private timeUpdateInterval: ReturnType<typeof setInterval> | null = null;
 
   tasks: Task[] = [];
   activeFilter: 'all' | 'todo' | 'today' | 'done' = 'today';
@@ -53,6 +54,18 @@ export class ListView implements OnInit {
       this.tasks = tasks;
       this.cdr.detectChanges();
     });
+
+    // Re-evaluate static task done-state every 30s so the UI updates
+    // automatically when a task's end time passes.
+    this.timeUpdateInterval = setInterval(() => {
+      this.cdr.detectChanges();
+    }, 30000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.timeUpdateInterval) {
+      clearInterval(this.timeUpdateInterval);
+    }
   }
 
   /**
@@ -215,10 +228,14 @@ export class ListView implements OnInit {
   /**
    * Checks if a task is finished.
    * For AlgoTasks, returns true only when ALL scopes are finished.
+   * For StaticTasks, returns true when the end date/time is in the past.
    */
   isTaskFinished(task: Task): boolean {
     if (task instanceof AlgoTask) {
       return task.scopes.length > 0 && task.scopes.every((s) => s.isFinished);
+    }
+    if (task instanceof StaticTask) {
+      return task.scope.end.getTime() < Date.now();
     }
     return task.isFinished;
   }
@@ -238,13 +255,6 @@ export class ListView implements OnInit {
     this.taskService.getTask(task.id).then((apiTask) => {
       this.taskModalService.openForEdit(apiTask);
     });
-  }
-
-  onMarkDone(task: Task, event: Event) {
-    event.stopPropagation();
-    task.isFinished = !task.isFinished;
-    this.taskService.saveTaskCompletion(task.id, task.isFinished);
-    this.cdr.detectChanges();
   }
 
   onMarkScopeDone(task: AlgoTask, scope: Scope, event: Event) {

@@ -311,15 +311,17 @@ export class TaskService {
 
     if (isStatic) {
       const staticTask = apiTask as StaticTaskResponse;
+      const scopeEnd = new Date(staticTask.endAt!);
+      const isFinished = scopeEnd.getTime() < Date.now();
       return new StaticTask(
         staticTask.id!,
         staticTask.name!,
         staticTask.description || '',
         (staticTask.labels as any)?.map((l: any) => l.name || l) || [],
-        new Scope(new Date(staticTask.startAt!), new Date(staticTask.endAt!)),
+        new Scope(new Date(staticTask.startAt!), scopeEnd),
         staticTask.organizationId || null,
         staticTask.difficulty!,
-        completionState?.isFinished ?? false,
+        isFinished,
         staticTask.rrule || '',
         Boolean(staticTask.isBlocker),
       );

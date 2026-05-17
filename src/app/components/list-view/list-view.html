@@ -101,23 +101,8 @@
                   max="100"
                 ></progress>
               }
-              @if (isStaticTask(task)) {
-                <button
-                  class="btn btn-ghost btn-sm btn-circle"
-                  [class.text-warning]="!task.isFinished"
-                  [class.text-success]="task.isFinished"
-                  (click)="onMarkDone(task, $event)"
-                  [title]="task.isFinished ? 'Mark as open' : 'Mark as done'"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                  </svg>
-                </button>
+              @if (isStaticTask(task) && isTaskFinished(task)) {
+                <span class="badge badge-success badge-sm">Done</span>
               }
               <button
                 class="btn btn-ghost btn-sm btn-circle text-error"
