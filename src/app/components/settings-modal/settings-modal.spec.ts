@@ -3,7 +3,10 @@ import { SettingsModal } from './settings-modal';
 import { Auth } from '@services/auth';
 import { OAuthService } from 'angular-oauth2-oidc';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
+import { TaskService } from '@services/task.service';
+import { Api } from '@api/api';
 import { of } from 'rxjs';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 describe('SettingsModal', () => {
   let component: SettingsModal;
@@ -31,13 +34,30 @@ describe('SettingsModal', () => {
     getIdentityData: vi.fn().mockReturnValue({ organizations: [] }),
   };
 
+  const mockTaskService = {
+    getTaskColorMix: vi.fn(() => null),
+  };
+
+  const mockApi = {
+    invoke: vi.fn().mockResolvedValue([]),
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SettingsModal],
+      imports: [SettingsModal, getTranslocoTestingModule()],
       providers: [
         { provide: OAuthService, useValue: mockOAuthService },
         { provide: Auth, useValue: mockAuth },
-        { provide: WorkSlotPreferenceService, useValue: { loadPreferences: vi.fn().mockResolvedValue([]), loadWorkSettings: vi.fn().mockResolvedValue(null) } },
+        {
+          provide: WorkSlotPreferenceService,
+          useValue: {
+            loadPreferences: vi.fn().mockResolvedValue([]),
+            loadOrganizationColorMap: vi.fn().mockResolvedValue({}),
+            loadWorkSettings: vi.fn().mockResolvedValue(null),
+          },
+        },
+        { provide: TaskService, useValue: mockTaskService },
+        { provide: Api, useValue: mockApi },
       ],
     }).compileComponents();
 

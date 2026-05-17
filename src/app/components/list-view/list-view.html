@@ -10,7 +10,7 @@
           [class.btn-primary]="activeFilter === filter.value"
           (click)="setFilter(filter.value)"
         >
-          {{ filter.label }}
+          {{ filter.label | transloco }}
         </button>
       }
     </div>
@@ -19,15 +19,15 @@
   <!-- Statistics -->
   <div class="stats shadow mb-6 w-full bg-base-100 shrink-0">
     <div class="stat">
-      <div class="stat-title">Overall</div>
+      <div class="stat-title">{{ 'LIST_STAT_OVERALL' | transloco }}</div>
       <div class="stat-value text-primary">{{ tasks.length }}</div>
     </div>
     <div class="stat">
-      <div class="stat-title">Open</div>
+      <div class="stat-title">{{ 'LIST_STAT_OPEN' | transloco }}</div>
       <div class="stat-value text-warning">{{ openCount() }}</div>
     </div>
     <div class="stat">
-      <div class="stat-title">Done</div>
+      <div class="stat-title">{{ 'LIST_STAT_DONE' | transloco }}</div>
       <div class="stat-value text-success">{{ doneCount() }}</div>
     </div>
   </div>
@@ -38,6 +38,7 @@
       <div
         class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-base-200"
         [class.task-done]="isTaskFinished(task)"
+        [ngStyle]="getTaskColorStyle(task)"
         (click)="onTaskClick(task)"
       >
         <!-- Main row -->
@@ -59,7 +60,7 @@
                 <button
                   class="btn-ghost"
                   (click)="toggleExpand(task, $event)"
-                  [title]="isExpanded(task) ? 'Collapse' : 'Expand'"
+                  [title]="isExpanded(task) ? ('LIST_COLLAPSE' | transloco) : ('LIST_EXPAND' | transloco)"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -116,7 +117,7 @@
               <button
                 class="btn btn-ghost btn-sm btn-circle text-error"
                 (click)="onDelete(task, $event)"
-                title="Delete"
+                [title]="task.isFinished ? ('LIST_MARK_OPEN' | transloco) : ('LIST_MARK_DONE' | transloco)"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -157,7 +158,7 @@
                   <button
                     class="btn btn-ghost btn-xs btn-circle text-warning ml-auto shrink-0"
                     (click)="onMarkScopeDone($any(task), scope, $event)"
-                    title="Mark as done"
+                    [title]="scope.isFinished ? ('LIST_MARK_OPEN' | transloco) : ('LIST_MARK_DONE' | transloco)"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -193,7 +194,7 @@
             d="M712.32 426.56L448 721.6l-137.28-136.32A32 32 0 0 0 265.6 630.4l160 160a32 32 0 0 0 22.4 9.6 32 32 0 0 0 23.04-10.56l288-320a32 32 0 0 0-47.68-42.88z"
           />
         </svg>
-        <h3 class="text-lg font-semibold mb-2">No tasks found</h3>
+        <h3 class="text-lg font-semibold mb-2">{{ 'LIST_NO_TASKS' | transloco }}</h3>
         <p class="text-base-content/70">
           {{ activeFilterDesc ? 'Try another ' + activeFilterDesc : '' }}
         </p>

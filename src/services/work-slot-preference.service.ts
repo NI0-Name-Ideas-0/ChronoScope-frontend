@@ -7,11 +7,19 @@ import {
   createWorkSlot,
   deleteWorkSlot,
   getSettings,
-  updateSettings
+  updateSettings,
 } from '../api/functions';
-import { WorkSlotResponse, WorkSettings, SettingsResponse } from '../api/models';
+import {
+  WorkSlotResponse,
+  WorkSettings,
+  SettingsResponse,
+  IdentityOrganizationColorResponse,
+} from '../api/models';
 import { Organization } from '../api/models';
-import { TimeSlot, COLOR_POOL } from '@app/model/work-preference.model';
+import { TimeSlot } from '@app/model/work-preference.model';
+import { getOrganizationColors } from '../api/fn/identity/get-organization-colors';
+import { getOrganizationColor } from '../api/fn/identity/get-organization-color';
+import { NotificationService } from './notification.service';
 
 /** Ordered mapping from dayIndex (0=Mon..6=Sun) to the Java DayOfWeek string */
 const DAY_OF_WEEK_NAMES = [
@@ -35,6 +43,7 @@ const MINUTES_PER_DAY = 24 * 60;
 export class WorkSlotPreferenceService {
   private api = inject(Api);
   private auth = inject(Auth);
+  private notificationService = inject(NotificationService);
   private preferencesChanged = new Subject<void>();
   preferencesChanged$ = this.preferencesChanged.asObservable();
 
@@ -42,10 +51,15 @@ export class WorkSlotPreferenceService {
   async loadPreferences(): Promise<TimeSlot[]> {
     const orgs = this.auth.getIdentityData()?.organizations ?? [];
     const slotsData = await this.fetchSlots();
+    const orgColors = await this.fetchOrganizationColors();
 
     return slotsData
-      .map((ws) => this.toTimeSlot(ws, orgs))
+      .map((ws) => this.toTimeSlot(ws, orgs, orgColors))
       .filter((s): s is TimeSlot => s !== null);
+  }
+
+  async loadOrganizationColorMap(): Promise<Record<string, string>> {
+    return this.fetchOrganizationColors();
   }
 
   /**
@@ -95,13 +109,15 @@ export class WorkSlotPreferenceService {
       });
     }
 
+    this.notificationService.success('Work schedule saved');
     this.preferencesChanged.next();
   }
 
   /** Convert a backend WorkSlotResponse to a frontend TimeSlot. */
   private toTimeSlot(
     ws: WorkSlotResponse,
-    orgs: Organization[]
+    orgs: Organization[],
+    organizationColors: Record<string, string>,
   ): TimeSlot | null {
     if (!ws.startTime || !ws.endTime || !ws.organizationId || !ws.dayOfWeek) {
       return null;
@@ -120,8 +136,7 @@ export class WorkSlotPreferenceService {
     const durationHours = endHour - startHour;
     if (durationHours <= 0) return null;
 
-    const orgIndex = orgs.findIndex((o) => o.id === ws.organizationId);
-    const colorClass = COLOR_POOL[orgIndex % COLOR_POOL.length];
+    const colorClass = organizationColors[ws.organizationId] || 'UNSET';
 
     return {
       id: ws.id?.toString() ?? this.generateId(),
@@ -187,6 +202,49 @@ export class WorkSlotPreferenceService {
       return Array.isArray(parsed) ? parsed : [];
     }
     return Array.isArray(response) ? (response as WorkSlotResponse[]) : [];
+  }
+
+  private async fetchOrganizationColors(): Promise<Record<string, string>> {
+    try {
+      const response = await this.api.invoke(getOrganizationColors, {});
+      const parsed = response instanceof Blob ? JSON.parse(await response.text()) : response;
+      const list = Array.isArray(parsed) ? (parsed as IdentityOrganizationColorResponse[]) : [];
+      const colorMap = list.reduce<Record<string, string>>((acc, entry) => {
+        if (entry.organizationId && entry.color && entry.color !== 'UNSET') {
+          acc[entry.organizationId] = entry.color;
+        }
+        return acc;
+      }, {});
+
+      const orgs = this.auth.getIdentityData()?.organizations ?? [];
+      const missingOrgIds = orgs.map((o) => o.id).filter((id): id is string => !!id && !colorMap[id]);
+
+      if (missingOrgIds.length > 0) {
+        const results = await Promise.allSettled(
+          missingOrgIds.map((orgId) =>
+            this.api.invoke(getOrganizationColor, { organizationId: orgId }),
+          ),
+        );
+        for (const result of results) {
+          if (result.status === 'fulfilled') {
+            const singleResponse = result.value;
+            const singleParsed =
+              singleResponse instanceof Blob
+                ? JSON.parse(await singleResponse.text())
+                : singleResponse;
+            const resp = singleParsed as IdentityOrganizationColorResponse;
+            if (resp.organizationId && resp.color && resp.color !== 'UNSET') {
+              colorMap[resp.organizationId] = resp.color;
+            }
+          }
+        }
+      }
+
+      return colorMap;
+    } catch (error) {
+      console.error('Failed to load organization colors for work slots:', error);
+      return {};
+    }
   }
 
   private generateId(): string {

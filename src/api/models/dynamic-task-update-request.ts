@@ -8,6 +8,7 @@ import { TaskUpdateRequest } from '../models/task-update-request';
  * Update request for a dynamic (schedulable) task
  */
 export type DynamicTaskUpdateRequest = TaskUpdateRequest & {
+'color'?: 'UNSET' | 'RED' | 'ORANGE' | 'AMBER' | 'YELLOW' | 'GREEN' | 'MINT' | 'CYAN' | 'BLUE' | 'INDIGO' | 'PURPLE' | 'PINK' | 'BROWN' | 'GRAY';
 'dependencies'?: Array<number>;
 'description'?: string;
 'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';

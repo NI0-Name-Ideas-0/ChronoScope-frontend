@@ -2,10 +2,13 @@ import { Component, ChangeDetectionStrategy, signal, computed, inject, AfterView
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { output } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Auth } from '@services/auth';
 import { Organization } from 'api/models';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
-import { TimeSlot, COLOR_POOL } from '@app/model/work-preference.model';
+import { TimeSlot } from '@app/model/work-preference.model';
+import { TaskColor } from '@app/model/task';
+import { TaskService } from '@services/task.service';
 
 /** View-model for organizations shown in the sidebar */
 interface OrgItem {
@@ -31,7 +34,7 @@ const DEFAULT_SCROLL_HOUR = 6;
 
 @Component({
   selector: 'app-settings-work-preferences',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: 'work-preferences.html',
   styleUrl: 'work-preferences.css',
@@ -53,6 +56,7 @@ export class WorkPreferencesSection implements AfterViewInit {
   private auth = inject(Auth);
   /** Service to persist/retrieve work slots via the backend API */
   private preferenceService = inject(WorkSlotPreferenceService);
+  private taskService = inject(TaskService);
 
   // --- Settings ---
 
@@ -93,8 +97,8 @@ export class WorkPreferencesSection implements AfterViewInit {
 
   /** Hour labels from 0 to 23 for the time column */
   hours = Array.from({ length: 24 }, (_, i) => i);
-  /** Short day names for the calendar header */
-  dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  /** Short day names as translation keys for the calendar header */
+  dayNames = ['WEEKDAY_MON', 'WEEKDAY_TUE', 'WEEKDAY_WED', 'WEEKDAY_THU', 'WEEKDAY_FRI', 'WEEKDAY_SAT', 'WEEKDAY_SUN'];
   /** Day metadata for the calendar grid */
   weekDays = Array.from({ length: 7 }, (_, i) => ({ index: i, short: this.dayNames[i] }));
 
@@ -160,18 +164,19 @@ export class WorkPreferencesSection implements AfterViewInit {
         slots: JSON.parse(JSON.stringify(this.slots())),
       };
     } catch (err) {
-      console.error('Failed to load work slot preferences:', err);
+      // Error toast handled by HTTP error interceptor
     }
   }
 
   /** Loads organizations from Auth service and maps them to sidebar items */
-  private loadOrganizations(): void {
+  private async loadOrganizations(): Promise<void> {
+    const colorMap = await this.preferenceService.loadOrganizationColorMap();
     const orgs = (this.auth.getIdentityData()?.organizations ?? [])
       .filter((o): o is Organization & { id: string; name: string } => !!o.id && !!o.name)
-      .map((o, i) => ({
+      .map((o) => ({
         id: o.id,
         name: o.name,
-        colorClass: COLOR_POOL[i % COLOR_POOL.length],
+        colorClass: colorMap[o.id] || 'UNSET',
       }));
     this.organizations.set(orgs);
     this.loadSlotsFromBackend();
@@ -218,6 +223,69 @@ export class WorkPreferencesSection implements AfterViewInit {
     return base + 'text-success';
   }
 
+  private normalizeColor(colorClass: string): TaskColor {
+    const value = colorClass?.toUpperCase?.() ?? '';
+    if (
+      [
+        'UNSET',
+        'RED',
+        'ORANGE',
+        'AMBER',
+        'YELLOW',
+        'GREEN',
+        'MINT',
+        'CYAN',
+        'BLUE',
+        'INDIGO',
+        'PURPLE',
+        'PINK',
+        'BROWN',
+        'GRAY',
+      ].includes(value)
+    ) {
+      return value as TaskColor;
+    }
+
+    const fallbackByClass: Record<string, TaskColor> = {
+      primary: 'BLUE',
+      secondary: 'INDIGO',
+      accent: 'MINT',
+      info: 'CYAN',
+      success: 'GREEN',
+      warning: 'AMBER',
+    };
+
+    return fallbackByClass[colorClass] || 'BLUE';
+  }
+
+  getOrgCardStyle(org: OrgItem): Record<string, string> {
+    const color = this.normalizeColor(org.colorClass);
+    const background = this.taskService.getTaskColorMix(color, 10);
+    const border = this.taskService.getTaskColorMix(color, 65);
+    return {
+      backgroundColor: background || '',
+      borderLeftColor: border || '',
+    };
+  }
+
+  getOrgDotStyle(org: OrgItem): Record<string, string> {
+    const color = this.normalizeColor(org.colorClass);
+    const background = this.taskService.getTaskColorMix(color, 85);
+    return {
+      backgroundColor: background || '',
+    };
+  }
+
+  getSlotStyle(slot: TimeSlot): Record<string, string> {
+    const color = this.normalizeColor(slot.colorClass);
+    const background = this.taskService.getTaskColorMix(color, 20);
+    const border = this.taskService.getTaskColorMix(color, 75);
+    return {
+      backgroundColor: background || '',
+      borderLeftColor: border || '',
+    };
+  }
+
   /** Formats a decimal hour (e.g. 9.5) to HH:MM string */
   formatTime(hour: number): string {
     const h = Math.floor(hour);
@@ -254,7 +322,7 @@ export class WorkPreferencesSection implements AfterViewInit {
       this.storeCurrentState();
       this.saved.emit(this.slots());
     } catch (err) {
-      console.error('Failed to save work slot preferences:', err);
+      // Error toast handled by HTTP error interceptor
     }
   }
 

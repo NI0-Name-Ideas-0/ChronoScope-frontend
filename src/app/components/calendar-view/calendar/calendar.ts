@@ -6,6 +6,7 @@ import {
   SimpleChanges,
   inject,
   effect,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FullCalendarModule } from '@fullcalendar/angular';
@@ -13,6 +14,7 @@ import { FullCalendarComponent } from '@fullcalendar/angular';
 import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import deLocale from '@fullcalendar/core/locales/de';
 import { EventClickArg } from '@fullcalendar/core';
 import { TaskService } from '@services/task.service';
 import { TaskModalService } from '@services/task-modal.service';
@@ -20,7 +22,8 @@ import { ViewService } from '@services/view.service';
 import rrulePlugin from '@fullcalendar/rrule';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
 import { TimeSlot } from '@app/model/work-preference.model';
-import { Task } from '@app/model/task';
+import { Task, TaskColor } from '@app/model/task';
+import { LanguageService, AppLocale } from '@services/language.service';
 
 @Component({
   selector: 'app-calendar',
@@ -34,6 +37,13 @@ export class Calendar implements OnChanges {
   @Input() focusDate: Date | null = null;
 
   private viewService = inject(ViewService);
+  private languageService = inject(LanguageService);
+
+  // Workaround for FullCalendar bug #4591 — explicit buttonText per locale
+  private static readonly BUTTON_TEXT: Record<AppLocale, { today: string; month: string; week: string }> = {
+    en: { today: 'today', month: 'month', week: 'week' },
+    de: { today: 'Heute', month: 'Monat', week: 'Woche' },
+  };
 
   tasks: Task[] = [];
 
@@ -53,31 +63,39 @@ export class Calendar implements OnChanges {
     }
   });
 
-  calendarOptions: CalendarOptions = {
-    initialView: 'dayGridMonth',
-    plugins: [dayGridPlugin, timeGridPlugin, rrulePlugin],
-    height: '100%',
-    locale: 'en-GB',
-    firstDay: 1,
-    weekends: true,
-    slotLabelFormat: {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    },
-    eventTimeFormat: {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    },
-    headerToolbar: {
-      start: 'timeGridWeek dayGridMonth',
-      center: 'title',
-      end: 'today prev,next',
-    },
-    eventOrder: 'displayOrder',
-    eventContent: (arg) => this.renderEventContent(arg),
-  };
+  private readonly eventContentCallback = (arg: any) => this.renderEventContent(arg);
+
+  readonly calendarOptions = computed<CalendarOptions>(() => {
+    const lang = this.languageService.language();
+    return {
+      initialView: 'dayGridMonth',
+      plugins: [dayGridPlugin, timeGridPlugin, rrulePlugin],
+      height: '100%',
+      locales: [deLocale],
+      locale: lang,
+      buttonText: Calendar.BUTTON_TEXT[lang],
+      firstDay: 1,
+      weekends: true,
+      slotLabelFormat: {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      },
+      eventTimeFormat: {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      },
+      headerToolbar: {
+        start: 'timeGridWeek dayGridMonth',
+        center: 'title',
+        end: 'today prev,next',
+      },
+      eventOrder: 'displayOrder',
+      eventContent: this.eventContentCallback,
+      eventDidMount: (arg) => this.applyEventColor(arg),
+    };
+  });
 
   ngAfterViewInit() {
     const api = this.calendarRef.getApi();
@@ -129,6 +147,8 @@ export class Calendar implements OnChanges {
   private mapWorkSlotsToEvents(slots: TimeSlot[]): EventInput[] {
     return slots.map((slot) => {
       const dayIndex = (slot.dayIndex + 1) % 7;
+      const slotColor = this.resolveWorkSlotColor(slot.colorClass);
+      const slotTint = this.taskService.getTaskColorMix(slotColor, 35);
 
       return {
         id: `work-slot-${slot.id}`,
@@ -136,12 +156,48 @@ export class Calendar implements OnChanges {
         startTime: this.formatSlotTime(slot.startHour),
         endTime: this.formatSlotTime(slot.startHour + slot.durationHours),
         display: 'background',
-        classNames: [`work-slot`, `work-slot-${slot.colorClass}`],
+        classNames: ['work-slot'],
+        backgroundColor: slotTint ?? undefined,
         extendedProps: {
           isWorkSlot: true,
         },
       };
     });
+  }
+
+  private resolveWorkSlotColor(colorClass: string): TaskColor {
+    const value = colorClass?.toUpperCase?.() ?? '';
+    if (
+      [
+        'UNSET',
+        'RED',
+        'ORANGE',
+        'AMBER',
+        'YELLOW',
+        'GREEN',
+        'MINT',
+        'CYAN',
+        'BLUE',
+        'INDIGO',
+        'PURPLE',
+        'PINK',
+        'BROWN',
+        'GRAY',
+      ].includes(value)
+    ) {
+      return value as TaskColor;
+    }
+
+    const fallbackByClass: Record<string, TaskColor> = {
+      primary: 'BLUE',
+      secondary: 'INDIGO',
+      accent: 'MINT',
+      info: 'CYAN',
+      success: 'GREEN',
+      warning: 'AMBER',
+    };
+
+    return fallbackByClass[colorClass] || 'BLUE';
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -200,7 +256,6 @@ export class Calendar implements OnChanges {
     container.className = isMonthView
       ? 'fc-task-content fc-task-content--month'
       : 'fc-task-content';
-
     const icon = document.createElement('span');
     icon.className = 'fc-task-icon';
     icon.innerHTML = this.getIconSvg(iconType);
@@ -228,6 +283,20 @@ export class Calendar implements OnChanges {
     }
 
     return { domNodes: [container] };
+  }
+
+  private applyEventColor(arg: any): void {
+    if (arg?.event?.extendedProps?.['isWorkSlot']) {
+      return;
+    }
+
+    const color = (arg?.event?.extendedProps?.['color'] ?? 'UNSET') as TaskColor;
+    const colorMix = this.taskService.getTaskColorMix(color, 35);
+    if (!colorMix) {
+      return;
+    }
+
+    arg.el.style.setProperty('--task-color-bg', colorMix);
   }
 
   private getIconSvg(type: string): string {

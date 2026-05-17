@@ -8,6 +8,7 @@ import { TaskCreateRequest } from '../models/task-create-request';
  * Create request for a dynamic (schedulable) task with duration and scope constraints
  */
 export type DynamicTaskCreateRequest = TaskCreateRequest & {
+'color'?: 'UNSET' | 'RED' | 'ORANGE' | 'AMBER' | 'YELLOW' | 'GREEN' | 'MINT' | 'CYAN' | 'BLUE' | 'INDIGO' | 'PURPLE' | 'PINK' | 'BROWN' | 'GRAY';
 'dependencies'?: Array<number>;
 'description'?: string;
 'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';

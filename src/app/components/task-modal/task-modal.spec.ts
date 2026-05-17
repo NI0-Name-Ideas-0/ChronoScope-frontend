@@ -9,6 +9,7 @@ import { Task } from '@app/model/task';
 import { AlgoTask } from '@app/model/algo-task';
 import { Scope } from '@app/model/scope';
 import { StaticTaskResponse, DynamicTaskResponse } from '../../../api/models';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 describe('TaskModal', () => {
   let component: TaskModal;
@@ -24,6 +25,7 @@ describe('TaskModal', () => {
     updateTask: vi.fn().mockResolvedValue({}),
     deleteTask: vi.fn().mockResolvedValue({}),
     tasks$: new BehaviorSubject<Task[]>([]),
+    getOrganizationFallbackColor: vi.fn(() => 'UNSET'),
   };
 
   beforeEach(async () => {
@@ -37,7 +39,7 @@ describe('TaskModal', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [TaskModal],
+      imports: [TaskModal, getTranslocoTestingModule()],
       providers: [
         { provide: TaskModalService, useValue: mockTaskModalService },
         { provide: Auth, useValue: mockAuth },
@@ -402,8 +404,8 @@ describe('TaskModal', () => {
 
   it('should filter available dependency options', () => {
     const tasks: Task[] = [
-      new AlgoTask(1, 'Algo 1', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 30, 120),
-      new AlgoTask(2, 'Algo 2', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 30, 120),
+      new AlgoTask(1, 'Algo 1', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
+      new AlgoTask(2, 'Algo 2', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
     ];
 
     component.dynamicTask = { ...component.emptyDynamicTask(), dependencies: [1] };
@@ -415,8 +417,8 @@ describe('TaskModal', () => {
 
   it('should exclude current editing task from available dependencies', () => {
     const tasks: Task[] = [
-      new AlgoTask(1, 'Algo 1', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 30, 120),
-      new AlgoTask(10, 'Current', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 30, 120),
+      new AlgoTask(1, 'Algo 1', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
+      new AlgoTask(10, 'Current', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
     ];
 
     component.editingTask = { id: 10, type: 'dynamic' } as DynamicTaskResponse;
@@ -429,7 +431,7 @@ describe('TaskModal', () => {
 
   it('should get dependency label when task is found', () => {
     const tasks: Task[] = [
-      new AlgoTask(1, 'Found Task', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 30, 120),
+      new AlgoTask(1, 'Found Task', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
     ];
 
     expect(component.getDependencyLabel(1, tasks)).toBe('Found Task');
@@ -937,7 +939,7 @@ describe('TaskModal', () => {
         dependencies: [1],
       };
       mockTaskService.tasks$.next([
-        new AlgoTask(1, 'Dep Task', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 30, 120),
+        new AlgoTask(1, 'Dep Task', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
       ]);
       fixture.detectChanges();
 
@@ -948,7 +950,7 @@ describe('TaskModal', () => {
       openSubject.next({});
       component.mode = 'planned';
       mockTaskService.tasks$.next([
-        new AlgoTask(1, 'Option 1', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 30, 120),
+        new AlgoTask(1, 'Option 1', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
       ]);
       fixture.detectChanges();
 

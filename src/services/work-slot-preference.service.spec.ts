@@ -2,7 +2,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { Api } from '../api/api';
 import { createWorkSlot, deleteWorkSlot, getWorkSlots, updateSettings, getSettings } from '../api/functions';
-import { WorkSlotResponse } from '../api/models';
+import { getOrganizationColors } from '../api/fn/identity/get-organization-colors';
+import { getOrganizationColor } from '../api/fn/identity/get-organization-color';
+import { WorkSlotResponse, IdentityOrganizationColorResponse } from '../api/models';
 import { TimeSlot } from '../app/model/work-preference.model';
 import { Auth } from './auth';
 import { WorkSlotPreferenceService } from './work-slot-preference.service';
@@ -36,19 +38,29 @@ describe('WorkSlotPreferenceService', () => {
   });
 
   it('maps backend HH:mm work-slot responses to TimeSlots', async () => {
-    mockApi.invoke.mockResolvedValue([
-      responseSlot({
-        id: 7,
-        organizationId: 'org-1',
-        dayOfWeek: 'WEDNESDAY',
-        startTime: '09:30',
-        endTime: '11:00',
-      }),
-    ]);
+    mockApi.invoke.mockImplementation((fn: unknown) => {
+      if (fn === getWorkSlots) {
+        return Promise.resolve([
+          responseSlot({
+            id: 7,
+            organizationId: 'org-1',
+            dayOfWeek: 'WEDNESDAY',
+            startTime: '09:30',
+            endTime: '11:00',
+          }),
+        ]);
+      }
+      if (fn === getOrganizationColors) {
+        return Promise.resolve([]);
+      }
+      if (fn === getOrganizationColor) {
+        return Promise.resolve({ organizationId: 'org-1', color: 'BLUE' });
+      }
+      return Promise.resolve({});
+    });
 
     const result = await service.loadPreferences();
 
-    expect(mockApi.invoke).toHaveBeenCalledWith(getWorkSlots, {});
     expect(result).toEqual([
       {
         id: '7',
@@ -57,7 +69,7 @@ describe('WorkSlotPreferenceService', () => {
         durationHours: 1.5,
         type: 'organization',
         label: 'Chrono Labs',
-        colorClass: 'primary',
+        colorClass: 'BLUE',
         organizationId: 'org-1',
       },
     ]);

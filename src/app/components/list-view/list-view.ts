@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { TaskService } from '@services/task.service';
 import { TaskModalService } from '@services/task-modal.service';
 import { ViewService } from '@services/view.service';
@@ -14,7 +15,7 @@ import { rrulestr } from 'rrule';
 @Component({
   selector: 'app-list-view',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   templateUrl: 'list-view.html',
   styleUrl: 'list-view.css',
 })
@@ -44,10 +45,10 @@ export class ListView implements OnInit, OnDestroy {
 
   //filters for the automatic Button creation in the .html
   filters = [
-    { label: 'All', value: 'all' as const },
-    { label: 'Open', value: 'todo' as const },
-    { label: 'Today', value: 'today' as const },
-    { label: 'Done', value: 'done' as const },
+    { label: 'LIST_FILTER_ALL', value: 'all' as const },
+    { label: 'LIST_FILTER_OPEN', value: 'todo' as const },
+    { label: 'LIST_FILTER_TODAY', value: 'today' as const },
+    { label: 'LIST_FILTER_DONE', value: 'done' as const },
   ];
 
   ngOnInit(): void {
@@ -104,6 +105,18 @@ export class ListView implements OnInit, OnDestroy {
       return 'dynamic';
     }
     return 'static';
+  }
+
+  getTaskColorStyle(task: Task): Record<string, string> {
+    const color = this.taskService.getEffectiveTaskColor(task);
+    const tint = this.taskService.getTaskColorMix(color, 18);
+    if (!tint) {
+      return {};
+    }
+
+    return {
+      '--task-tint': tint,
+    } as Record<string, string>;
   }
 
   onSearchChange() {}

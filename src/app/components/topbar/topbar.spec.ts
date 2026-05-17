@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Topbar } from './topbar';
 import { ViewService } from '@services/view.service';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 import { TaskService } from '@services/task.service';
 import { Auth } from '@services/auth';
 import { of } from 'rxjs';
@@ -27,7 +28,7 @@ describe('Topbar', () => {
   beforeEach(async () => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [Topbar],
+      imports: [Topbar, getTranslocoTestingModule()],
       providers: [
         ViewService,
         { provide: TaskService, useClass: MockTaskService },
@@ -182,6 +183,7 @@ describe('Topbar', () => {
       [finishedScope, openScope],
       'easy',
       false,
+      'UNSET',
       30,
       60,
     );

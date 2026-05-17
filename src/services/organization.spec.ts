@@ -43,6 +43,11 @@ describe('Organization', () => {
     expect(mockApi.invoke).toHaveBeenCalled();
   });
 
+  it('should remove member', async () => {
+    await service.removeMember('org-1', 'user-1');
+    expect(mockApi.invoke).toHaveBeenCalled();
+  });
+
   it('should resend invitation', async () => {
     await service.resendInvitation('org-1', 'inv-1');
     expect(mockApi.invoke).toHaveBeenCalled();

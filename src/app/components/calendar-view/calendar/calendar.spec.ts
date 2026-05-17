@@ -7,10 +7,13 @@ import { OAuthService } from 'angular-oauth2-oidc';
 import { Api } from '@api/api';
 import { Auth } from '@services/auth';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
+import { LanguageService } from '@services/language.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { Task } from '@app/model/task';
 import { StaticTask } from '@app/model/static-task';
 import { Scope } from '@app/model/scope';
+import { signal } from '@angular/core';
+import { getTranslocoTestingModule } from '@test-utils/transloco-testing';
 
 class MockTaskService {
   tasks$ = new BehaviorSubject<Task[]>([]);
@@ -57,6 +60,12 @@ describe('Calendar', () => {
     preferencesChanged$: of(undefined),
   };
 
+  const mockLanguageService = {
+    language: signal('en' as const),
+    initialize: vi.fn(),
+    setLanguage: vi.fn(),
+  };
+
   const createMockCalendarRef = () => {
     const events: Array<{ remove: ReturnType<typeof vi.fn> }> = [];
     const api = {
@@ -76,7 +85,7 @@ describe('Calendar', () => {
     TestBed.resetTestingModule();
 
     await TestBed.configureTestingModule({
-      imports: [Calendar],
+      imports: [Calendar, getTranslocoTestingModule()],
       providers: [
         ViewService,
         { provide: TaskService, useClass: MockTaskService },
@@ -85,6 +94,7 @@ describe('Calendar', () => {
         { provide: Api, useValue: mockApi },
         { provide: Auth, useValue: mockAuth },
         { provide: WorkSlotPreferenceService, useValue: mockWorkSlotPreferenceService },
+        { provide: LanguageService, useValue: mockLanguageService },
       ],
     }).compileComponents();
 
@@ -158,8 +168,8 @@ describe('Calendar', () => {
   // --- getFilteredEvents ---
   it('should filter events by organization', () => {
     component.tasks = [
-      new StaticTask(1, 'Task 1', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy'),
-      new StaticTask(2, 'Task 2', '', [], new Scope(new Date(), new Date()), 'org-2', 'easy'),
+      new StaticTask(1, 'Task 1', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy', false, 'UNSET'),
+      new StaticTask(2, 'Task 2', '', [], new Scope(new Date(), new Date()), 'org-2', 'easy', false, 'UNSET'),
     ];
     mockTaskService.toCalendarEvents.mockImplementation((task: Task) => [{ id: task.id }]);
 
@@ -171,8 +181,8 @@ describe('Calendar', () => {
 
   it('should filter events by label', () => {
     component.tasks = [
-      new StaticTask(1, 'Task 1', '', ['work'], new Scope(new Date(), new Date()), 'org-1', 'easy'),
-      new StaticTask(2, 'Task 2', '', ['personal'], new Scope(new Date(), new Date()), 'org-1', 'easy'),
+      new StaticTask(1, 'Task 1', '', ['work'], new Scope(new Date(), new Date()), 'org-1', 'easy', false, 'UNSET'),
+      new StaticTask(2, 'Task 2', '', ['personal'], new Scope(new Date(), new Date()), 'org-1', 'easy', false, 'UNSET'),
     ];
     mockTaskService.toCalendarEvents.mockImplementation((task: Task) => [{ id: task.id }]);
 
@@ -184,8 +194,8 @@ describe('Calendar', () => {
 
   it('should filter events by task id', () => {
     component.tasks = [
-      new StaticTask(1, 'Task 1', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy'),
-      new StaticTask(2, 'Task 2', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy'),
+      new StaticTask(1, 'Task 1', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy', false, 'UNSET'),
+      new StaticTask(2, 'Task 2', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy', false, 'UNSET'),
     ];
     mockTaskService.toCalendarEvents.mockImplementation((task: Task) => [{ id: task.id }]);
 

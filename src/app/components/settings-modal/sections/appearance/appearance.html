@@ -1,14 +1,14 @@
 <div class="space-y-6">
   <div>
-    <h2 class="text-lg font-semibold text-base-content">Appearance</h2>
-    <p class="text-sm text-base-content/60 mt-0.5">Customize how ChronoScope looks for you.</p>
+    <h2 class="text-lg font-semibold text-base-content">{{ 'SETTINGS_APPEARANCE_TITLE' | transloco }}</h2>
+    <p class="text-sm text-base-content/60 mt-0.5">{{ 'SETTINGS_APPEARANCE_DESC' | transloco }}</p>
   </div>
 
   <!-- Theme -->
   <div class="settings-card">
-    <h3 class="settings-card-title">Color Theme</h3>
-    <p class="settings-card-desc">Choose your preferred color scheme.</p>
-    <div class="mt-4 grid grid-cols-3 gap-3" role="radiogroup" aria-label="Color theme">
+    <h3 class="settings-card-title">{{ 'SETTINGS_APPEARANCE_THEME_TITLE' | transloco }}</h3>
+    <p class="settings-card-desc">{{ 'SETTINGS_APPEARANCE_THEME_DESC' | transloco }}</p>
+    <div class="mt-4 grid grid-cols-3 gap-3" role="radiogroup" [attr.aria-label]="'SETTINGS_APPEARANCE_THEME_TITLE' | transloco">
       @for (option of themeOptions; track option.value) {
         <button
           type="button"
@@ -25,9 +25,25 @@
               <div class="theme-preview-block theme-preview-block--sm"></div>
             </div>
           </div>
-          <span class="mt-2 text-sm font-medium text-base-content">{{ option.label }}</span>
+          <span class="mt-2 text-sm font-medium text-base-content">{{ option.label | transloco }}</span>
         </button>
       }
+    </div>
+  </div>
+
+  <!-- Language -->
+  <div class="settings-card">
+    <h3 class="settings-card-title">{{ 'SETTINGS_APPEARANCE_LANGUAGE_TITLE' | transloco }}</h3>
+    <p class="settings-card-desc">{{ 'SETTINGS_APPEARANCE_LANGUAGE_DESC' | transloco }}</p>
+    <div class="mt-4">
+      <select
+        class="select select-bordered w-full max-w-xs"
+        (change)="setLanguage($any($event.target).value)"
+      >
+        @for (option of languageOptions; track option.value) {
+          <option [value]="option.value" [selected]="option.value === selectedLanguage()">{{ option.label }}</option>
+        }
+      </select>
     </div>
   </div>
 </div>

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ListView } from './list-view';
 import { TaskService } from '@services/task.service';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 import { BehaviorSubject } from 'rxjs';
 import { StaticTask } from '@app/model/static-task';
 import { AlgoTask } from '@app/model/algo-task';
@@ -19,11 +20,13 @@ describe('ListView', () => {
     updateTask: vi.fn().mockResolvedValue({}),
     formatMinutesToDuration: vi.fn((m: number) => `PT${m}M`),
     saveTaskCompletion: vi.fn(),
+    getTaskColorMix: vi.fn(() => null),
+    getEffectiveTaskColor: vi.fn((task: Task) => task.color ?? 'UNSET'),
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ListView],
+      imports: [ListView, getTranslocoTestingModule()],
       providers: [{ provide: TaskService, useValue: mockTaskService }],
     }).compileComponents();
 
@@ -184,6 +187,7 @@ function createStaticTask(id: number, title: string, isFinished = false, rrule: 
     'EASY',
     isFinished,
     rrule,
+    'UNSET',
   );
 }
 
@@ -202,6 +206,7 @@ function createAlgoTask(id: number, title: string, scopes: Scope[] = [], isFinis
     scopes,
     'EASY',
     isFinished,
+    'UNSET',
     30,
     120,
   );
