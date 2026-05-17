@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AppearanceSection } from './appearance';
 import { ThemeService } from '@services/theme.service';
 import { signal } from '@angular/core';
+import { LanguageService } from '@services/language.service';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 describe('AppearanceSection', () => {
   let component: AppearanceSection;
@@ -14,8 +16,11 @@ describe('AppearanceSection', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AppearanceSection],
-      providers: [{ provide: ThemeService, useValue: mockThemeService }],
+      imports: [AppearanceSection, getTranslocoTestingModule()],
+      providers: [
+        { provide: ThemeService, useValue: mockThemeService },
+        { provide: LanguageService, useValue: { initialize: vi.fn(), language: vi.fn(() => 'en'), setLanguage: vi.fn() } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AppearanceSection);

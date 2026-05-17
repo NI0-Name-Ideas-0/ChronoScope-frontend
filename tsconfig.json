@@ -20,7 +20,8 @@
       "@api/*": ["api/*"],
     	"@services/*": ["services/*"],
     	"@components/*": ["components/*"],
-      "@pipes/*": ["pipes/*"]
+      "@pipes/*": ["pipes/*"],
+      "@test-utils/*": ["test-utils/*"]
     }
   },
   "angularCompilerOptions": {

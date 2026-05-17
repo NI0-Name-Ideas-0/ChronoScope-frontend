@@ -6,6 +6,7 @@ import {
   SimpleChanges,
   inject,
   effect,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FullCalendarModule } from '@fullcalendar/angular';
@@ -13,6 +14,7 @@ import { FullCalendarComponent } from '@fullcalendar/angular';
 import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
+import deLocale from '@fullcalendar/core/locales/de';
 import { EventClickArg } from '@fullcalendar/core';
 import { TaskService } from '@services/task.service';
 import { TaskModalService } from '@services/task-modal.service';
@@ -21,6 +23,7 @@ import rrulePlugin from '@fullcalendar/rrule';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
 import { TimeSlot } from '@app/model/work-preference.model';
 import { Task } from '@app/model/task';
+import { LanguageService, AppLocale } from '@services/language.service';
 
 @Component({
   selector: 'app-calendar',
@@ -34,6 +37,13 @@ export class Calendar implements OnChanges {
   @Input() focusDate: Date | null = null;
 
   private viewService = inject(ViewService);
+  private languageService = inject(LanguageService);
+
+  // Workaround for FullCalendar bug #4591 — explicit buttonText per locale
+  private static readonly BUTTON_TEXT: Record<AppLocale, { today: string; month: string; week: string }> = {
+    en: { today: 'today', month: 'month', week: 'week' },
+    de: { today: 'Heute', month: 'Monat', week: 'Woche' },
+  };
 
   tasks: Task[] = [];
 
@@ -53,31 +63,38 @@ export class Calendar implements OnChanges {
     }
   });
 
-  calendarOptions: CalendarOptions = {
-    initialView: 'dayGridMonth',
-    plugins: [dayGridPlugin, timeGridPlugin, rrulePlugin],
-    height: '100%',
-    locale: 'en-GB',
-    firstDay: 1,
-    weekends: true,
-    slotLabelFormat: {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    },
-    eventTimeFormat: {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    },
-    headerToolbar: {
-      start: 'timeGridWeek dayGridMonth',
-      center: 'title',
-      end: 'today prev,next',
-    },
-    eventOrder: 'displayOrder',
-    eventContent: (arg) => this.renderEventContent(arg),
-  };
+  private readonly eventContentCallback = (arg: any) => this.renderEventContent(arg);
+
+  readonly calendarOptions = computed<CalendarOptions>(() => {
+    const lang = this.languageService.language();
+    return {
+      initialView: 'dayGridMonth',
+      plugins: [dayGridPlugin, timeGridPlugin, rrulePlugin],
+      height: '100%',
+      locales: [deLocale],
+      locale: lang,
+      buttonText: Calendar.BUTTON_TEXT[lang],
+      firstDay: 1,
+      weekends: true,
+      slotLabelFormat: {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      },
+      eventTimeFormat: {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      },
+      headerToolbar: {
+        start: 'timeGridWeek dayGridMonth',
+        center: 'title',
+        end: 'today prev,next',
+      },
+      eventOrder: 'displayOrder',
+      eventContent: this.eventContentCallback,
+    };
+  });
 
   ngAfterViewInit() {
     const api = this.calendarRef.getApi();

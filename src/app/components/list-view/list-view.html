@@ -10,7 +10,7 @@
           [class.btn-primary]="activeFilter === filter.value"
           (click)="setFilter(filter.value)"
         >
-          {{ filter.label }}
+          {{ filter.label | transloco }}
         </button>
       }
     </div>
@@ -19,15 +19,15 @@
   <!-- Statistics -->
   <div class="stats shadow mb-6 w-full bg-base-100 shrink-0">
     <div class="stat">
-      <div class="stat-title">Overall</div>
+      <div class="stat-title">{{ 'LIST_STAT_OVERALL' | transloco }}</div>
       <div class="stat-value text-primary">{{ tasks.length }}</div>
     </div>
     <div class="stat">
-      <div class="stat-title">Open</div>
+      <div class="stat-title">{{ 'LIST_STAT_OPEN' | transloco }}</div>
       <div class="stat-value text-warning">{{ openCount() }}</div>
     </div>
     <div class="stat">
-      <div class="stat-title">Done</div>
+      <div class="stat-title">{{ 'LIST_STAT_DONE' | transloco }}</div>
       <div class="stat-value text-success">{{ doneCount() }}</div>
     </div>
   </div>
@@ -74,7 +74,7 @@
                 <button
                   class="btn-ghost"
                   (click)="toggleExpand(task, $event)"
-                  [title]="isExpanded(task) ? 'Collapse' : 'Expand'"
+                  [title]="isExpanded(task) ? ('LIST_COLLAPSE' | transloco) : ('LIST_EXPAND' | transloco)"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -97,13 +97,13 @@
             </div>
             <p class="text-sm text-base-content/70 truncate">{{ task.description }}</p>
             <p class="text-xs text-base-content/50 mt-1">
-              DueDate: {{ getTaskDueDate(task) | date: 'dd/MM/yyyy' }}
+              {{ 'LIST_DUE_DATE' | transloco }} {{ getTaskDueDate(task) | date: 'dd/MM/yyyy' }}
             </p>
             <!-- Progress bar for AlgoTasks -->
             @if (isAlgoTask(task)) {
               <div class="w-full max-w-xs mx-auto mt-2">
                 <div class="flex justify-between text-xs text-base-content/60 mb-0.5">
-                  <span>Progress</span>
+                  <span>{{ 'LIST_PROGRESS' | transloco }}</span>
                   <span>{{ (getCompletionRatio($any(task)) * 100).toFixed(0) }}%</span>
                 </div>
                 <progress
@@ -124,7 +124,7 @@
                 [class.text-warning]="!task.isFinished"
                 [class.text-success]="task.isFinished"
                 (click)="onMarkDone(task, $event)"
-                [title]="task.isFinished ? 'Mark as open' : 'Mark as done'"
+                [title]="task.isFinished ? ('LIST_MARK_OPEN' | transloco) : ('LIST_MARK_DONE' | transloco)"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -140,7 +140,7 @@
             <button
               class="btn btn-ghost btn-sm btn-circle text-error"
               (click)="onDelete(task, $event)"
-              title="Delete"
+              [title]="'LIST_DELETE' | transloco"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -176,7 +176,7 @@
                       ({{ getScopeDurationMinutes(scope) }} min)
                     </span>
                     @if (scope.isFinished) {
-                      <span class="badge badge-success badge-sm">Done</span>
+                      <span class="badge badge-success badge-sm">{{ 'LIST_DONE_BADGE' | transloco }}</span>
                     }
                   </div>
                   <button
@@ -184,7 +184,7 @@
                     [class.text-warning]="!scope.isFinished"
                     [class.text-success]="scope.isFinished"
                     (click)="onMarkScopeDone($any(task), scope, $event)"
-                    [title]="scope.isFinished ? 'Mark as open' : 'Mark as done'"
+                    [title]="scope.isFinished ? ('LIST_MARK_OPEN' | transloco) : ('LIST_MARK_DONE' | transloco)"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -220,7 +220,7 @@
             d="M712.32 426.56L448 721.6l-137.28-136.32A32 32 0 0 0 265.6 630.4l160 160a32 32 0 0 0 22.4 9.6 32 32 0 0 0 23.04-10.56l288-320a32 32 0 0 0-47.68-42.88z"
           />
         </svg>
-        <h3 class="text-lg font-semibold mb-2">No tasks found</h3>
+        <h3 class="text-lg font-semibold mb-2">{{ 'LIST_NO_TASKS' | transloco }}</h3>
         <p class="text-base-content/70">
           {{ activeFilterDesc ? 'Try another ' + activeFilterDesc : '' }}
         </p>

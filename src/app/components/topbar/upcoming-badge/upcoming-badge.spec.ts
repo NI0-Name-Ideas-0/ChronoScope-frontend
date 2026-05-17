@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 import { UpcomingBadge } from './upcoming-badge';
 import { TaskService } from '@services/task.service';
 import { Auth } from '@services/auth';
+import { getTranslocoTestingModule } from '@test-utils/transloco-testing';
 
 class MockTaskService {
   tasks$ = of([]);
@@ -22,7 +23,7 @@ describe('UpcomingBadge', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [UpcomingBadge],
+      imports: [UpcomingBadge, getTranslocoTestingModule()],
       providers: [
         { provide: TaskService, useClass: MockTaskService },
         { provide: Auth, useClass: MockAuth },

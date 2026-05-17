@@ -5,7 +5,7 @@
       <button
         type="button"
         class="badge-action"
-        title="Mark scope as done"
+        [title]="'UPCOMING_MARK_DONE' | transloco"
         (click)="markScopeDone()"
       >
         ✓
@@ -15,7 +15,7 @@
       <button
         type="button"
         class="badge-action is-overdue"
-        title="Update remaining time"
+        [title]="'UPCOMING_UPDATE_TIME' | transloco"
         (click)="openOverdueModal()"
       >
         ✕
@@ -26,13 +26,13 @@
 
 <dialog class="modal" [class.modal-open]="showOverdueModal()">
   <div class="modal-box">
-    <h3 class="font-bold text-lg">Running late?</h3>
+    <h3 class="font-bold text-lg">{{ 'UPCOMING_OVERDUE_TITLE' | transloco }}</h3>
     <p class="text-sm text-base-content/70 mt-2">
-      How many more minutes do you need to finish "{{ badgeText() }}"?
+      {{ 'UPCOMING_OVERDUE_DESC' | transloco:{ task: badgeText() } }}
     </p>
     <div class="form-control mt-4">
       <label class="label">
-        <span class="label-text">Additional minutes needed</span>
+        <span class="label-text">{{ 'UPCOMING_OVERDUE_LABEL' | transloco }}</span>
       </label>
       <input
         type="number"
@@ -48,9 +48,9 @@
       }
     </div>
     <div class="modal-action">
-      <button class="btn btn-ghost" type="button" (click)="closeOverdueModal()">Cancel</button>
+      <button class="btn btn-ghost" type="button" (click)="closeOverdueModal()">{{ 'COMMON_CANCEL' | transloco }}</button>
       <button class="btn btn-primary" type="button" [disabled]="isSubmitting()" (click)="submitOverdue()">
-        Update plan
+        {{ 'UPCOMING_OVERDUE_SUBMIT' | transloco }}
       </button>
     </div>
   </div>

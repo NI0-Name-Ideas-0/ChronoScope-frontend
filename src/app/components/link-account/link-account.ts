@@ -1,11 +1,12 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Auth } from '@services/auth';
 import { AccountLinkConfirmRequest } from '@api/models/account-link-confirm-request';
 
 @Component({
   selector: 'app-link-account',
-  imports: [],
+  imports: [TranslocoPipe],
   templateUrl: './link-account.html',
   styleUrl: './link-account.css',
 })
