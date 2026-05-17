@@ -130,6 +130,8 @@ export class Calendar implements OnChanges {
   private mapWorkSlotsToEvents(slots: TimeSlot[]): EventInput[] {
     return slots.map((slot) => {
       const dayIndex = (slot.dayIndex + 1) % 7;
+      const slotColor = this.resolveWorkSlotColor(slot.colorClass);
+      const slotTint = this.taskService.getTaskColorMix(slotColor, 35);
 
       return {
         id: `work-slot-${slot.id}`,
@@ -137,12 +139,48 @@ export class Calendar implements OnChanges {
         startTime: this.formatSlotTime(slot.startHour),
         endTime: this.formatSlotTime(slot.startHour + slot.durationHours),
         display: 'background',
-        classNames: [`work-slot`, `work-slot-${slot.colorClass}`],
+        classNames: ['work-slot'],
+        backgroundColor: slotTint ?? undefined,
         extendedProps: {
           isWorkSlot: true,
         },
       };
     });
+  }
+
+  private resolveWorkSlotColor(colorClass: string): TaskColor {
+    const value = colorClass?.toUpperCase?.() ?? '';
+    if (
+      [
+        'UNSET',
+        'RED',
+        'ORANGE',
+        'AMBER',
+        'YELLOW',
+        'GREEN',
+        'MINT',
+        'CYAN',
+        'BLUE',
+        'INDIGO',
+        'PURPLE',
+        'PINK',
+        'BROWN',
+        'GRAY',
+      ].includes(value)
+    ) {
+      return value as TaskColor;
+    }
+
+    const fallbackByClass: Record<string, TaskColor> = {
+      primary: 'BLUE',
+      secondary: 'INDIGO',
+      accent: 'MINT',
+      info: 'CYAN',
+      success: 'GREEN',
+      warning: 'AMBER',
+    };
+
+    return fallbackByClass[colorClass] || 'BLUE';
   }
 
   ngOnChanges(changes: SimpleChanges) {

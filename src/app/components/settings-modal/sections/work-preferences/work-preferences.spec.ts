@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WorkPreferencesSection } from './work-preferences';
 import { Auth } from '@services/auth';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
+import { TaskService } from '@services/task.service';
 import { TimeSlot } from '@app/model/work-preference.model';
 
 describe('WorkPreferencesSection', () => {
@@ -17,8 +18,13 @@ describe('WorkPreferencesSection', () => {
 
   const mockPreferenceService = {
     loadPreferences: vi.fn().mockResolvedValue([]),
+    loadOrganizationColorMap: vi.fn().mockResolvedValue({}),
     loadWorkSettings: vi.fn().mockResolvedValue(null),
     savePreferences: vi.fn().mockResolvedValue(undefined),
+  };
+
+  const mockTaskService = {
+    getTaskColorMix: vi.fn(() => null),
   };
 
   beforeAll(() => {
@@ -38,6 +44,7 @@ describe('WorkPreferencesSection', () => {
       organizations: [{ id: 'org-1', name: 'Chrono Labs' }],
     });
     mockPreferenceService.loadPreferences.mockResolvedValue([]);
+    mockPreferenceService.loadOrganizationColorMap.mockResolvedValue({});
     mockPreferenceService.loadWorkSettings.mockResolvedValue(null);
 
     await TestBed.configureTestingModule({
@@ -45,6 +52,7 @@ describe('WorkPreferencesSection', () => {
       providers: [
         { provide: Auth, useValue: mockAuth },
         { provide: WorkSlotPreferenceService, useValue: mockPreferenceService },
+        { provide: TaskService, useValue: mockTaskService },
       ],
     }).compileComponents();
 
@@ -196,6 +204,7 @@ describe('WorkPreferencesSection', () => {
     ];
 
     mockPreferenceService.loadPreferences.mockResolvedValue(backendSlots);
+    mockPreferenceService.loadOrganizationColorMap.mockResolvedValue({});
 
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
@@ -203,6 +212,7 @@ describe('WorkPreferencesSection', () => {
       providers: [
         { provide: Auth, useValue: mockAuth },
         { provide: WorkSlotPreferenceService, useValue: mockPreferenceService },
+        { provide: TaskService, useValue: mockTaskService },
       ],
     }).compileComponents();
 
@@ -213,6 +223,7 @@ describe('WorkPreferencesSection', () => {
       newComponent.calendarBody.nativeElement.scrollTo = vi.fn();
     }
     await newFixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(newComponent.slots()).toEqual(backendSlots);
   });
@@ -255,6 +266,7 @@ describe('WorkPreferencesSection', () => {
   it('should log error when loading slots fails', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockPreferenceService.loadPreferences.mockRejectedValue(new Error('Load failed'));
+    mockPreferenceService.loadOrganizationColorMap.mockResolvedValue({});
 
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
@@ -262,6 +274,7 @@ describe('WorkPreferencesSection', () => {
       providers: [
         { provide: Auth, useValue: mockAuth },
         { provide: WorkSlotPreferenceService, useValue: mockPreferenceService },
+        { provide: TaskService, useValue: mockTaskService },
       ],
     }).compileComponents();
 
@@ -272,6 +285,7 @@ describe('WorkPreferencesSection', () => {
       newComponent.calendarBody.nativeElement.scrollTo = vi.fn();
     }
     await newFixture.whenStable();
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(consoleSpy).toHaveBeenCalledWith('Failed to load work slot preferences:', expect.any(Error));
     consoleSpy.mockRestore();

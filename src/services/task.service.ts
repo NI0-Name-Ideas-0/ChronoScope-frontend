@@ -28,9 +28,11 @@ import {
   DynamicTaskResponse,
   StaticTaskUpdateRequest,
   DynamicTaskUpdateRequest,
+  IdentityOrganizationColorResponse,
 } from '../api/models';
 import { Auth } from './auth';
 import { rrulestr } from 'rrule';
+import { getOrganizationColors as getOrganizationColorsApi } from '../api/fn/identity/get-organization-colors';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -41,6 +43,7 @@ export class TaskService {
    * @remarks Connected accounts are managed by Auth service (auth.ts)
    */
   private tasks: Map<number, Task> = new Map();
+  private organizationColors: Record<string, TaskColor> = {};
   private tasksSubject = new BehaviorSubject<Task[]>([]);
   tasks$ = this.tasksSubject.asObservable();
 
@@ -50,9 +53,29 @@ export class TaskService {
     // Wait for auth to be ready before loading tasks
     this.authService.authReady$.subscribe((isReady) => {
       if (isReady) {
+        this.loadOrganizationColors();
         this.loadTasks();
       }
     });
+  }
+
+  private async loadOrganizationColors(): Promise<void> {
+    try {
+      const response = await this.api.invoke(getOrganizationColorsApi, {});
+      const colors =
+        response instanceof Blob
+          ? (JSON.parse(await response.text()) as IdentityOrganizationColorResponse[])
+          : ((response as IdentityOrganizationColorResponse[]) ?? []);
+      this.organizationColors = (colors || []).reduce<Record<string, TaskColor>>((acc, entry) => {
+        if (entry.organizationId && entry.color && entry.color !== 'UNSET') {
+          acc[entry.organizationId] = entry.color as TaskColor;
+        }
+        return acc;
+      }, {});
+    } catch (error) {
+      console.error('Error loading organization colors:', error);
+      this.organizationColors = {};
+    }
   }
 
   private async parseBlob<T>(response: T): Promise<T> {
@@ -111,6 +134,30 @@ export class TaskService {
     return (allowed.includes(value as TaskColor) ? value : 'UNSET') as TaskColor;
   }
 
+  private resolveTaskColor(task: Task): TaskColor {
+    const normalized = this.normalizeTaskColor(task.color);
+    if (normalized !== 'UNSET') {
+      return normalized;
+    }
+
+    if (task.organizationId && this.organizationColors[task.organizationId]) {
+      return this.organizationColors[task.organizationId];
+    }
+
+    if (!task.organizationId) {
+      return 'UNSET';
+    }
+
+    const orgs = this.authService.getIdentityData()?.organizations ?? [];
+    const index = orgs.findIndex((org) => org.id === task.organizationId);
+    if (index === -1) {
+      return 'UNSET';
+    }
+
+    const fallbackPool: TaskColor[] = ['BLUE', 'INDIGO', 'MINT', 'CYAN', 'GREEN', 'AMBER'];
+    return fallbackPool[index % fallbackPool.length] ?? 'UNSET';
+  }
+
   private getTaskColorPalette(color: TaskColor): string | null {
     const palette: Record<TaskColor, string | null> = {
       UNSET: null,
@@ -138,6 +185,10 @@ export class TaskService {
     }
     const safePercent = Math.max(0, Math.min(100, percent));
     return `color-mix(in srgb, ${base} ${safePercent}%, transparent)`;
+  }
+
+  getEffectiveTaskColor(task: Task): TaskColor {
+    return this.resolveTaskColor(task);
   }
 
   /**
@@ -434,14 +485,14 @@ export class TaskService {
                 labels: task.labels,
                 isBlocker: task.isBlocker,
                 taskType: task.isBlocker ? 'static-blocker' : 'static',
-                color: task.color,
+                color: this.resolveTaskColor(task),
               },
               classNames: ['fc-event--task'],
-              ...(task.color !== 'UNSET'
+              ...(this.resolveTaskColor(task) !== 'UNSET'
                 ? {
-                    backgroundColor: this.getTaskColorMix(task.color, 35) ?? undefined,
-                    borderColor: this.getTaskColorMix(task.color, 35) ?? undefined,
-                }
+                    backgroundColor: this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
+                    borderColor: this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
+                  }
                 : {}),
             },
           ];
@@ -463,13 +514,13 @@ export class TaskService {
             labels: task.labels,
             isBlocker: task.isBlocker,
             taskType: task.isBlocker ? 'static-blocker' : 'static',
-            color: task.color,
+            color: this.resolveTaskColor(task),
           },
           classNames: ['fc-event--task'],
-          ...(task.color !== 'UNSET'
+          ...(this.resolveTaskColor(task) !== 'UNSET'
             ? {
-                backgroundColor: this.getTaskColorMix(task.color, 35) ?? undefined,
-                borderColor: this.getTaskColorMix(task.color, 35) ?? undefined,
+                backgroundColor: this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
+                borderColor: this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
               }
             : {}),
         },
@@ -487,13 +538,13 @@ export class TaskService {
           difficulty: task.difficulty,
           taskType: 'dynamic',
           isDone: scope.isFinished,
-          color: task.color,
+          color: this.resolveTaskColor(task),
         },
         classNames: ['fc-event--task'],
-        ...(task.color !== 'UNSET'
+        ...(this.resolveTaskColor(task) !== 'UNSET'
           ? {
-              backgroundColor: this.getTaskColorMix(task.color, 35) ?? undefined,
-              borderColor: this.getTaskColorMix(task.color, 35) ?? undefined,
+              backgroundColor: this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
+              borderColor: this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
             }
           : {}),
       }));

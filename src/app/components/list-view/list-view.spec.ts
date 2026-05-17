@@ -19,6 +19,7 @@ describe('ListView', () => {
     formatMinutesToDuration: vi.fn((m: number) => `PT${m}M`),
     saveTaskCompletion: vi.fn(),
     getTaskColorMix: vi.fn(() => null),
+    getEffectiveTaskColor: vi.fn((task: Task) => task.color ?? 'UNSET'),
   };
 
   beforeEach(async () => {

@@ -6,6 +6,8 @@ import { Auth } from '@services/auth';
 import { Organization } from 'api/models';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
 import { TimeSlot, COLOR_POOL } from '@app/model/work-preference.model';
+import { TaskColor } from '@app/model/task';
+import { TaskService } from '@services/task.service';
 
 /** View-model for organizations shown in the sidebar */
 interface OrgItem {
@@ -53,6 +55,7 @@ export class WorkPreferencesSection implements AfterViewInit {
   private auth = inject(Auth);
   /** Service to persist/retrieve work slots via the backend API */
   private preferenceService = inject(WorkSlotPreferenceService);
+  private taskService = inject(TaskService);
 
   // --- Settings ---
 
@@ -165,13 +168,14 @@ export class WorkPreferencesSection implements AfterViewInit {
   }
 
   /** Loads organizations from Auth service and maps them to sidebar items */
-  private loadOrganizations(): void {
+  private async loadOrganizations(): Promise<void> {
+    const colorMap = await this.preferenceService.loadOrganizationColorMap();
     const orgs = (this.auth.getIdentityData()?.organizations ?? [])
       .filter((o): o is Organization & { id: string; name: string } => !!o.id && !!o.name)
       .map((o, i) => ({
         id: o.id,
         name: o.name,
-        colorClass: COLOR_POOL[i % COLOR_POOL.length],
+        colorClass: colorMap[o.id] || COLOR_POOL[i % COLOR_POOL.length],
       }));
     this.organizations.set(orgs);
     this.loadSlotsFromBackend();
@@ -216,6 +220,69 @@ export class WorkPreferencesSection implements AfterViewInit {
     if (hours > limit) return base + 'text-error';
     if (hours > limit * 0.9) return base + 'text-warning';
     return base + 'text-success';
+  }
+
+  private normalizeColor(colorClass: string): TaskColor {
+    const value = colorClass?.toUpperCase?.() ?? '';
+    if (
+      [
+        'UNSET',
+        'RED',
+        'ORANGE',
+        'AMBER',
+        'YELLOW',
+        'GREEN',
+        'MINT',
+        'CYAN',
+        'BLUE',
+        'INDIGO',
+        'PURPLE',
+        'PINK',
+        'BROWN',
+        'GRAY',
+      ].includes(value)
+    ) {
+      return value as TaskColor;
+    }
+
+    const fallbackByClass: Record<string, TaskColor> = {
+      primary: 'BLUE',
+      secondary: 'INDIGO',
+      accent: 'MINT',
+      info: 'CYAN',
+      success: 'GREEN',
+      warning: 'AMBER',
+    };
+
+    return fallbackByClass[colorClass] || 'BLUE';
+  }
+
+  getOrgCardStyle(org: OrgItem): Record<string, string> {
+    const color = this.normalizeColor(org.colorClass);
+    const background = this.taskService.getTaskColorMix(color, 10);
+    const border = this.taskService.getTaskColorMix(color, 65);
+    return {
+      backgroundColor: background || '',
+      borderLeftColor: border || '',
+    };
+  }
+
+  getOrgDotStyle(org: OrgItem): Record<string, string> {
+    const color = this.normalizeColor(org.colorClass);
+    const background = this.taskService.getTaskColorMix(color, 85);
+    return {
+      backgroundColor: background || '',
+    };
+  }
+
+  getSlotStyle(slot: TimeSlot): Record<string, string> {
+    const color = this.normalizeColor(slot.colorClass);
+    const background = this.taskService.getTaskColorMix(color, 20);
+    const border = this.taskService.getTaskColorMix(color, 75);
+    return {
+      backgroundColor: background || '',
+      borderLeftColor: border || '',
+    };
   }
 
   /** Formats a decimal hour (e.g. 9.5) to HH:MM string */

@@ -64,6 +64,7 @@ describe('TaskService', () => {
     const mockAuth = {
       authReady$: authReadySubject.asObservable(),
       getAccounts: vi.fn().mockReturnValue([]),
+      getIdentityData: vi.fn().mockReturnValue({ organizations: [] }),
     };
 
     await TestBed.configureTestingModule({

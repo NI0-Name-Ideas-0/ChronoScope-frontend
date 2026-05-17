@@ -93,7 +93,7 @@ export class ListView implements OnInit {
   }
 
   getTaskColorStyle(task: Task): Record<string, string> {
-    const color = task.color || 'UNSET';
+    const color = this.taskService.getEffectiveTaskColor(task);
     const tint = this.taskService.getTaskColorMix(color, 18);
     if (!tint) {
       return {};
