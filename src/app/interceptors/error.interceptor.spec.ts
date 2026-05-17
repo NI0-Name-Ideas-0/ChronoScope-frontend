@@ -255,4 +255,54 @@ describe('errorInterceptor', () => {
 
     expect(notificationService.notifications()[0].fieldErrors).toBeUndefined();
   });
+
+  it('should parse ProblemDetail from string error body (responseType: text)', () => {
+    const problemDetail = JSON.stringify({
+      detail: 'No account found for email test@example.com',
+      title: 'Account Not Found',
+      status: 404,
+      type: 'urn:chronoscope:error:account-not-found',
+      properties: { errorCode: 'ACCOUNT_NOT_FOUND' },
+    });
+
+    let caughtError: unknown = null;
+    http.get('/api/test').subscribe({ error: (err) => (caughtError = err) });
+    httpMock.expectOne('/api/test').flush(problemDetail, {
+      status: 404,
+      statusText: 'Not Found',
+    });
+
+    const notification = notificationService.notifications()[0];
+    expect(notification.title).toBe('Account Not Found');
+    expect(notification.message).toBe('No account found for email test@example.com');
+    expect(caughtError).toBeInstanceOf(ChronoscopeError);
+    expect((caughtError as ChronoscopeError).errorCode).toBe('ACCOUNT_NOT_FOUND');
+  });
+
+  it('should parse fieldErrors from string error body with validation errors', () => {
+    const problemDetail = JSON.stringify({
+      detail: 'Request validation failed',
+      title: 'Validation Failed',
+      status: 400,
+      type: 'urn:chronoscope:error:validation-error',
+      properties: {
+        errorCode: 'VALIDATION_ERROR',
+        fieldErrors: [
+          { field: 'targetEmail', message: 'must be a valid email address' },
+        ],
+      },
+    });
+
+    http.get('/api/test').subscribe({ error: () => {} });
+    httpMock.expectOne('/api/test').flush(problemDetail, {
+      status: 400,
+      statusText: 'Bad Request',
+    });
+
+    const notification = notificationService.notifications()[0];
+    expect(notification.title).toBe('Validation Failed');
+    expect(notification.fieldErrors).toBeDefined();
+    expect(notification.fieldErrors!.length).toBe(1);
+    expect(notification.fieldErrors![0].field).toBe('targetEmail');
+  });
 });
