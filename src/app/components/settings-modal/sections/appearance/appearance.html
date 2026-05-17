@@ -38,11 +38,10 @@
     <div class="mt-4">
       <select
         class="select select-bordered w-full max-w-xs"
-        [value]="selectedLanguage()"
         (change)="setLanguage($any($event.target).value)"
       >
         @for (option of languageOptions; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
+          <option [value]="option.value" [selected]="option.value === selectedLanguage()">{{ option.label }}</option>
         }
       </select>
     </div>
