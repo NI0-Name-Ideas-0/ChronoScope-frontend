@@ -256,6 +256,9 @@ export class TaskModal {
         rrule: task.rrule || '',
         isBlocker: ('isBlocker' in task && task.isBlocker) || false,
       } as StaticTaskForm;
+      if (this.staticTask.isBlocker) {
+        this.staticTask.color = 'GRAY';
+      }
       this.dynamicTask = this.emptyDynamicTask();
     }
   }
@@ -277,6 +280,22 @@ export class TaskModal {
     this.cdr.markForCheck();
   }
 
+  getEffectiveSelectedColor(): TaskColor {
+    if (this.currentTask.color !== 'UNSET') {
+      return this.currentTask.color;
+    }
+
+    return this.taskService.getOrganizationFallbackColor(this.currentTask.organizationId);
+  }
+
+  isColorSelected(color: TaskColor): boolean {
+    return this.getEffectiveSelectedColor() === color;
+  }
+
+  isUnsetSelected(): boolean {
+    return this.currentTask.color === 'UNSET' && this.getEffectiveSelectedColor() === 'UNSET';
+  }
+
   get isOrganizationDisabled(): boolean {
     return this.isEditing || (this.mode === 'static' && this.staticTask.isBlocker);
   }
@@ -290,6 +309,9 @@ export class TaskModal {
       this.staticTask.organizationId = undefined;
       this.cdr.markForCheck();
     }
+
+    this.staticTask.color = 'GRAY';
+    this.cdr.markForCheck();
   }
 
   getDifficultyLabel(value: number): string {
@@ -377,7 +399,7 @@ export class TaskModal {
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             difficulty: t.difficulty,
-            color: t.color,
+            color: t.isBlocker ? 'GRAY' : t.color,
             organizationId: t.organizationId,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),
@@ -392,7 +414,7 @@ export class TaskModal {
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             difficulty: t.difficulty,
-            color: t.color,
+            color: t.isBlocker ? 'GRAY' : t.color,
             organizationId: t.organizationId,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),

@@ -245,52 +245,54 @@
           </select>
         </div>
 
-        <!-- Color -->
-        <div class="form-control">
-          <label class="label">
-            <span class="task-field-label">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-3.5 h-3.5 text-base-content/50"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M14.121 3.879a3 3 0 10-4.242 4.242M7 7l10 10M9.879 14.121a3 3 0 104.242 4.242M4 12h3m10 0h3M12 4v3m0 10v3"
-                />
-              </svg>
-              Color
-            </span>
-          </label>
-          <div class="task-color-row" role="radiogroup" aria-label="Task color">
-            <button
-              type="button"
-              class="task-color-dot task-color-dot--unset"
-              [class.task-color-dot--selected]="currentTask.color === 'UNSET'"
-              (click)="setColor('UNSET')"
-              role="radio"
-              [attr.aria-checked]="currentTask.color === 'UNSET'"
-              aria-label="No color"
-            ></button>
-            @for (color of colorOptions; track color) {
+        @if (!(mode === 'static' && staticTask.isBlocker)) {
+          <!-- Color -->
+          <div class="form-control">
+            <label class="label">
+              <span class="task-field-label">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-3.5 h-3.5 text-base-content/50"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M14.121 3.879a3 3 0 10-4.242 4.242M7 7l10 10M9.879 14.121a3 3 0 104.242 4.242M4 12h3m10 0h3M12 4v3m0 10v3"
+                  />
+                </svg>
+                Color
+              </span>
+            </label>
+            <div class="task-color-row" role="radiogroup" aria-label="Task color">
               <button
                 type="button"
-                class="task-color-dot"
-                [attr.data-color]="color"
-                [class.task-color-dot--selected]="currentTask.color === color"
-                (click)="setColor(color)"
+                class="task-color-dot task-color-dot--unset"
+                [class.task-color-dot--selected]="isUnsetSelected()"
+                (click)="setColor('UNSET')"
                 role="radio"
-                [attr.aria-checked]="currentTask.color === color"
-                [attr.aria-label]="color + ' color'"
+                [attr.aria-checked]="isUnsetSelected()"
+                aria-label="No color"
               ></button>
-            }
+              @for (color of colorOptions; track color) {
+                <button
+                  type="button"
+                  class="task-color-dot"
+                  [attr.data-color]="color"
+                  [class.task-color-dot--selected]="isColorSelected(color)"
+                  (click)="setColor(color)"
+                  role="radio"
+                  [attr.aria-checked]="isColorSelected(color)"
+                  [attr.aria-label]="color + ' color'"
+                ></button>
+              }
+            </div>
           </div>
-        </div>
+        }
 
         <!-- Labels -->
         <div class="form-control">

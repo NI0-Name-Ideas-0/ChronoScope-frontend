@@ -24,6 +24,7 @@ describe('TaskModal', () => {
     updateTask: vi.fn().mockResolvedValue({}),
     deleteTask: vi.fn().mockResolvedValue({}),
     tasks$: new BehaviorSubject<Task[]>([]),
+    getOrganizationFallbackColor: vi.fn(() => 'UNSET'),
   };
 
   beforeEach(async () => {

@@ -158,6 +158,25 @@ export class TaskService {
     return fallbackPool[index % fallbackPool.length] ?? 'UNSET';
   }
 
+  getOrganizationFallbackColor(organizationId?: string | null): TaskColor {
+    if (!organizationId) {
+      return 'UNSET';
+    }
+
+    if (this.organizationColors[organizationId]) {
+      return this.organizationColors[organizationId];
+    }
+
+    const orgs = this.authService.getIdentityData()?.organizations ?? [];
+    const index = orgs.findIndex((org) => org.id === organizationId);
+    if (index === -1) {
+      return 'UNSET';
+    }
+
+    const fallbackPool: TaskColor[] = ['BLUE', 'INDIGO', 'MINT', 'CYAN', 'GREEN', 'AMBER'];
+    return fallbackPool[index % fallbackPool.length] ?? 'UNSET';
+  }
+
   private getTaskColorPalette(color: TaskColor): string | null {
     const palette: Record<TaskColor, string | null> = {
       UNSET: null,

@@ -393,6 +393,8 @@
 
 :host ::ng-deep .fc .work-slot {
   opacity: 0.18;
+  cursor: default !important;
+  pointer-events: none;
 }
 
 :host ::ng-deep .fc .work-slot-primary {
