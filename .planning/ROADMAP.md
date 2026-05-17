@@ -1,7 +1,7 @@
 # Roadmap: ChronoScope v0.2 — Internationalization (EN and DE only)
 
 **Milestone:** v0.2
-**Phases:** 3
+**Phases:** 4
 **Requirements:** 10
 
 ---
@@ -75,6 +75,28 @@ Plans:
 Plans:
 - [ ] 03-01-PLAN.md — Create LanguageService with signal state, localStorage cache, backend sync, and app startup initialization
 - [ ] 03-02-PLAN.md — Add language selector dropdown to Appearance & Language settings section
+
+**UI hint**: yes
+
+---
+
+## Phase 4: Set language in FullCalendar properly
+
+**Goal:** FullCalendar renders all UI elements (button labels, day/month names) in the active locale so that the calendar view matches the rest of the internationalized application.
+
+**Depends on:** Phase 1, Phase 3
+
+**Requirements:** I18N-02
+
+**Success criteria:**
+1. FullCalendar displays "today", "month", "week" button labels in the active language (EN or DE)
+2. Switching language via the language selector updates FullCalendar labels without page reload
+3. German button text workaround is applied for the known FullCalendar bug (issue #4591)
+
+**Plans:** 1 plan
+
+Plans:
+- [ ] 04-01-PLAN.md — Wire FullCalendar locale to LanguageService with reactive switching and buttonText workaround
 
 **UI hint**: yes
 
