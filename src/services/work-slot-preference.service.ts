@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject, filter, firstValueFrom } from 'rxjs';
 import { Api } from '../api/api';
 import { Auth } from './auth';
 import {
@@ -47,8 +47,13 @@ export class WorkSlotPreferenceService {
   private preferencesChanged = new Subject<void>();
   preferencesChanged$ = this.preferencesChanged.asObservable();
 
+  private waitForAuthReady(): Promise<void> {
+    return firstValueFrom(this.auth.authReady$.pipe(filter((isReady) => isReady))).then(() => undefined);
+  }
+
   /** Load organization slots from the backend and map them to TimeSlots. */
   async loadPreferences(): Promise<TimeSlot[]> {
+    await this.waitForAuthReady();
     const orgs = this.auth.getIdentityData()?.organizations ?? [];
     const slotsData = await this.fetchSlots();
     const orgColors = await this.fetchOrganizationColors();
@@ -59,6 +64,7 @@ export class WorkSlotPreferenceService {
   }
 
   async loadOrganizationColorMap(): Promise<Record<string, string>> {
+    await this.waitForAuthReady();
     return this.fetchOrganizationColors();
   }
 
@@ -68,6 +74,7 @@ export class WorkSlotPreferenceService {
    * organization slots are created sequentially (to avoid race conditions).
    */
   async savePreferences(slots: TimeSlot[], hours: number, workDays: boolean[]): Promise<void> {
+    await this.waitForAuthReady();
     const workSettings: WorkSettings = {
       dailyWorkTimeMinutes: Math.round(hours * 60),
       workDays: WORK_SETTINGS_DAY_CODES.filter((_, index) => workDays[index] === true),
@@ -169,6 +176,7 @@ export class WorkSlotPreferenceService {
 
   /** Load work schedule settings from the backend. */
   async loadWorkSettings(): Promise<{ hoursPerDay: number; workDays: boolean[] } | null> {
+    await this.waitForAuthReady();
     const response = await this.api.invoke(getSettings, {});
 
     let parsed: SettingsResponse;

@@ -1,9 +1,11 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
+import { filter, firstValueFrom } from 'rxjs';
 import { Api } from '../api/api';
 import { getSettings, updateSettings } from '../api/functions';
 import { SettingsResponse } from '../api/models';
+import { Auth } from './auth';
 
 export type AppLocale = 'en' | 'de';
 
@@ -16,6 +18,7 @@ export class LanguageService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly transloco = inject(TranslocoService);
   private readonly api = inject(Api);
+  private readonly auth = inject(Auth);
 
   readonly language = signal<AppLocale>('en');
 
@@ -44,6 +47,7 @@ export class LanguageService {
 
   private async syncFromBackend(): Promise<void> {
     try {
+      await firstValueFrom(this.auth.authReady$.pipe(filter((isReady) => isReady)));
       const response = await this.api.invoke(getSettings, {});
 
       let parsed: SettingsResponse;

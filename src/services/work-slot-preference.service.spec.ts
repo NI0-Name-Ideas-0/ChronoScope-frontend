@@ -8,6 +8,7 @@ import { WorkSlotResponse, IdentityOrganizationColorResponse } from '../api/mode
 import { TimeSlot } from '../app/model/work-preference.model';
 import { Auth } from './auth';
 import { WorkSlotPreferenceService } from './work-slot-preference.service';
+import { of } from 'rxjs';
 
 describe('WorkSlotPreferenceService', () => {
   let service: WorkSlotPreferenceService;
@@ -17,6 +18,7 @@ describe('WorkSlotPreferenceService', () => {
   };
 
   const mockAuth = {
+    authReady$: of(true),
     getIdentityData: vi.fn(),
   };
 
