@@ -6,7 +6,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { TaskModalService } from '@services/task-modal.service';
 import { TaskService } from '@services/task.service';
 import { Auth } from '@services/auth';
-import { Task } from '@app/model/task';
+import { Task, TaskColor } from '@app/model/task';
 import { AlgoTask } from '@app/model/algo-task';
 import { RepetitionFieldComponent } from '../repetition-modal/repetition-modal';
 import {
@@ -23,6 +23,21 @@ import {
 // Difficulty level mapping
 type Difficulty = 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
 const DIFFICULTY_LEVELS = ['TRIVIAL', 'EASY', 'MEDIUM', 'HARD', 'EXTREME'];
+const TASK_COLORS: TaskColor[] = [
+  'RED',
+  'ORANGE',
+  'AMBER',
+  'YELLOW',
+  'GREEN',
+  'MINT',
+  'CYAN',
+  'BLUE',
+  'INDIGO',
+  'PURPLE',
+  'PINK',
+  'BROWN',
+  'GRAY',
+];
 
 interface StaticTaskForm {
   title: string;
@@ -30,6 +45,7 @@ interface StaticTaskForm {
   labels: string[];
   organizationId: string | undefined;
   difficulty: Difficulty;
+  color: TaskColor;
   startDate: string;
   startTime: string;
   endDate: string;
@@ -44,6 +60,7 @@ interface DynamicTaskForm {
   labels: string[];
   organizationId: string | undefined;
   difficulty: Difficulty;
+  color: TaskColor;
   startDate: string;
   dueDate: string;
   duration: number;
@@ -111,6 +128,7 @@ export class TaskModal {
       labels: [],
       organizationId: undefined,
       difficulty: 'MEDIUM',
+      color: 'UNSET',
       startDate: this.formatLocalDate(now),
       startTime: this.formatLocalTime(now),
       endDate: this.formatLocalDate(end),
@@ -129,6 +147,7 @@ export class TaskModal {
       labels: [],
       organizationId: undefined,
       difficulty: 'MEDIUM',
+      color: 'UNSET',
       startDate: this.formatLocalDate(now),
       dueDate: this.formatLocalDate(end),
       duration: 60,
@@ -202,6 +221,7 @@ export class TaskModal {
       labels: this.labelResponseToString(task.labels as LabelResponse[] | undefined),
       organizationId: task.organizationId,
       difficulty: task.difficulty || 1,
+      color: (task.color || 'UNSET') as TaskColor,
     };
 
     if (this.isDynamicTask(task)) {
@@ -237,6 +257,9 @@ export class TaskModal {
         rrule: task.rrule || '',
         isBlocker: ('isBlocker' in task && task.isBlocker) || false,
       } as StaticTaskForm;
+      if (this.staticTask.isBlocker) {
+        this.staticTask.color = 'GRAY';
+      }
       this.dynamicTask = this.emptyDynamicTask();
     }
   }
@@ -247,6 +270,31 @@ export class TaskModal {
 
   get difficultyOptions(): Difficulty[] {
     return DIFFICULTY_LEVELS as Difficulty[];
+  }
+
+  get colorOptions(): TaskColor[] {
+    return TASK_COLORS;
+  }
+
+  setColor(color: TaskColor): void {
+    this.currentTask.color = color;
+    this.cdr.markForCheck();
+  }
+
+  getEffectiveSelectedColor(): TaskColor {
+    if (this.currentTask.color !== 'UNSET') {
+      return this.currentTask.color;
+    }
+
+    return this.taskService.getOrganizationFallbackColor(this.currentTask.organizationId);
+  }
+
+  isColorSelected(color: TaskColor): boolean {
+    return this.getEffectiveSelectedColor() === color;
+  }
+
+  isUnsetSelected(): boolean {
+    return this.currentTask.color === 'UNSET' && this.getEffectiveSelectedColor() === 'UNSET';
   }
 
   get isOrganizationDisabled(): boolean {
@@ -262,6 +310,9 @@ export class TaskModal {
       this.staticTask.organizationId = undefined;
       this.cdr.markForCheck();
     }
+
+    this.staticTask.color = 'GRAY';
+    this.cdr.markForCheck();
   }
 
   getDifficultyLabel(value: number): string {
@@ -349,6 +400,7 @@ export class TaskModal {
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             difficulty: t.difficulty,
+            color: t.isBlocker ? 'GRAY' : t.color,
             organizationId: t.organizationId,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),
@@ -363,6 +415,7 @@ export class TaskModal {
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             difficulty: t.difficulty,
+            color: t.isBlocker ? 'GRAY' : t.color,
             organizationId: t.organizationId,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),
@@ -383,6 +436,7 @@ export class TaskModal {
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             difficulty: t.difficulty,
+            color: t.color,
             organizationId: t.organizationId,
             duration: this.minutesToDuration(t.duration),
             minScopeDuration: this.minutesToDuration(t.minScopeDuration),
@@ -400,6 +454,7 @@ export class TaskModal {
             description: t.description.trim(),
             labels: this.convertLabelsToRequest(t.labels),
             difficulty: t.difficulty,
+            color: t.color,
             organizationId: t.organizationId,
             duration: this.minutesToDuration(t.duration),
             minScopeDuration: this.minutesToDuration(t.minScopeDuration),

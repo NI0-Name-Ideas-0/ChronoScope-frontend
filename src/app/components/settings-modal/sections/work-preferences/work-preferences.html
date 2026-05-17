@@ -70,29 +70,13 @@
           @for (org of organizations(); track org.id) {
             <div
               class="draggable-item cursor-grab active:cursor-grabbing select-none border-l-4 rounded-lg p-3 transition-all hover:translate-x-0.5 shadow-sm"
-              [class.bg-primary/10]="org.colorClass === 'primary'"
-              [class.border-primary]="org.colorClass === 'primary'"
-              [class.bg-secondary/10]="org.colorClass === 'secondary'"
-              [class.border-secondary]="org.colorClass === 'secondary'"
-              [class.bg-accent/10]="org.colorClass === 'accent'"
-              [class.border-accent]="org.colorClass === 'accent'"
-              [class.bg-info/10]="org.colorClass === 'info'"
-              [class.border-info]="org.colorClass === 'info'"
-              [class.bg-success/10]="org.colorClass === 'success'"
-              [class.border-success]="org.colorClass === 'success'"
-              [class.bg-warning/10]="org.colorClass === 'warning'"
-              [class.border-warning]="org.colorClass === 'warning'"
+              [ngStyle]="getOrgCardStyle(org)"
               draggable="true"
               (dragstart)="onSidebarDragStart($event, org)"
             >
               <span
                 class="w-2.5 h-2.5 rounded-full shrink-0"
-                [class.bg-primary]="org.colorClass === 'primary'"
-                [class.bg-secondary]="org.colorClass === 'secondary'"
-                [class.bg-accent]="org.colorClass === 'accent'"
-                [class.bg-info]="org.colorClass === 'info'"
-                [class.bg-success]="org.colorClass === 'success'"
-                [class.bg-warning]="org.colorClass === 'warning'"
+                [ngStyle]="getOrgDotStyle(org)"
               ></span>
               <span class="text-sm font-semibold text-base-content">{{ org.name }}</span>
             </div>
@@ -201,18 +185,7 @@
             @for (slot of getSlotsForDay(day.index); track slot.id) {
               <div
                 class="absolute left-0.5 right-0.5 rounded-md border-l-4 p-1.5 cursor-grab active:cursor-grabbing overflow-hidden text-xs transition-shadow hover:shadow-lg hover:z-10 group"
-                [class.bg-primary/20]="slot.colorClass === 'primary'"
-                [class.border-l-primary]="slot.colorClass === 'primary'"
-                [class.bg-secondary/20]="slot.colorClass === 'secondary'"
-                [class.border-l-secondary]="slot.colorClass === 'secondary'"
-                [class.bg-accent/20]="slot.colorClass === 'accent'"
-                [class.border-l-accent]="slot.colorClass === 'accent'"
-                [class.bg-info/20]="slot.colorClass === 'info'"
-                [class.border-l-info]="slot.colorClass === 'info'"
-                [class.bg-success/20]="slot.colorClass === 'success'"
-                [class.border-l-success]="slot.colorClass === 'success'"
-                [class.bg-warning/20]="slot.colorClass === 'warning'"
-                [class.border-l-warning]="slot.colorClass === 'warning'"
+                [ngStyle]="getSlotStyle(slot)"
                 [style.top.%]="(slot.startHour / 24) * 100"
                 [style.height.%]="(slot.durationHours / 24) * 100"
                 draggable="true"

@@ -8,6 +8,7 @@ import { TaskCreateRequest } from '../models/task-create-request';
  * Create request for a static (fixed-time) task
  */
 export type StaticTaskCreateRequest = TaskCreateRequest & {
+'color'?: 'UNSET' | 'RED' | 'ORANGE' | 'AMBER' | 'YELLOW' | 'GREEN' | 'MINT' | 'CYAN' | 'BLUE' | 'INDIGO' | 'PURPLE' | 'PINK' | 'BROWN' | 'GRAY';
 'description'?: string;
 'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
 'endAt'?: string;

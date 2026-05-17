@@ -168,8 +168,8 @@ describe('Calendar', () => {
   // --- getFilteredEvents ---
   it('should filter events by organization', () => {
     component.tasks = [
-      new StaticTask(1, 'Task 1', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy'),
-      new StaticTask(2, 'Task 2', '', [], new Scope(new Date(), new Date()), 'org-2', 'easy'),
+      new StaticTask(1, 'Task 1', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy', false, 'UNSET'),
+      new StaticTask(2, 'Task 2', '', [], new Scope(new Date(), new Date()), 'org-2', 'easy', false, 'UNSET'),
     ];
     mockTaskService.toCalendarEvents.mockImplementation((task: Task) => [{ id: task.id }]);
 
@@ -181,8 +181,8 @@ describe('Calendar', () => {
 
   it('should filter events by label', () => {
     component.tasks = [
-      new StaticTask(1, 'Task 1', '', ['work'], new Scope(new Date(), new Date()), 'org-1', 'easy'),
-      new StaticTask(2, 'Task 2', '', ['personal'], new Scope(new Date(), new Date()), 'org-1', 'easy'),
+      new StaticTask(1, 'Task 1', '', ['work'], new Scope(new Date(), new Date()), 'org-1', 'easy', false, 'UNSET'),
+      new StaticTask(2, 'Task 2', '', ['personal'], new Scope(new Date(), new Date()), 'org-1', 'easy', false, 'UNSET'),
     ];
     mockTaskService.toCalendarEvents.mockImplementation((task: Task) => [{ id: task.id }]);
 
@@ -194,8 +194,8 @@ describe('Calendar', () => {
 
   it('should filter events by task id', () => {
     component.tasks = [
-      new StaticTask(1, 'Task 1', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy'),
-      new StaticTask(2, 'Task 2', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy'),
+      new StaticTask(1, 'Task 1', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy', false, 'UNSET'),
+      new StaticTask(2, 'Task 2', '', [], new Scope(new Date(), new Date()), 'org-1', 'easy', false, 'UNSET'),
     ];
     mockTaskService.toCalendarEvents.mockImplementation((task: Task) => [{ id: task.id }]);
 

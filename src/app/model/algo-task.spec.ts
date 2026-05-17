@@ -17,6 +17,7 @@ describe('AlgoTask', () => {
         [], // scopes
         'MEDIUM', // difficulty
         false, // isFinished
+        'UNSET', // color
         30, // minScopeMinutes
         120, // maxScopeMinutes
       ),

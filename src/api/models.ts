@@ -8,6 +8,8 @@ export type { AccountResponse } from './models/account-response';
 export type { DynamicTaskCreateRequest } from './models/dynamic-task-create-request';
 export type { DynamicTaskResponse } from './models/dynamic-task-response';
 export type { DynamicTaskUpdateRequest } from './models/dynamic-task-update-request';
+export type { IdentityOrganizationColorResponse } from './models/identity-organization-color-response';
+export type { IdentityOrganizationColorUpdateRequest } from './models/identity-organization-color-update-request';
 export type { IdentityResponse } from './models/identity-response';
 export type { Invitation } from './models/invitation';
 export type { InviteUserRequest } from './models/invite-user-request';

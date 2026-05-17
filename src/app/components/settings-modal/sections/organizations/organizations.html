@@ -10,11 +10,41 @@
     <p class="settings-card-desc">{{ 'SETTINGS_ORGANIZATIONS_YOUR_DESC' | transloco }}</p>
     <ul class="mt-4 space-y-3" aria-label="Organization list">
       @for (org of (authService.identity$ | async)?.organizations ; track org.id) {
-        <li class="flex p-3 rounded-xl bg-base-200/60 border border-base-300 justify-between items-center">
-            <p class="font-medium text-base-content text-sm truncate">{{ org.name }}</p>
+        <li class="flex p-3 rounded-xl bg-base-200/60 border border-base-300 justify-between items-center gap-3 relative">
+          <p class="font-medium text-base-content text-sm truncate">{{ org.name }}</p>
+          <div class="flex items-center gap-3">
             @if ((authService.identity$ | async)?.adminOrganizations?.includes(org.id!)) {
               <p class="font-medium text-base-content text-sm truncate">{{ 'SETTINGS_ORGANIZATIONS_ADMIN' | transloco }}</p>
             }
+            <div class="relative">
+              <button
+                type="button"
+                class="org-color-trigger"
+                [attr.data-color]="getOrganizationColor(org.id)"
+                (click)="togglePopover(org.id)"
+                [disabled]="savingOrgId() === org.id"
+                aria-label="Choose organization color"
+              ></button>
+
+              @if (openPopoverOrgId() === org.id) {
+                <div class="org-color-popover" role="menu" aria-label="Organization color selector">
+                  <div class="task-color-row">
+                    @for (color of colorOptions; track color) {
+                      <button
+                        type="button"
+                        class="task-color-dot"
+                        [attr.data-color]="color"
+                        [class.task-color-dot--selected]="getOrganizationColor(org.id) === color"
+                        (click)="setOrganizationColor(org.id, color)"
+                        [disabled]="savingOrgId() === org.id"
+                        [attr.aria-label]="color + ' color'"
+                      ></button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
         </li>
       }
     </ul>

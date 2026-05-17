@@ -9,6 +9,7 @@ import { TaskResponse } from '../models/task-response';
  * Response for a dynamic (schedulable) task, including its scopes and dependencies
  */
 export type DynamicTaskResponse = TaskResponse & {
+'color'?: 'UNSET' | 'RED' | 'ORANGE' | 'AMBER' | 'YELLOW' | 'GREEN' | 'MINT' | 'CYAN' | 'BLUE' | 'INDIGO' | 'PURPLE' | 'PINK' | 'BROWN' | 'GRAY';
 'dependencies'?: Array<number>;
 'dependents'?: Array<number>;
 'description'?: string;

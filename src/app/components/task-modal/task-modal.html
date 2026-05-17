@@ -9,11 +9,7 @@
     (mousedown)="onBackdropClick($event)"
     (keydown.escape)="close()"
   >
-    <div
-      class="task-panel"
-      [class.task-panel--leaving]="isLeaving()"
-      role="document"
-    >
+    <div class="task-panel" [class.task-panel--leaving]="isLeaving()" role="document">
       <!-- Header -->
       <div class="task-header">
         <div class="flex items-center gap-3">
@@ -248,6 +244,55 @@
             }
           </select>
         </div>
+
+        @if (!(mode === 'static' && staticTask.isBlocker)) {
+          <!-- Color -->
+          <div class="form-control">
+            <label class="label">
+              <span class="task-field-label">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-3.5 h-3.5 text-base-content/50"
+                  fill="currentColor"
+                  viewBox="0 0 640 640"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M290.4 70C288.9 66.4 285.4 64 281.5 64L262.5 64C258.6 64 255 66.4 253.6 70L232.9 121.7C229.7 129.7 218.3 129.7 215.1 121.7L194.4 70C192.9 66.4 189.4 64 185.5 64L176 64C149.5 64 128 85.5 128 112L128 320L512 320L512 112C512 85.5 490.5 64 464 64L358.5 64C354.6 64 351 66.4 349.6 70L328.9 121.7C325.7 129.7 314.3 129.7 311.1 121.7L290.4 70zM128 368L128 384C128 419.3 156.7 448 192 448L256 448L256 512C256 547.3 284.7 576 320 576C355.3 576 384 547.3 384 512L384 448L448 448C483.3 448 512 419.3 512 384L512 368L128 368zM320 528C311.2 528 304 520.8 304 512C304 503.2 311.2 496 320 496C328.8 496 336 503.2 336 512C336 520.8 328.8 528 320 528z"
+                  />
+                </svg>
+                {{ 'TASK_MODAL_COLOR_LABEL' | transloco }}
+              </span>
+            </label>
+            <div class="task-color-row" role="radiogroup" aria-label="Task color">
+              <button
+                type="button"
+                class="task-color-dot task-color-dot--unset"
+                [class.task-color-dot--selected]="isUnsetSelected()"
+                (click)="setColor('UNSET')"
+                role="radio"
+                [attr.aria-checked]="isUnsetSelected()"
+                aria-label="No color"
+              ></button>
+              @for (color of colorOptions; track color) {
+                <button
+                  type="button"
+                  class="task-color-dot"
+                  [attr.data-color]="color"
+                  [class.task-color-dot--selected]="isColorSelected(color)"
+                  (click)="setColor(color)"
+                  role="radio"
+                  [attr.aria-checked]="isColorSelected(color)"
+                  [attr.aria-label]="color + ' color'"
+                ></button>
+              }
+            </div>
+          </div>
+        }
 
         <!-- Labels -->
         <div class="form-control">

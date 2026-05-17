@@ -93,6 +93,18 @@ export class ListView implements OnInit {
     return 'static';
   }
 
+  getTaskColorStyle(task: Task): Record<string, string> {
+    const color = this.taskService.getEffectiveTaskColor(task);
+    const tint = this.taskService.getTaskColorMix(color, 18);
+    if (!tint) {
+      return {};
+    }
+
+    return {
+      '--task-tint': tint,
+    } as Record<string, string>;
+  }
+
   onSearchChange() {}
   /**
    * Returns the duration of a scope in minutes

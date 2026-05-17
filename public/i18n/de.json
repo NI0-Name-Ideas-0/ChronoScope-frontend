@@ -82,6 +82,7 @@
   "TASK_MODAL_ACCOUNT_LABEL": "Konto",
   "TASK_MODAL_BLOCKER_LABEL": "Blocker",
   "TASK_MODAL_DIFFICULTY_LABEL": "Schwierigkeit",
+  "TASK_MODAL_COLOR_LABEL": "Farbe",
   "TASK_MODAL_LABELS_LABEL": "Labels",
   "TASK_MODAL_LABELS_PLACEHOLDER": "Label eingeben und Enter drücken",
   "TASK_MODAL_START_DATE_LABEL": "Startdatum",

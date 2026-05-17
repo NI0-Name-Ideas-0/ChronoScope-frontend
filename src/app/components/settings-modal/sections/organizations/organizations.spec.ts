@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrganizationsSection } from './organizations';
 import { Auth } from '@services/auth';
+import { Api } from '@api/api';
 import { BehaviorSubject } from 'rxjs';
 import { IdentityResponse } from '../../../../../api/models';
 import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
@@ -19,6 +20,11 @@ describe('OrganizationsSection', () => {
 
   const mockAuth = {
     identity$: identitySubject.asObservable(),
+    getIdentityData: vi.fn().mockReturnValue(identitySubject.getValue()),
+  };
+
+  const mockApi = {
+    invoke: vi.fn().mockResolvedValue([]),
   };
 
   beforeEach(async () => {

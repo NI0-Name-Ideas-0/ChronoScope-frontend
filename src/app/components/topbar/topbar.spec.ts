@@ -183,6 +183,7 @@ describe('Topbar', () => {
       [finishedScope, openScope],
       'easy',
       false,
+      'UNSET',
       30,
       60,
     );
