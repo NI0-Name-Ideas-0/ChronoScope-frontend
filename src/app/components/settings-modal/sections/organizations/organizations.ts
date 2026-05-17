@@ -5,9 +5,10 @@ import { Auth } from '@services/auth';
 import { AsyncPipe } from '@angular/common';
 import { Api } from '@api/api';
 import { TaskColor } from '@app/model/task';
+import { Organization as OrganizationService } from '@services/organization';
 import { getOrganizationColors } from '../../../../../api/fn/identity/get-organization-colors';
 import { updateOrganizationColor } from '../../../../../api/fn/identity/update-organization-color';
-import { IdentityOrganizationColorResponse } from '../../../../../api/models';
+import { IdentityOrganizationColorResponse, Invitation, OrganizationMember, Organization as IdentityOrganization } from '../../../../../api/models';
 
 const ORGANIZATION_COLORS: TaskColor[] = [
   'RED',
@@ -35,15 +36,82 @@ const ORGANIZATION_COLORS: TaskColor[] = [
 export class OrganizationsSection {
   protected authService = inject(Auth);
   private api = inject(Api);
+  private organizationService = inject(OrganizationService);
 
   colors = signal<Record<string, TaskColor>>({});
   openPopoverOrgId = signal<string | null>(null);
   savingOrgId = signal<string | null>(null);
+  selectedAdminOrganizationId = signal<string | null>(null);
+  organizationMembers = signal<OrganizationMember[]>([]);
+  outgoingInvitations = signal<Invitation[]>([]);
+  inviteEmail = signal('');
+  loadingManagementData = signal(false);
+  inviting = signal(false);
+  memberActionUserId = signal<string | null>(null);
+  invitationActionId = signal<string | null>(null);
 
   readonly colorOptions = ORGANIZATION_COLORS;
 
   constructor() {
     this.loadOrganizationColors();
+    this.initializeSelectedOrganization();
+  }
+
+  private initializeSelectedOrganization(): void {
+    const adminOrganizations = this.getAdminOrganizations();
+    if (!adminOrganizations.length) {
+      return;
+    }
+    const firstOrganizationId = adminOrganizations[0].id;
+    if (!firstOrganizationId) {
+      return;
+    }
+    this.selectedAdminOrganizationId.set(firstOrganizationId);
+    void this.loadManagementData(firstOrganizationId);
+  }
+
+  private getAdminOrganizationIds(): string[] {
+    return this.authService.getIdentityData()?.adminOrganizations ?? [];
+  }
+
+  getAdminOrganizations(): IdentityOrganization[] {
+    const identity = this.authService.getIdentityData();
+    const adminOrgIds = new Set(identity?.adminOrganizations ?? []);
+    return (identity?.organizations ?? []).filter((organization) => !!organization.id && adminOrgIds.has(organization.id));
+  }
+
+  isAdminOrganization(organizationId: string | undefined): boolean {
+    if (!organizationId) {
+      return false;
+    }
+    return this.getAdminOrganizationIds().includes(organizationId);
+  }
+
+  async selectOrganizationToManage(organizationId: string | undefined): Promise<void> {
+    if (!organizationId || !this.isAdminOrganization(organizationId) || this.selectedAdminOrganizationId() === organizationId) {
+      return;
+    }
+
+    this.selectedAdminOrganizationId.set(organizationId);
+    await this.loadManagementData(organizationId);
+  }
+
+  private async loadManagementData(organizationId: string): Promise<void> {
+    this.loadingManagementData.set(true);
+    try {
+      const [membersResponse, invitationsResponse] = await Promise.all([
+        this.organizationService.getOrganizationMembers(organizationId),
+        this.organizationService.getOrganizationInvitations(organizationId),
+      ]);
+      this.organizationMembers.set(membersResponse?.members ?? []);
+      this.outgoingInvitations.set(invitationsResponse?.invitations ?? []);
+    } catch (error) {
+      console.error('Failed to load organization management data:', error);
+      this.organizationMembers.set([]);
+      this.outgoingInvitations.set([]);
+    } finally {
+      this.loadingManagementData.set(false);
+    }
   }
 
   private async parseBlob<T>(response: T): Promise<T> {
@@ -118,5 +186,79 @@ export class OrganizationsSection {
     } finally {
       this.savingOrgId.set(null);
     }
+  }
+
+  async inviteMember(): Promise<void> {
+    const organizationId = this.selectedAdminOrganizationId();
+    const email = this.inviteEmail().trim();
+    if (!organizationId || !email || this.inviting()) {
+      return;
+    }
+
+    this.inviting.set(true);
+    try {
+      await this.organizationService.inviteUser(organizationId, email);
+      this.inviteEmail.set('');
+      await this.loadManagementData(organizationId);
+    } catch (error) {
+      console.error('Failed to invite member:', error);
+    } finally {
+      this.inviting.set(false);
+    }
+  }
+
+  async kickMember(member: OrganizationMember): Promise<void> {
+    const organizationId = this.selectedAdminOrganizationId();
+    if (!organizationId || !member.id || this.memberActionUserId()) {
+      return;
+    }
+
+    this.memberActionUserId.set(member.id);
+    try {
+      await this.organizationService.removeMember(organizationId, member.id);
+      await this.loadManagementData(organizationId);
+    } catch (error) {
+      console.error('Failed to remove organization member:', error);
+    } finally {
+      this.memberActionUserId.set(null);
+    }
+  }
+
+  async resendInvite(invitation: Invitation): Promise<void> {
+    const organizationId = this.selectedAdminOrganizationId();
+    if (!organizationId || !invitation.id || this.invitationActionId()) {
+      return;
+    }
+
+    this.invitationActionId.set(invitation.id);
+    try {
+      await this.organizationService.resendInvitation(organizationId, invitation.id);
+    } catch (error) {
+      console.error('Failed to resend invitation:', error);
+    } finally {
+      this.invitationActionId.set(null);
+    }
+  }
+
+  async cancelInvite(invitation: Invitation): Promise<void> {
+    const organizationId = this.selectedAdminOrganizationId();
+    if (!organizationId || !invitation.id || this.invitationActionId()) {
+      return;
+    }
+
+    this.invitationActionId.set(invitation.id);
+    try {
+      await this.organizationService.deleteInvitation(organizationId, invitation.id);
+      this.outgoingInvitations.update((invitations) => invitations.filter((item) => item.id !== invitation.id));
+    } catch (error) {
+      console.error('Failed to cancel invitation:', error);
+    } finally {
+      this.invitationActionId.set(null);
+    }
+  }
+
+  getMemberDisplayName(member: OrganizationMember): string {
+    const fullName = `${member.firstName ?? ''} ${member.lastName ?? ''}`.trim();
+    return fullName || member.userName || member.email;
   }
 }

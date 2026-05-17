@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrganizationsSection } from './organizations';
 import { Auth } from '@services/auth';
-import { Api } from '@api/api';
+import { Organization } from '@services/organization';
 import { BehaviorSubject } from 'rxjs';
 import { IdentityResponse } from '../../../../../api/models';
 import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
@@ -23,14 +23,22 @@ describe('OrganizationsSection', () => {
     getIdentityData: vi.fn().mockReturnValue(identitySubject.getValue()),
   };
 
-  const mockApi = {
-    invoke: vi.fn().mockResolvedValue([]),
+  const mockOrganizationService = {
+    getOrganizationMembers: vi.fn().mockResolvedValue({ members: [] }),
+    getOrganizationInvitations: vi.fn().mockResolvedValue({ invitations: [] }),
+    inviteUser: vi.fn().mockResolvedValue(undefined),
+    resendInvitation: vi.fn().mockResolvedValue(undefined),
+    deleteInvitation: vi.fn().mockResolvedValue(undefined),
+    removeMember: vi.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [OrganizationsSection, getTranslocoTestingModule()],
-      providers: [{ provide: Auth, useValue: mockAuth }],
+      providers: [
+        { provide: Auth, useValue: mockAuth },
+        { provide: Organization, useValue: mockOrganizationService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(OrganizationsSection);

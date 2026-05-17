@@ -1,7 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Api } from 'api/api';
-import { Auth } from './auth';
-import { deleteInvitation, DeleteInvitation$Params, getInvitations, GetInvitations$Params, getOrganizationMembers, GetOrganizationMembers$Params, inviteUser, InviteUser$Params, resendInvitation, ResendInvitation$Params } from 'api/functions';
+import { deleteInvitation, DeleteInvitation$Params, getInvitations, GetInvitations$Params, getOrganizationMembers, GetOrganizationMembers$Params, inviteUser, InviteUser$Params, removeMember, RemoveMember$Params, resendInvitation, ResendInvitation$Params } from 'api/functions';
 import { OrganizationInvitationsResponse, OrganizationMembersResponse } from 'api/models';
 
 @Injectable({
@@ -10,11 +9,22 @@ import { OrganizationInvitationsResponse, OrganizationMembersResponse } from 'ap
 export class Organization {
 
   private api = inject(Api);
+
+  private async parseBlob<T>(response: T): Promise<T> {
+    const blob = response as Blob;
+    if (!(blob instanceof Blob)) {
+      return response;
+    }
+
+    const jsonText = await blob.text();
+    return JSON.parse(jsonText) as T;
+  }
   
   async getOrganizationMembers(organizationId: string): Promise<OrganizationMembersResponse> {
     try {
       const params: GetOrganizationMembers$Params= {organizationId};
-      return await this.api.invoke(getOrganizationMembers, params);
+      const response = await this.api.invoke(getOrganizationMembers, params);
+      return this.parseBlob<OrganizationMembersResponse>(response);
     } catch (error) {
       console.error('Error fetching organization members:', error);
       throw error;
@@ -24,7 +34,8 @@ export class Organization {
   async getOrganizationInvitations(organizationId: string): Promise<OrganizationInvitationsResponse> {
     try {
       const params: GetInvitations$Params= {organizationId};
-      return await this.api.invoke(getInvitations, params);
+      const response = await this.api.invoke(getInvitations, params);
+      return this.parseBlob<OrganizationInvitationsResponse>(response);
     } catch (error) {
       console.error('Error fetching organization invitations:', error);
       throw error;
@@ -37,6 +48,16 @@ export class Organization {
       await this.api.invoke(inviteUser, params);
     } catch (error) {
       console.error('Error inviting user:', error);
+      throw error;
+    }
+  }
+
+  async removeMember(organizationId: string, memberId: string): Promise<void> {
+    try {
+      const params: RemoveMember$Params = { organizationId, id: memberId };
+      await this.api.invoke(removeMember, params);
+    } catch (error) {
+      console.error('Error removing member:', error);
       throw error;
     }
   }
