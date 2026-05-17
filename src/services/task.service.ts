@@ -435,6 +435,7 @@ export class TaskService {
         staticTask.organizationId || null,
         staticTask.difficulty!,
         isFinished,
+        this.normalizeTaskColor(staticTask.color),
         staticTask.rrule || '',
         Boolean(staticTask.isBlocker),
       );
@@ -455,7 +456,8 @@ export class TaskService {
       }
 
       const allScopesDone = scopes.length > 0 && scopes.every((s) => s.isFinished);
-      const isFinished = allScopesDone || elapsedMinutes >= this.parseDurationToMinutes(dynamicTask.duration, 0);
+      const isFinished =
+        allScopesDone || elapsedMinutes >= this.parseDurationToMinutes(dynamicTask.duration, 0);
       return new AlgoTask(
         dynamicTask.id!,
         dynamicTask.name!,
@@ -470,6 +472,7 @@ export class TaskService {
         scopes,
         dynamicTask.difficulty!,
         isFinished,
+        this.normalizeTaskColor(dynamicTask.color),
         this.parseDurationToMinutes(dynamicTask.minScopeDuration, 30),
         this.parseDurationToMinutes(dynamicTask.maxScopeDuration, 120),
       );
@@ -502,7 +505,8 @@ export class TaskService {
               classNames: ['fc-event--task'],
               ...(this.resolveTaskColor(task) !== 'UNSET'
                 ? {
-                    backgroundColor: this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
+                    backgroundColor:
+                      this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
                     borderColor: this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
                   }
                 : {}),
