@@ -75,8 +75,11 @@
 3. errorCode and type URI are exposed to callers for programmatic error handling
 4. Existing error handling behavior is preserved for non-ProblemDetail responses
 
-**Plans:**
-- (Not planned yet)
+**Plans:** 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Error model, errorCode mapping, and interceptor enhancement
+- [ ] 04-02-PLAN.md — Toast field errors display and test coverage
 
 ---
 
