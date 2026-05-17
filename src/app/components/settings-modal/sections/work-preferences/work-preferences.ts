@@ -6,7 +6,7 @@ import { TranslocoPipe } from '@jsverse/transloco';
 import { Auth } from '@services/auth';
 import { Organization } from 'api/models';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
-import { TimeSlot, COLOR_POOL } from '@app/model/work-preference.model';
+import { TimeSlot } from '@app/model/work-preference.model';
 import { TaskColor } from '@app/model/task';
 import { TaskService } from '@services/task.service';
 
@@ -173,10 +173,10 @@ export class WorkPreferencesSection implements AfterViewInit {
     const colorMap = await this.preferenceService.loadOrganizationColorMap();
     const orgs = (this.auth.getIdentityData()?.organizations ?? [])
       .filter((o): o is Organization & { id: string; name: string } => !!o.id && !!o.name)
-      .map((o, i) => ({
+      .map((o) => ({
         id: o.id,
         name: o.name,
-        colorClass: colorMap[o.id] || COLOR_POOL[i % COLOR_POOL.length],
+        colorClass: colorMap[o.id] || 'UNSET',
       }));
     this.organizations.set(orgs);
     this.loadSlotsFromBackend();

@@ -16,8 +16,9 @@ import {
   IdentityOrganizationColorResponse,
 } from '../api/models';
 import { Organization } from '../api/models';
-import { TimeSlot, COLOR_POOL } from '@app/model/work-preference.model';
+import { TimeSlot } from '@app/model/work-preference.model';
 import { getOrganizationColors } from '../api/fn/identity/get-organization-colors';
+import { getOrganizationColor } from '../api/fn/identity/get-organization-color';
 import { NotificationService } from './notification.service';
 
 /** Ordered mapping from dayIndex (0=Mon..6=Sun) to the Java DayOfWeek string */
@@ -135,8 +136,7 @@ export class WorkSlotPreferenceService {
     const durationHours = endHour - startHour;
     if (durationHours <= 0) return null;
 
-    const orgIndex = orgs.findIndex((o) => o.id === ws.organizationId);
-    const colorClass = organizationColors[ws.organizationId] || COLOR_POOL[orgIndex % COLOR_POOL.length];
+    const colorClass = organizationColors[ws.organizationId] || 'UNSET';
 
     return {
       id: ws.id?.toString() ?? this.generateId(),
@@ -209,12 +209,38 @@ export class WorkSlotPreferenceService {
       const response = await this.api.invoke(getOrganizationColors, {});
       const parsed = response instanceof Blob ? JSON.parse(await response.text()) : response;
       const list = Array.isArray(parsed) ? (parsed as IdentityOrganizationColorResponse[]) : [];
-      return list.reduce<Record<string, string>>((acc, entry) => {
+      const colorMap = list.reduce<Record<string, string>>((acc, entry) => {
         if (entry.organizationId && entry.color && entry.color !== 'UNSET') {
           acc[entry.organizationId] = entry.color;
         }
         return acc;
       }, {});
+
+      const orgs = this.auth.getIdentityData()?.organizations ?? [];
+      const missingOrgIds = orgs.map((o) => o.id).filter((id): id is string => !!id && !colorMap[id]);
+
+      if (missingOrgIds.length > 0) {
+        const results = await Promise.allSettled(
+          missingOrgIds.map((orgId) =>
+            this.api.invoke(getOrganizationColor, { organizationId: orgId }),
+          ),
+        );
+        for (const result of results) {
+          if (result.status === 'fulfilled') {
+            const singleResponse = result.value;
+            const singleParsed =
+              singleResponse instanceof Blob
+                ? JSON.parse(await singleResponse.text())
+                : singleResponse;
+            const resp = singleParsed as IdentityOrganizationColorResponse;
+            if (resp.organizationId && resp.color && resp.color !== 'UNSET') {
+              colorMap[resp.organizationId] = resp.color;
+            }
+          }
+        }
+      }
+
+      return colorMap;
     } catch (error) {
       console.error('Failed to load organization colors for work slots:', error);
       return {};
