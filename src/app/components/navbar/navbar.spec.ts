@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Navbar } from './navbar';
 import { Auth } from '@services/auth';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 import { TaskModalService } from '@services/task-modal.service';
 import { ThemeService } from '@services/theme.service';
 import { ViewService } from '@services/view.service';
@@ -38,7 +39,7 @@ describe('Navbar', () => {
   beforeEach(async () => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [Navbar],
+      imports: [Navbar, getTranslocoTestingModule()],
       providers: [
         { provide: Auth, useValue: mockAuthService },
         { provide: TaskModalService, useValue: mockTaskModalService },

@@ -9,6 +9,7 @@ import { Task } from '@app/model/task';
 import { AlgoTask } from '@app/model/algo-task';
 import { Scope } from '@app/model/scope';
 import { StaticTaskResponse, DynamicTaskResponse } from '../../../api/models';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 describe('TaskModal', () => {
   let component: TaskModal;
@@ -37,7 +38,7 @@ describe('TaskModal', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [TaskModal],
+      imports: [TaskModal, getTranslocoTestingModule()],
       providers: [
         { provide: TaskModalService, useValue: mockTaskModalService },
         { provide: Auth, useValue: mockAuth },

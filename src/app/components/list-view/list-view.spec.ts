@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ListView } from './list-view';
 import { TaskService } from '@services/task.service';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 import { BehaviorSubject } from 'rxjs';
 import { StaticTask } from '@app/model/static-task';
 import { AlgoTask } from '@app/model/algo-task';
@@ -22,7 +23,7 @@ describe('ListView', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ListView],
+      imports: [ListView, getTranslocoTestingModule()],
       providers: [{ provide: TaskService, useValue: mockTaskService }],
     }).compileComponents();
 
