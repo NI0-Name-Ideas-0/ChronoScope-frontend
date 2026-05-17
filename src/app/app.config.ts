@@ -8,12 +8,13 @@ import { provideOAuthClient } from 'angular-oauth2-oidc';
 import { provideApiConfiguration } from '../api/api-configuration';
 import { environment } from '../environments/environment';
 import { oauthInterceptor } from './interceptors/oauth.interceptor';
+import { errorInterceptor } from './interceptors/error.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([oauthInterceptor])),
+    provideHttpClient(withInterceptors([oauthInterceptor, errorInterceptor])),
     provideApiConfiguration(environment.apiUrl),
     provideOAuthClient({
       resourceServer: {
