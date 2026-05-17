@@ -34,6 +34,7 @@ import { Auth } from './auth';
 import { rrulestr } from 'rrule';
 import { getOrganizationColors as getOrganizationColorsApi } from '../api/fn/identity/get-organization-colors';
 import { NotificationService } from './notification.service';
+import { TranslocoService } from '@jsverse/transloco';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -50,6 +51,7 @@ export class TaskService {
 
   private authService = inject(Auth);
   private notificationService = inject(NotificationService);
+  private translocoService = inject(TranslocoService);
 
   constructor(private api: Api) {
     // Wait for auth to be ready before loading tasks
@@ -263,7 +265,7 @@ export class TaskService {
 
     await this.planAndReload(request.organizationId, 'after task creation');
 
-    this.notificationService.success('Task created');
+    this.notificationService.success(this.translocoService.translate('TOAST_TASK_CREATED'));
     return createdTask;
   }
 
@@ -285,7 +287,7 @@ export class TaskService {
     const updatedTask = await this.parseBlob<StaticTaskResponse | DynamicTaskResponse>(response);
     const organizationId = request.organizationId ?? updatedTask.organizationId ?? null;
     await this.planAndReload(organizationId, 'after task update');
-    this.notificationService.success('Task updated');
+    this.notificationService.success(this.translocoService.translate('TOAST_TASK_UPDATED'));
     return updatedTask;
   }
 
@@ -319,6 +321,7 @@ export class TaskService {
         body: { organizationId: organizationId ?? undefined },
       };
       await this.api.invoke(planApi, planParams);
+      this.notificationService.success(this.translocoService.translate('TOAST_PLANNING_SUCCEEDED'));
     } catch (error) {
       // Error toast handled by HTTP error interceptor
     } finally {
@@ -342,6 +345,7 @@ export class TaskService {
           return this.api.invoke(planApi, planParams);
         }),
       );
+      this.notificationService.success(this.translocoService.translate('TOAST_PLANNING_SUCCEEDED'));
     } catch (error) {
       // Error toast handled by HTTP error interceptor
     } finally {
@@ -405,7 +409,7 @@ export class TaskService {
     // Remove from local cache
     this.tasks.delete(id);
     this.tasksSubject.next([...this.tasks.values()]);
-    this.notificationService.success('Task deleted');
+    this.notificationService.success(this.translocoService.translate('TOAST_TASK_DELETED'));
   }
 
   /**
