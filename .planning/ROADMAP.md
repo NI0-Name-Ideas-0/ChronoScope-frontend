@@ -20,8 +20,12 @@
 3. Changing the active language updates all visible text instantly without a page reload
 4. The app boots and displays English text by default when no preference is set
 
-**Plans:**
-- (Not planned yet)
+**Plans:** 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Install Transloco, configure provider and loader, create translation files
+- [ ] 01-02-PLAN.md — Replace hardcoded strings in navbar, topbar, list-view, task-modal, link-account, notifications
+- [ ] 01-03-PLAN.md — Replace hardcoded strings in settings-modal and all settings sections
 
 **UI hint**: yes
 
