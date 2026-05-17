@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, computed, input, output } from '@angular/core';
+import { FieldError } from '@app/model/chronoscope-error.model';
 import { Notification } from '@app/model/notification.model';
 
 @Component({
@@ -26,6 +27,8 @@ export class NotificationToast {
     const typeClass = `toast-${this.notification().type}`;
     return `${base} ${typeClass}`;
   });
+
+  fieldErrors = computed<FieldError[]>(() => this.notification().fieldErrors ?? []);
 
   iconPath = computed(() => {
     switch (this.notification().type) {

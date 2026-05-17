@@ -9,6 +9,13 @@
       <p class="toast-title">{{ notification().title }}</p>
     }
     <p class="toast-message">{{ notification().message }}</p>
+    @if (fieldErrors().length > 0) {
+      <ul class="toast-field-errors" role="list">
+        @for (fe of fieldErrors(); track fe.field) {
+          <li><span class="font-semibold">{{ fe.field }}</span>: {{ fe.message }}</li>
+        }
+      </ul>
+    }
   </div>
 
   @if (notification().dismissible !== false) {
