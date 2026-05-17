@@ -1,4 +1,4 @@
-import { Task } from './task';
+import { Task, TaskColor } from './task';
 import { Scope } from './scope';
 
 export class StaticTask extends Task {
@@ -14,10 +14,11 @@ export class StaticTask extends Task {
     organizationId: string | null,
     difficulty: string,
     isFinished: boolean = false,
+    color: TaskColor = 'UNSET',
     rrule: string = '',
     isBlocker: boolean = false,
   ) {
-    super(id, title, description, labels, organizationId, difficulty, isFinished);
+    super(id, title, description, labels, organizationId, difficulty, isFinished, color);
     this.scope = scope;
     this.rrule = rrule;
     this.isBlocker = isBlocker;

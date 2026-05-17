@@ -1,3 +1,19 @@
+export type TaskColor =
+  | 'UNSET'
+  | 'RED'
+  | 'ORANGE'
+  | 'AMBER'
+  | 'YELLOW'
+  | 'GREEN'
+  | 'MINT'
+  | 'CYAN'
+  | 'BLUE'
+  | 'INDIGO'
+  | 'PURPLE'
+  | 'PINK'
+  | 'BROWN'
+  | 'GRAY';
+
 export abstract class Task {
   /**
    * Task Model.
@@ -21,6 +37,7 @@ export abstract class Task {
   organizationId: string | null;
   difficulty: string;
   isFinished: boolean;
+  color: TaskColor;
 
   constructor(
     id: number,
@@ -30,6 +47,7 @@ export abstract class Task {
     organizationId: string | null,
     difficulty: string,
     isFinished: boolean = false,
+    color: TaskColor = 'UNSET',
   ) {
     this.id = id;
     this.title = title;
@@ -38,5 +56,6 @@ export abstract class Task {
     this.organizationId = organizationId;
     this.difficulty = difficulty;
     this.isFinished = isFinished;
+    this.color = color;
   }
 }

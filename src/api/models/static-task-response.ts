@@ -8,6 +8,7 @@ import { TaskResponse } from '../models/task-response';
  * Response for a static (fixed-time) task
  */
 export type StaticTaskResponse = TaskResponse & {
+'color'?: 'UNSET' | 'RED' | 'ORANGE' | 'AMBER' | 'YELLOW' | 'GREEN' | 'MINT' | 'CYAN' | 'BLUE' | 'INDIGO' | 'PURPLE' | 'PINK' | 'BROWN' | 'GRAY';
 'description'?: string;
 'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
 'endAt'?: string;

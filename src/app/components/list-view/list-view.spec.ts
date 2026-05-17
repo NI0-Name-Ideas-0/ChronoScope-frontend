@@ -18,6 +18,7 @@ describe('ListView', () => {
     updateTask: vi.fn().mockResolvedValue({}),
     formatMinutesToDuration: vi.fn((m: number) => `PT${m}M`),
     saveTaskCompletion: vi.fn(),
+    getTaskColorStyles: vi.fn(() => ({})),
   };
 
   beforeEach(async () => {
@@ -164,6 +165,7 @@ function createStaticTask(id: number, title: string, isFinished = false): Task {
     null,
     'EASY',
     isFinished,
+    'UNSET',
   );
 }
 
@@ -182,6 +184,7 @@ function createAlgoTask(id: number, title: string, scopes: Scope[] = [], isFinis
     scopes,
     'EASY',
     isFinished,
+    'UNSET',
     30,
     120,
   );

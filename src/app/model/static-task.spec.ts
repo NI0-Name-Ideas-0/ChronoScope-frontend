@@ -13,6 +13,7 @@ describe('StaticTask', () => {
         'uuid', // organizationId
         'MEDIUM', // difficulty
         false, // isFinished
+        'UNSET', // color
         '', // rrule
         false, // isBlocker
       ),

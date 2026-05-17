@@ -92,6 +92,24 @@ export class ListView implements OnInit {
     return 'static';
   }
 
+  getTaskColorStyle(task: Task): Record<string, string> {
+    const color = task.color || 'UNSET';
+    const base = this.taskService.getTaskColorStyles(color);
+    if (!base['--task-color-bg']) {
+      return {};
+    }
+
+    const tintBase = base['--task-color-border'] || base['--task-color-text'];
+
+    return {
+      '--task-tint': tintBase
+        ? `color-mix(in srgb, ${tintBase} 18%, transparent)`
+        : base['--task-color-bg'],
+      '--task-tint-border': base['--task-color-border'],
+      '--task-tint-text': base['--task-color-text'],
+    } as Record<string, string>;
+  }
+
   onSearchChange() {}
   /**
    * Returns the duration of a scope in minutes

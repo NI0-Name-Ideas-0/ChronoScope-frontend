@@ -249,6 +249,38 @@
           </select>
         </div>
 
+        <!-- Color -->
+        <div class="form-control">
+          <label class="label">
+            <span class="task-field-label">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-3.5 h-3.5 text-base-content/50"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M14.121 3.879a3 3 0 10-4.242 4.242M7 7l10 10M9.879 14.121a3 3 0 104.242 4.242M4 12h3m10 0h3M12 4v3m0 10v3"
+                />
+              </svg>
+              Color
+            </span>
+          </label>
+          <div class="flex items-center gap-2">
+            <select class="select select-bordered flex-1" [(ngModel)]="currentTask.color">
+              @for (color of colorOptions; track color) {
+                <option [value]="color">{{ color === 'UNSET' ? 'No color' : color }}</option>
+              }
+            </select>
+            <span class="task-color-chip" [attr.data-color]="currentTask.color"></span>
+          </div>
+        </div>
+
         <!-- Labels -->
         <div class="form-control">
           <label class="label">

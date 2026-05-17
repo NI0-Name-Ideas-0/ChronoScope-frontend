@@ -20,7 +20,7 @@ import { ViewService } from '@services/view.service';
 import rrulePlugin from '@fullcalendar/rrule';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
 import { TimeSlot } from '@app/model/work-preference.model';
-import { Task } from '@app/model/task';
+import { Task, TaskColor } from '@app/model/task';
 
 @Component({
   selector: 'app-calendar',
@@ -195,11 +195,16 @@ export class Calendar implements OnChanges {
     const isDone = Boolean(arg?.event?.extendedProps?.['isDone']);
     const viewType = arg?.view?.type ?? '';
     const isMonthView = viewType.startsWith('dayGrid');
+    const color = (arg?.event?.extendedProps?.['color'] ?? 'UNSET') as TaskColor;
+    const colorStyles = this.taskService.getTaskColorStyles(color);
 
     const container = document.createElement('div');
     container.className = isMonthView
       ? 'fc-task-content fc-task-content--month'
       : 'fc-task-content';
+    Object.entries(colorStyles).forEach(([key, value]) => {
+      container.style.setProperty(key, value);
+    });
 
     const icon = document.createElement('span');
     icon.className = 'fc-task-icon';

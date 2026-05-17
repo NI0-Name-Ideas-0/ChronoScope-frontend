@@ -8,6 +8,7 @@ import { TaskUpdateRequest } from '../models/task-update-request';
  * Update request for a static (fixed-time) task
  */
 export type StaticTaskUpdateRequest = TaskUpdateRequest & {
+'color'?: 'UNSET' | 'RED' | 'ORANGE' | 'AMBER' | 'YELLOW' | 'GREEN' | 'MINT' | 'CYAN' | 'BLUE' | 'INDIGO' | 'PURPLE' | 'PINK' | 'BROWN' | 'GRAY';
 'description'?: string;
 'difficulty'?: 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
 'endAt'?: string;

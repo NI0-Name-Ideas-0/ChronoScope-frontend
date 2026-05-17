@@ -5,6 +5,7 @@ import { StaticTask } from '../app/model/static-task';
 import { Scope } from '../app/model/scope';
 import { EventInput } from '@fullcalendar/core';
 import { AlgoTask } from '@app/model/algo-task';
+import { TaskColor } from '@app/model/task';
 import { Api } from '../api/api';
 import {
   createTask as createTaskApi,
@@ -84,6 +85,64 @@ export class TaskService {
     const seconds = Number(isoMatch[4] || 0);
 
     return Math.round(days * 24 * 60 + hours * 60 + minutes + seconds / 60);
+  }
+
+  private normalizeTaskColor(color?: TaskColor | string): TaskColor {
+    if (!color) {
+      return 'UNSET';
+    }
+    const value = String(color).toUpperCase();
+    const allowed: TaskColor[] = [
+      'UNSET',
+      'RED',
+      'ORANGE',
+      'AMBER',
+      'YELLOW',
+      'GREEN',
+      'MINT',
+      'CYAN',
+      'BLUE',
+      'INDIGO',
+      'PURPLE',
+      'PINK',
+      'BROWN',
+      'GRAY',
+    ];
+    return (allowed.includes(value as TaskColor) ? value : 'UNSET') as TaskColor;
+  }
+
+  private getTaskColorPalette(
+    color: TaskColor,
+  ): { bg: string; border: string; text: string } | null {
+    const palette: Record<TaskColor, { bg: string; border: string; text: string } | null> = {
+      UNSET: null,
+      RED: { bg: '#ef4444', border: '#ef4444', text: '#991b1b' },
+      ORANGE: { bg: '#f97316', border: '#f97316', text: '#9a3412' },
+      AMBER: { bg: '#f59e0b', border: '#f59e0b', text: '#92400e' },
+      YELLOW: { bg: '#eab308', border: '#eab308', text: '#854d0e' },
+      GREEN: { bg: '#22c55e', border: '#22c55e', text: '#166534' },
+      MINT: { bg: '#14b8a6', border: '#14b8a6', text: '#0f766e' },
+      CYAN: { bg: '#06b6d4', border: '#06b6d4', text: '#0e7490' },
+      BLUE: { bg: '#3b82f6', border: '#3b82f6', text: '#1e40af' },
+      INDIGO: { bg: '#6366f1', border: '#6366f1', text: '#3730a3' },
+      PURPLE: { bg: '#a855f7', border: '#a855f7', text: '#6b21a8' },
+      PINK: { bg: '#ec4899', border: '#ec4899', text: '#9d174d' },
+      BROWN: { bg: '#a16207', border: '#a16207', text: '#713f12' },
+      GRAY: { bg: '#6b7280', border: '#6b7280', text: '#374151' },
+    };
+    return palette[color];
+  }
+
+  getTaskColorStyles(color: TaskColor): { [key: string]: string } {
+    const entry = this.getTaskColorPalette(color);
+    if (!entry) {
+      return {};
+    }
+    return {
+      '--task-color-bg': `color-mix(in srgb, ${entry.bg} 35%, transparent)`,
+      '--task-color-border': entry.border,
+      '--task-color-text': entry.text,
+    };
   }
 
   /**
@@ -307,7 +366,8 @@ export class TaskService {
    */
   private convertApiTaskToModel(apiTask: StaticTaskResponse | DynamicTaskResponse): Task {
     const isStatic = apiTask.type === 'static';
-    const completionState = apiTask.id !== undefined ? this.loadCompletionState()[apiTask.id] : undefined;
+    const completionState =
+      apiTask.id !== undefined ? this.loadCompletionState()[apiTask.id] : undefined;
 
     if (isStatic) {
       const staticTask = apiTask as StaticTaskResponse;
@@ -320,6 +380,7 @@ export class TaskService {
         staticTask.organizationId || null,
         staticTask.difficulty!,
         completionState?.isFinished ?? false,
+        this.normalizeTaskColor(staticTask.color),
         staticTask.rrule || '',
         Boolean(staticTask.isBlocker),
       );
@@ -350,6 +411,7 @@ export class TaskService {
         scopes,
         dynamicTask.difficulty!,
         completionState?.isFinished ?? allScopesDone,
+        this.normalizeTaskColor(dynamicTask.color),
         this.parseDurationToMinutes(dynamicTask.minScopeDuration, 30),
         this.parseDurationToMinutes(dynamicTask.maxScopeDuration, 120),
       );
@@ -377,6 +439,7 @@ export class TaskService {
                 labels: task.labels,
                 isBlocker: task.isBlocker,
                 taskType: task.isBlocker ? 'static-blocker' : 'static',
+                color: task.color,
               },
             },
           ];
@@ -398,6 +461,7 @@ export class TaskService {
             labels: task.labels,
             isBlocker: task.isBlocker,
             taskType: task.isBlocker ? 'static-blocker' : 'static',
+            color: task.color,
           },
         },
       ];
@@ -414,6 +478,7 @@ export class TaskService {
           difficulty: task.difficulty,
           taskType: 'dynamic',
           isDone: scope.isFinished,
+          color: task.color,
         },
       }));
     }

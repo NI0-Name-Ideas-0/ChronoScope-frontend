@@ -38,6 +38,7 @@
       <div
         class="card bg-base-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-base-200"
         [class.task-done]="isTaskFinished(task)"
+        [ngStyle]="getTaskColorStyle(task)"
         (click)="onTaskClick(task)"
       >
         <!-- Content -->
@@ -63,7 +64,7 @@
               }
             </span>
             <div
-              class="flex items-center justify-center gap-2 mb-1 px-2 py-1 rounded-lg transition-colors"
+              class="task-title-chip flex items-center justify-center gap-2 mb-1 px-2 py-1 rounded-lg transition-colors"
               [class.cursor-pointer]="isAlgoTask(task)"
               [class.select-none]="isAlgoTask(task)"
               [class.hover:bg-base-200]="isAlgoTask(task)"

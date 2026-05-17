@@ -331,6 +331,11 @@
   align-items: flex-start;
   gap: 0.35rem;
   line-height: 1.1;
+  border-radius: 0.4rem;
+  padding: 0.1rem 0.35rem;
+  background-color: var(--task-color-bg, transparent);
+  border: 1px solid var(--task-color-border, transparent);
+  color: var(--task-color-text, inherit);
 }
 
 :host ::ng-deep .fc .fc-task-content--month {
