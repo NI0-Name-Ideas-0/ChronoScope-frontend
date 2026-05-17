@@ -3,11 +3,13 @@ import { inject } from '@angular/core';
 import { catchError, from, switchMap, throwError } from 'rxjs';
 import { NotificationService } from '@services/notification.service';
 import { ChronoscopeError, parseErrorBody } from '@app/model/chronoscope-error.model';
+import { TranslocoService } from '@jsverse/transloco';
 
 export const SKIP_ERROR_TOAST = new HttpContextToken<boolean>(() => false);
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const notificationService = inject(NotificationService);
+  const translocoService = inject(TranslocoService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -20,7 +22,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           switchMap((text) => {
             const chronoError = parseErrorBody(text, error);
             if (!skipToast) {
-              showChronoErrorToast(notificationService, chronoError);
+              showChronoErrorToast(notificationService, chronoError, translocoService);
             }
             return throwError(() => chronoError);
           }),
@@ -30,17 +32,17 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       // String/object bodies (responseType: 'text' or 'json') — parseErrorBody handles both
       const chronoError = parseErrorBody(body, error);
       if (!skipToast) {
-        showChronoErrorToast(notificationService, chronoError);
+        showChronoErrorToast(notificationService, chronoError, translocoService);
       }
       return throwError(() => chronoError);
     }),
   );
 };
 
-function showChronoErrorToast(notificationService: NotificationService, chronoError: ChronoscopeError): void {
+function showChronoErrorToast(notificationService: NotificationService, chronoError: ChronoscopeError, translocoService: TranslocoService): void {
   if (chronoError.status === 0) {
-    notificationService.error('Unable to reach the server. Please check your connection.', {
-      title: 'Connection Error',
+    notificationService.error(translocoService.translate('TOAST_CONNECTION_ERROR_MESSAGE'), {
+      title: translocoService.translate('TOAST_CONNECTION_ERROR_TITLE'),
     });
     return;
   }

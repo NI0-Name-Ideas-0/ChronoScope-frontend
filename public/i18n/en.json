@@ -128,5 +128,12 @@
   "UPCOMING_OVERDUE_LABEL": "Additional minutes needed",
   "UPCOMING_OVERDUE_SUBMIT": "Update plan",
   "UPCOMING_MARK_DONE": "Mark scope as done",
-  "UPCOMING_UPDATE_TIME": "Update remaining time"
+  "UPCOMING_UPDATE_TIME": "Update remaining time",
+  "TOAST_TASK_CREATED": "Task created",
+  "TOAST_TASK_UPDATED": "Task updated",
+  "TOAST_TASK_DELETED": "Task deleted",
+  "TOAST_WORK_SCHEDULE_SAVED": "Work schedule saved",
+  "TOAST_PLANNING_SUCCEEDED": "Planning succeeded",
+  "TOAST_CONNECTION_ERROR_TITLE": "Connection Error",
+  "TOAST_CONNECTION_ERROR_MESSAGE": "Unable to reach the server. Please check your connection."
 }
