@@ -128,5 +128,20 @@
   "TOAST_WORK_SCHEDULE_SAVED": "Arbeitsplan gespeichert",
   "TOAST_PLANNING_SUCCEEDED": "Planung erfolgreich",
   "TOAST_CONNECTION_ERROR_TITLE": "Verbindungsfehler",
-  "TOAST_CONNECTION_ERROR_MESSAGE": "Server nicht erreichbar. Bitte überprüfen Sie Ihre Verbindung."
+  "TOAST_CONNECTION_ERROR_MESSAGE": "Server nicht erreichbar. Bitte überprüfen Sie Ihre Verbindung.",
+  "ERROR_TITLE_API_NOT_IMPLEMENTED": "Nicht implementiert",
+  "ERROR_TITLE_INSUFFICIENT_SLOTS": "Planung fehlgeschlagen",
+  "ERROR_TITLE_RESOURCE_NOT_FOUND": "Nicht gefunden",
+  "ERROR_TITLE_VALIDATION_ERROR": "Validierung fehlgeschlagen",
+  "ERROR_TITLE_INVALID_REQUEST": "Ungültige Anfrage",
+  "ERROR_TITLE_ACCESS_DENIED": "Zugriff verweigert",
+  "ERROR_TITLE_ACCOUNT_NOT_FOUND": "Konto nicht gefunden",
+  "ERROR_TITLE_INTERNAL_SERVER_ERROR": "Interner Serverfehler",
+  "ERROR_FALLBACK_SERVER": "Serverfehler",
+  "ERROR_FALLBACK_NOT_FOUND": "Nicht gefunden",
+  "ERROR_FALLBACK_FORBIDDEN": "Zugriff verweigert",
+  "ERROR_FALLBACK_UNAUTHORIZED": "Nicht autorisiert",
+  "ERROR_FALLBACK_REQUEST": "Anfragefehler",
+  "ERROR_FALLBACK_GENERIC": "Fehler",
+  "ERROR_FALLBACK_MESSAGE": "Ein unerwarteter Fehler ist aufgetreten"
 }

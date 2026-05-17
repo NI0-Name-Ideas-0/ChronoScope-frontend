@@ -47,8 +47,29 @@ function showChronoErrorToast(notificationService: NotificationService, chronoEr
     return;
   }
 
-  notificationService.error(chronoError.message, {
-    title: chronoError.title,
+  let localizedTitle: string;
+  if (chronoError.errorCode) {
+    localizedTitle = translocoService.translate('ERROR_TITLE_' + chronoError.errorCode);
+  } else if (chronoError.status >= 500) {
+    localizedTitle = translocoService.translate('ERROR_FALLBACK_SERVER');
+  } else if (chronoError.status === 404) {
+    localizedTitle = translocoService.translate('ERROR_FALLBACK_NOT_FOUND');
+  } else if (chronoError.status === 403) {
+    localizedTitle = translocoService.translate('ERROR_FALLBACK_FORBIDDEN');
+  } else if (chronoError.status === 401) {
+    localizedTitle = translocoService.translate('ERROR_FALLBACK_UNAUTHORIZED');
+  } else if (chronoError.status >= 400) {
+    localizedTitle = translocoService.translate('ERROR_FALLBACK_REQUEST');
+  } else {
+    localizedTitle = translocoService.translate('ERROR_FALLBACK_GENERIC');
+  }
+
+  const resolvedMessage = (!chronoError.errorCode && !chronoError.detail)
+    ? translocoService.translate('ERROR_FALLBACK_MESSAGE')
+    : chronoError.message;
+
+  notificationService.error(resolvedMessage, {
+    title: localizedTitle,
     fieldErrors: chronoError.fieldErrors,
   });
 }
