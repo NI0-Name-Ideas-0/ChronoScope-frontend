@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, computed, inject, AfterView
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { output } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Auth } from '@services/auth';
 import { Organization } from 'api/models';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
@@ -31,7 +32,7 @@ const DEFAULT_SCROLL_HOUR = 6;
 
 @Component({
   selector: 'app-settings-work-preferences',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: 'work-preferences.html',
   styleUrl: 'work-preferences.css',
