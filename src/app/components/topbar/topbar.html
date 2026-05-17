@@ -62,7 +62,7 @@
                 class="w-full text-left px-2 py-1 rounded hover:bg-base-200 text-sm transition-colors"
                 [class.bg-primary]="viewService.selectedOrganizationId() === org.id"
                 [class.text-primary-content]="viewService.selectedOrganizationId() === org.id"
-                (click)="selectOrganization(org.id ?? null)"
+                (click)="selectOrganization(org.id)"
               >
                 {{ org.name || 'Unknown' }}
               </button>
@@ -116,7 +116,9 @@
               }
             </div>
           } @else if (viewService.searchQuery().trim()) {
-            <div class="border-t border-base-200 pt-2 px-2 py-3 text-sm text-base-content/50 text-center">
+            <div
+              class="border-t border-base-200 pt-2 px-2 py-3 text-sm text-base-content/50 text-center"
+            >
               No matches found
             </div>
           }

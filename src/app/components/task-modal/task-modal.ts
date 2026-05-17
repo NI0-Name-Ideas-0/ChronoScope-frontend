@@ -23,7 +23,6 @@ import {
 type Difficulty = 'TRIVIAL' | 'EASY' | 'MEDIUM' | 'HARD' | 'EXTREME';
 const DIFFICULTY_LEVELS = ['TRIVIAL', 'EASY', 'MEDIUM', 'HARD', 'EXTREME'];
 const TASK_COLORS: TaskColor[] = [
-  'UNSET',
   'RED',
   'ORANGE',
   'AMBER',
@@ -271,6 +270,11 @@ export class TaskModal {
 
   get colorOptions(): TaskColor[] {
     return TASK_COLORS;
+  }
+
+  setColor(color: TaskColor): void {
+    this.currentTask.color = color;
+    this.cdr.markForCheck();
   }
 
   get isOrganizationDisabled(): boolean {

@@ -94,19 +94,13 @@ export class ListView implements OnInit {
 
   getTaskColorStyle(task: Task): Record<string, string> {
     const color = task.color || 'UNSET';
-    const base = this.taskService.getTaskColorStyles(color);
-    if (!base['--task-color-bg']) {
+    const tint = this.taskService.getTaskColorMix(color, 18);
+    if (!tint) {
       return {};
     }
 
-    const tintBase = base['--task-color-border'] || base['--task-color-text'];
-
     return {
-      '--task-tint': tintBase
-        ? `color-mix(in srgb, ${tintBase} 18%, transparent)`
-        : base['--task-color-bg'],
-      '--task-tint-border': base['--task-color-border'],
-      '--task-tint-text': base['--task-color-text'],
+      '--task-tint': tint,
     } as Record<string, string>;
   }
 

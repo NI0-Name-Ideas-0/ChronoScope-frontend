@@ -9,11 +9,7 @@
     (mousedown)="onBackdropClick($event)"
     (keydown.escape)="close()"
   >
-    <div
-      class="task-panel"
-      [class.task-panel--leaving]="isLeaving()"
-      role="document"
-    >
+    <div class="task-panel" [class.task-panel--leaving]="isLeaving()" role="document">
       <!-- Header -->
       <div class="task-header">
         <div class="flex items-center gap-3">
@@ -271,13 +267,28 @@
               Color
             </span>
           </label>
-          <div class="flex items-center gap-2">
-            <select class="select select-bordered flex-1" [(ngModel)]="currentTask.color">
-              @for (color of colorOptions; track color) {
-                <option [value]="color">{{ color === 'UNSET' ? 'No color' : color }}</option>
-              }
-            </select>
-            <span class="task-color-chip" [attr.data-color]="currentTask.color"></span>
+          <div class="task-color-row" role="radiogroup" aria-label="Task color">
+            <button
+              type="button"
+              class="task-color-dot task-color-dot--unset"
+              [class.task-color-dot--selected]="currentTask.color === 'UNSET'"
+              (click)="setColor('UNSET')"
+              role="radio"
+              [attr.aria-checked]="currentTask.color === 'UNSET'"
+              aria-label="No color"
+            ></button>
+            @for (color of colorOptions; track color) {
+              <button
+                type="button"
+                class="task-color-dot"
+                [attr.data-color]="color"
+                [class.task-color-dot--selected]="currentTask.color === color"
+                (click)="setColor(color)"
+                role="radio"
+                [attr.aria-checked]="currentTask.color === color"
+                [attr.aria-label]="color + ' color'"
+              ></button>
+            }
           </div>
         </div>
 

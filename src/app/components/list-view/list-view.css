@@ -29,6 +29,4 @@
 }
 .task-title-chip {
   background: var(--task-tint, transparent);
-  border: 1px solid color-mix(in srgb, var(--task-tint-border, var(--color-base-300)) 55%, transparent);
-  color: var(--task-tint-text, var(--color-base-content));
 }

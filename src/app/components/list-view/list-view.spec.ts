@@ -18,7 +18,7 @@ describe('ListView', () => {
     updateTask: vi.fn().mockResolvedValue({}),
     formatMinutesToDuration: vi.fn((m: number) => `PT${m}M`),
     saveTaskCompletion: vi.fn(),
-    getTaskColorStyles: vi.fn(() => ({})),
+    getTaskColorMix: vi.fn(() => null),
   };
 
   beforeEach(async () => {

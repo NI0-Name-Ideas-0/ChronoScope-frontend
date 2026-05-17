@@ -111,38 +111,33 @@ export class TaskService {
     return (allowed.includes(value as TaskColor) ? value : 'UNSET') as TaskColor;
   }
 
-  private getTaskColorPalette(
-    color: TaskColor,
-  ): { bg: string; border: string; text: string } | null {
-    const palette: Record<TaskColor, { bg: string; border: string; text: string } | null> = {
+  private getTaskColorPalette(color: TaskColor): string | null {
+    const palette: Record<TaskColor, string | null> = {
       UNSET: null,
-      RED: { bg: '#ef4444', border: '#ef4444', text: '#991b1b' },
-      ORANGE: { bg: '#f97316', border: '#f97316', text: '#9a3412' },
-      AMBER: { bg: '#f59e0b', border: '#f59e0b', text: '#92400e' },
-      YELLOW: { bg: '#eab308', border: '#eab308', text: '#854d0e' },
-      GREEN: { bg: '#22c55e', border: '#22c55e', text: '#166534' },
-      MINT: { bg: '#14b8a6', border: '#14b8a6', text: '#0f766e' },
-      CYAN: { bg: '#06b6d4', border: '#06b6d4', text: '#0e7490' },
-      BLUE: { bg: '#3b82f6', border: '#3b82f6', text: '#1e40af' },
-      INDIGO: { bg: '#6366f1', border: '#6366f1', text: '#3730a3' },
-      PURPLE: { bg: '#a855f7', border: '#a855f7', text: '#6b21a8' },
-      PINK: { bg: '#ec4899', border: '#ec4899', text: '#9d174d' },
-      BROWN: { bg: '#a16207', border: '#a16207', text: '#713f12' },
-      GRAY: { bg: '#6b7280', border: '#6b7280', text: '#374151' },
+      RED: '#ef4444',
+      ORANGE: '#f97316',
+      AMBER: '#f59e0b',
+      YELLOW: '#eab308',
+      GREEN: '#22c55e',
+      MINT: '#14b8a6',
+      CYAN: '#06b6d4',
+      BLUE: '#3b82f6',
+      INDIGO: '#6366f1',
+      PURPLE: '#a855f7',
+      PINK: '#ec4899',
+      BROWN: '#a16207',
+      GRAY: '#6b7280',
     };
     return palette[color];
   }
 
-  getTaskColorStyles(color: TaskColor): { [key: string]: string } {
-    const entry = this.getTaskColorPalette(color);
-    if (!entry) {
-      return {};
+  getTaskColorMix(color: TaskColor, percent: number): string | null {
+    const base = this.getTaskColorPalette(color);
+    if (!base) {
+      return null;
     }
-    return {
-      '--task-color-bg': `color-mix(in srgb, ${entry.bg} 35%, transparent)`,
-      '--task-color-border': entry.border,
-      '--task-color-text': entry.text,
-    };
+    const safePercent = Math.max(0, Math.min(100, percent));
+    return `color-mix(in srgb, ${base} ${safePercent}%, transparent)`;
   }
 
   /**
@@ -441,6 +436,13 @@ export class TaskService {
                 taskType: task.isBlocker ? 'static-blocker' : 'static',
                 color: task.color,
               },
+              classNames: ['fc-event--task'],
+              ...(task.color !== 'UNSET'
+                ? {
+                    backgroundColor: this.getTaskColorMix(task.color, 35) ?? undefined,
+                    borderColor: this.getTaskColorMix(task.color, 35) ?? undefined,
+                }
+                : {}),
             },
           ];
         } catch (e) {
@@ -463,6 +465,13 @@ export class TaskService {
             taskType: task.isBlocker ? 'static-blocker' : 'static',
             color: task.color,
           },
+          classNames: ['fc-event--task'],
+          ...(task.color !== 'UNSET'
+            ? {
+                backgroundColor: this.getTaskColorMix(task.color, 35) ?? undefined,
+                borderColor: this.getTaskColorMix(task.color, 35) ?? undefined,
+              }
+            : {}),
         },
       ];
     }
@@ -480,6 +489,13 @@ export class TaskService {
           isDone: scope.isFinished,
           color: task.color,
         },
+        classNames: ['fc-event--task'],
+        ...(task.color !== 'UNSET'
+          ? {
+              backgroundColor: this.getTaskColorMix(task.color, 35) ?? undefined,
+              borderColor: this.getTaskColorMix(task.color, 35) ?? undefined,
+            }
+          : {}),
       }));
     }
 

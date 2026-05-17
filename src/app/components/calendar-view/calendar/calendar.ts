@@ -77,6 +77,7 @@ export class Calendar implements OnChanges {
     },
     eventOrder: 'displayOrder',
     eventContent: (arg) => this.renderEventContent(arg),
+    eventDidMount: (arg) => this.applyEventColor(arg),
   };
 
   ngAfterViewInit() {
@@ -195,17 +196,11 @@ export class Calendar implements OnChanges {
     const isDone = Boolean(arg?.event?.extendedProps?.['isDone']);
     const viewType = arg?.view?.type ?? '';
     const isMonthView = viewType.startsWith('dayGrid');
-    const color = (arg?.event?.extendedProps?.['color'] ?? 'UNSET') as TaskColor;
-    const colorStyles = this.taskService.getTaskColorStyles(color);
 
     const container = document.createElement('div');
     container.className = isMonthView
       ? 'fc-task-content fc-task-content--month'
       : 'fc-task-content';
-    Object.entries(colorStyles).forEach(([key, value]) => {
-      container.style.setProperty(key, value);
-    });
-
     const icon = document.createElement('span');
     icon.className = 'fc-task-icon';
     icon.innerHTML = this.getIconSvg(iconType);
@@ -233,6 +228,20 @@ export class Calendar implements OnChanges {
     }
 
     return { domNodes: [container] };
+  }
+
+  private applyEventColor(arg: any): void {
+    if (arg?.event?.extendedProps?.['isWorkSlot']) {
+      return;
+    }
+
+    const color = (arg?.event?.extendedProps?.['color'] ?? 'UNSET') as TaskColor;
+    const colorMix = this.taskService.getTaskColorMix(color, 35);
+    if (!colorMix) {
+      return;
+    }
+
+    arg.el.style.setProperty('--task-color-bg', colorMix);
   }
 
   private getIconSvg(type: string): string {

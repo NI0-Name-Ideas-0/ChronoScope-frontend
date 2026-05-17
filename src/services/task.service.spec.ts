@@ -467,7 +467,7 @@ describe('TaskService', () => {
   describe('toCalendarEvents', () => {
     it('should return events for a StaticTask', () => {
       const scope = new Scope(new Date('2026-05-01T10:00:00Z'), new Date('2026-05-01T11:00:00Z'));
-      const task = new StaticTask(1, 'Static', 'Desc', ['label1'], scope, 'org-1', 'EASY', false, '');
+      const task = new StaticTask(1, 'Static', 'Desc', ['label1'], scope, 'org-1', 'EASY', false, 'UNSET', '');
 
       const events = service.toCalendarEvents(task);
       expect(events.length).toBe(1);
@@ -494,6 +494,7 @@ describe('TaskService', () => {
         [scope1, scope2],
         'MEDIUM',
         false,
+        'UNSET',
         30,
         120,
       );
@@ -518,6 +519,7 @@ describe('TaskService', () => {
         null,
         'EASY',
         false,
+        'UNSET',
         'FREQ=DAILY;DTSTART=20260501T100000Z',
       );
 
@@ -540,6 +542,7 @@ describe('TaskService', () => {
         null,
         'EASY',
         false,
+        'UNSET',
         'FREQ=INVALID;COUNT=abc',
       );
 
