@@ -3,6 +3,7 @@ import { WorkPreferencesSection } from './work-preferences';
 import { Auth } from '@services/auth';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
 import { TimeSlot } from '@app/model/work-preference.model';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 describe('WorkPreferencesSection', () => {
   let component: WorkPreferencesSection;
@@ -41,7 +42,7 @@ describe('WorkPreferencesSection', () => {
     mockPreferenceService.loadWorkSettings.mockResolvedValue(null);
 
     await TestBed.configureTestingModule({
-      imports: [WorkPreferencesSection],
+      imports: [WorkPreferencesSection, getTranslocoTestingModule()],
       providers: [
         { provide: Auth, useValue: mockAuth },
         { provide: WorkSlotPreferenceService, useValue: mockPreferenceService },
@@ -199,7 +200,7 @@ describe('WorkPreferencesSection', () => {
 
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [WorkPreferencesSection],
+      imports: [WorkPreferencesSection, getTranslocoTestingModule()],
       providers: [
         { provide: Auth, useValue: mockAuth },
         { provide: WorkSlotPreferenceService, useValue: mockPreferenceService },
@@ -254,7 +255,7 @@ describe('WorkPreferencesSection', () => {
 
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [WorkPreferencesSection],
+      imports: [WorkPreferencesSection, getTranslocoTestingModule()],
       providers: [
         { provide: Auth, useValue: mockAuth },
         { provide: WorkSlotPreferenceService, useValue: mockPreferenceService },

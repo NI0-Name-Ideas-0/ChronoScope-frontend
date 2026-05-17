@@ -3,6 +3,7 @@ import { OrganizationsSection } from './organizations';
 import { Auth } from '@services/auth';
 import { BehaviorSubject } from 'rxjs';
 import { IdentityResponse } from '../../../../../api/models';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 describe('OrganizationsSection', () => {
   let component: OrganizationsSection;
@@ -22,7 +23,7 @@ describe('OrganizationsSection', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [OrganizationsSection],
+      imports: [OrganizationsSection, getTranslocoTestingModule()],
       providers: [{ provide: Auth, useValue: mockAuth }],
     }).compileComponents();
 

@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 
 import { LinkAccount } from './link-account';
 import { Auth } from '@services/auth';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 describe('LinkAccount', () => {
   let component: LinkAccount;
@@ -20,7 +21,7 @@ describe('LinkAccount', () => {
   beforeEach(async () => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [LinkAccount],
+      imports: [LinkAccount, getTranslocoTestingModule()],
       providers: [
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         { provide: Auth, useValue: mockAuth },
@@ -46,7 +47,7 @@ describe('LinkAccount', () => {
   it('should set error signal to true when token is missing', async () => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [LinkAccount],
+      imports: [LinkAccount, getTranslocoTestingModule()],
       providers: [
         { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
         { provide: Auth, useValue: mockAuth },

@@ -4,6 +4,7 @@ import { Auth } from '@services/auth';
 import { OAuthService } from 'angular-oauth2-oidc';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
 import { of } from 'rxjs';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 describe('SettingsModal', () => {
   let component: SettingsModal;
@@ -33,7 +34,7 @@ describe('SettingsModal', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SettingsModal],
+      imports: [SettingsModal, getTranslocoTestingModule()],
       providers: [
         { provide: OAuthService, useValue: mockOAuthService },
         { provide: Auth, useValue: mockAuth },

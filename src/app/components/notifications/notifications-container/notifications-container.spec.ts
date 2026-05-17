@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotificationsContainer } from './notifications-container';
 import { NotificationService } from '@services/notification.service';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 describe('NotificationsContainer', () => {
   let component: NotificationsContainer;
@@ -10,7 +11,7 @@ describe('NotificationsContainer', () => {
   beforeEach(async () => {
     vi.useFakeTimers();
     await TestBed.configureTestingModule({
-      imports: [NotificationsContainer],
+      imports: [NotificationsContainer, getTranslocoTestingModule()],
     }).compileComponents();
 
     service = TestBed.inject(NotificationService);
