@@ -242,18 +242,14 @@ describe('WorkPreferencesSection', () => {
   });
 
   // --- Error handling ---
-  it('should log error when onSave fails', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('should not throw when onSave fails', async () => {
     mockPreferenceService.savePreferences.mockRejectedValue(new Error('Save failed'));
 
+    // Should not throw — error is silently caught, HTTP interceptor handles toasts
     await component.onSave();
-
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to save work slot preferences:', expect.any(Error));
-    consoleSpy.mockRestore();
   });
 
-  it('should log error when loading slots fails', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('should not throw when loading slots fails', async () => {
     mockPreferenceService.loadPreferences.mockRejectedValue(new Error('Load failed'));
 
     TestBed.resetTestingModule();
@@ -271,10 +267,8 @@ describe('WorkPreferencesSection', () => {
     if (newComponent.calendarBody?.nativeElement) {
       newComponent.calendarBody.nativeElement.scrollTo = vi.fn();
     }
+    // Should not throw — error is silently caught, HTTP interceptor handles toasts
     await newFixture.whenStable();
-
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to load work slot preferences:', expect.any(Error));
-    consoleSpy.mockRestore();
   });
 
   // --- getDayColor ---
