@@ -108,6 +108,20 @@ const en: Record<string, string> = {
   COMMON_SAVE: 'Save',
   COMMON_DELETE: 'Delete',
   COMMON_CLOSE: 'Close',
+  WEEKDAY_MON: 'Mon',
+  WEEKDAY_TUE: 'Tue',
+  WEEKDAY_WED: 'Wed',
+  WEEKDAY_THU: 'Thu',
+  WEEKDAY_FRI: 'Fri',
+  WEEKDAY_SAT: 'Sat',
+  WEEKDAY_SUN: 'Sun',
+  UPCOMING_NO_TASKS: 'No upcoming tasks',
+  UPCOMING_OVERDUE_TITLE: 'Running late?',
+  UPCOMING_OVERDUE_DESC: 'How many more minutes do you need to finish "{{task}}"?',
+  UPCOMING_OVERDUE_LABEL: 'Additional minutes needed',
+  UPCOMING_OVERDUE_SUBMIT: 'Update plan',
+  UPCOMING_MARK_DONE: 'Mark scope as done',
+  UPCOMING_UPDATE_TIME: 'Update remaining time',
 };
 
 /**
