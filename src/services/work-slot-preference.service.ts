@@ -20,6 +20,7 @@ import { TimeSlot } from '@app/model/work-preference.model';
 import { getOrganizationColors } from '../api/fn/identity/get-organization-colors';
 import { getOrganizationColor } from '../api/fn/identity/get-organization-color';
 import { NotificationService } from './notification.service';
+import { TranslocoService } from '@jsverse/transloco';
 
 /** Ordered mapping from dayIndex (0=Mon..6=Sun) to the Java DayOfWeek string */
 const DAY_OF_WEEK_NAMES = [
@@ -44,6 +45,7 @@ export class WorkSlotPreferenceService {
   private api = inject(Api);
   private auth = inject(Auth);
   private notificationService = inject(NotificationService);
+  private translocoService = inject(TranslocoService);
   private preferencesChanged = new Subject<void>();
   preferencesChanged$ = this.preferencesChanged.asObservable();
 
@@ -109,7 +111,7 @@ export class WorkSlotPreferenceService {
       });
     }
 
-    this.notificationService.success('Work schedule saved');
+    this.notificationService.success(this.translocoService.translate('TOAST_WORK_SCHEDULE_SAVED'));
     this.preferencesChanged.next();
   }
 

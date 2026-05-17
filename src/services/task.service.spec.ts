@@ -4,6 +4,7 @@ import { TaskService } from './task.service';
 import { OAuthService } from 'angular-oauth2-oidc';
 import { Api } from '../api/api';
 import { Auth } from './auth';
+import { getTranslocoTestingModule } from '../test-utils/transloco-testing';
 import { StaticTask } from '../app/model/static-task';
 import { AlgoTask } from '../app/model/algo-task';
 import { Scope } from '../app/model/scope';
@@ -68,6 +69,7 @@ describe('TaskService', () => {
     };
 
     await TestBed.configureTestingModule({
+      imports: [getTranslocoTestingModule()],
       providers: [
         TaskService,
         { provide: OAuthService, useValue: mockOAuthService },
