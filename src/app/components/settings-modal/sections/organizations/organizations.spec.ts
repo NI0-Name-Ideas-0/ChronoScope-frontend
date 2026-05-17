@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrganizationsSection } from './organizations';
 import { Auth } from '@services/auth';
 import { Organization } from '@services/organization';
+import { Api } from '@api/api';
 import { BehaviorSubject } from 'rxjs';
 import { IdentityResponse } from '../../../../../api/models';
 import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
@@ -32,12 +33,17 @@ describe('OrganizationsSection', () => {
     removeMember: vi.fn().mockResolvedValue(undefined),
   };
 
+  const mockApi = {
+    invoke: vi.fn().mockResolvedValue([]),
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [OrganizationsSection, getTranslocoTestingModule()],
       providers: [
         { provide: Auth, useValue: mockAuth },
         { provide: Organization, useValue: mockOrganizationService },
+        { provide: Api, useValue: mockApi },
       ],
     }).compileComponents();
 
