@@ -109,7 +109,7 @@
         }
 
         @if (loadingManagementData()) {
-          <p class="text-sm text-base-content/60 mt-3">Loading...</p>
+          <p class="text-sm text-base-content/60 mt-3">{{ 'SETTINGS_ORGANIZATIONS_LOADING' | transloco }}</p>
         } @else {
           <ul class="manage-list mt-3" aria-label="Organization members">
             @for (member of organizationMembers(); track member.id) {
