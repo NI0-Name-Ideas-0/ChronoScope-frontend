@@ -160,7 +160,7 @@ export class WorkPreferencesSection implements AfterViewInit {
         slots: JSON.parse(JSON.stringify(this.slots())),
       };
     } catch (err) {
-      console.error('Failed to load work slot preferences:', err);
+      // Error toast handled by HTTP error interceptor
     }
   }
 
@@ -254,7 +254,7 @@ export class WorkPreferencesSection implements AfterViewInit {
       this.storeCurrentState();
       this.saved.emit(this.slots());
     } catch (err) {
-      console.error('Failed to save work slot preferences:', err);
+      // Error toast handled by HTTP error interceptor
     }
   }
 

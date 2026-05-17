@@ -8,10 +8,11 @@ import {
 import { RouterOutlet } from '@angular/router';
 import { Auth } from '@services/auth';
 import { ThemeService } from '@services/theme.service';
+import { NotificationsContainer } from '@app/components/notifications/notifications-container/notifications-container';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, NotificationsContainer],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
   styleUrl: './app.css',
