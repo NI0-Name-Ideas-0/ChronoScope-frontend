@@ -6,6 +6,7 @@ import {
   SimpleChanges,
   inject,
   effect,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FullCalendarModule } from '@fullcalendar/angular';
@@ -62,42 +63,38 @@ export class Calendar implements OnChanges {
     }
   });
 
-  localeEffect = effect(() => {
-    const lang = this.languageService.language();
-    if (this.calendarRef) {
-      const api = this.calendarRef.getApi();
-      api.setOption('locale', lang);
-      api.setOption('buttonText', Calendar.BUTTON_TEXT[lang]);
-    }
-  });
+  private readonly eventContentCallback = (arg: any) => this.renderEventContent(arg);
 
-  calendarOptions: CalendarOptions = {
-    initialView: 'dayGridMonth',
-    plugins: [dayGridPlugin, timeGridPlugin, rrulePlugin],
-    height: '100%',
-    locales: [deLocale],
-    locale: this.languageService.language(),
-    buttonText: Calendar.BUTTON_TEXT[this.languageService.language()],
-    firstDay: 1,
-    weekends: true,
-    slotLabelFormat: {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    },
-    eventTimeFormat: {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    },
-    headerToolbar: {
-      start: 'timeGridWeek dayGridMonth',
-      center: 'title',
-      end: 'today prev,next',
-    },
-    eventOrder: 'displayOrder',
-    eventContent: (arg) => this.renderEventContent(arg),
-  };
+  readonly calendarOptions = computed<CalendarOptions>(() => {
+    const lang = this.languageService.language();
+    return {
+      initialView: 'dayGridMonth',
+      plugins: [dayGridPlugin, timeGridPlugin, rrulePlugin],
+      height: '100%',
+      locales: [deLocale],
+      locale: lang,
+      buttonText: Calendar.BUTTON_TEXT[lang],
+      firstDay: 1,
+      weekends: true,
+      slotLabelFormat: {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      },
+      eventTimeFormat: {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      },
+      headerToolbar: {
+        start: 'timeGridWeek dayGridMonth',
+        center: 'title',
+        end: 'today prev,next',
+      },
+      eventOrder: 'displayOrder',
+      eventContent: this.eventContentCallback,
+    };
+  });
 
   ngAfterViewInit() {
     const api = this.calendarRef.getApi();
