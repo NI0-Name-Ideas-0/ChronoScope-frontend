@@ -104,5 +104,7 @@
   "COMMON_CANCEL": "Cancel",
   "COMMON_SAVE": "Save",
   "COMMON_DELETE": "Delete",
-  "COMMON_CLOSE": "Close"
+  "COMMON_CLOSE": "Close",
+  "SETTINGS_APPEARANCE_LANGUAGE_TITLE": "Language",
+  "SETTINGS_APPEARANCE_LANGUAGE_DESC": "Choose your preferred display language."
 }

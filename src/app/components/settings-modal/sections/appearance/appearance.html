@@ -30,4 +30,21 @@
       }
     </div>
   </div>
+
+  <!-- Language -->
+  <div class="settings-card">
+    <h3 class="settings-card-title">{{ 'SETTINGS_APPEARANCE_LANGUAGE_TITLE' | transloco }}</h3>
+    <p class="settings-card-desc">{{ 'SETTINGS_APPEARANCE_LANGUAGE_DESC' | transloco }}</p>
+    <div class="mt-4">
+      <select
+        class="select select-bordered w-full max-w-xs"
+        [value]="selectedLanguage()"
+        (change)="setLanguage($any($event.target).value)"
+      >
+        @for (option of languageOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
 </div>
