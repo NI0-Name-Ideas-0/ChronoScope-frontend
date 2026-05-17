@@ -56,10 +56,10 @@ export class ChronoscopeError extends Error {
   constructor(httpError: HttpErrorResponse, body?: unknown) {
     const parsed = isProblemDetail(body) ? body : undefined;
 
-    const rawCode = parsed?.properties?.['errorCode'];
+    const rawCode = (parsed as any)?.['errorCode']; // 'errorCode' is a non-standard extension
     const errorCode = isValidErrorCode(rawCode) ? rawCode : undefined;
     const typeUri = parsed?.type ?? undefined;
-    const rawFieldErrors = parsed?.properties?.['fieldErrors'];
+    const rawFieldErrors = (parsed as any)?.['fieldErrors']; // 'fieldErrors' is a non-standard extension
     const fieldErrors = Array.isArray(rawFieldErrors) ? rawFieldErrors as FieldError[] : undefined;
     const detail = parsed?.detail ?? undefined;
 
