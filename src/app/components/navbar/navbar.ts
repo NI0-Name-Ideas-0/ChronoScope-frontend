@@ -9,6 +9,7 @@ import {
   output,
   viewChild,
 } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { TaskModalService } from '@services/task-modal.service';
 import { ThemeService } from '@services/theme.service';
 import { ViewService } from '@services/view.service';
@@ -16,7 +17,7 @@ import { TaskService } from '@services/task.service';
 
 @Component({
   selector: 'app-navbar',
-  imports: [],
+  imports: [TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',

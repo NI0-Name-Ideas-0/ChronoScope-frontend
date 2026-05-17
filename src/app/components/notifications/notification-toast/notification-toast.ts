@@ -1,9 +1,11 @@
 import { Component, ChangeDetectionStrategy, computed, input, output } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { FieldError } from '@app/model/chronoscope-error.model';
 import { Notification } from '@app/model/notification.model';
 
 @Component({
   selector: 'app-notification-toast',
+  imports: [TranslocoPipe],
   templateUrl: './notification-toast.html',
   styleUrl: './notification-toast.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

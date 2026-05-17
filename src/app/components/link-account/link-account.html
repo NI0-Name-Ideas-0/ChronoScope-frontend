@@ -1,6 +1,6 @@
 @if (linked()) {
-  <p>Erfolgreich gelinkt!</p>
+  <p>{{ 'LINK_ACCOUNT_SUCCESS' | transloco }}</p>
 }
 @if (error()) {
-  <p>Beim verbinden ist ein Fehler aufgetreten</p>
+  <p>{{ 'LINK_ACCOUNT_ERROR' | transloco }}</p>
 }
