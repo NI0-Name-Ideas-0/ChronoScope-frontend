@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { ChangeDetectorRef } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { TaskModalService } from '@services/task-modal.service';
 import { TaskService } from '@services/task.service';
 import { Auth } from '@services/auth';
@@ -72,7 +73,7 @@ type TaskMode = 'static' | 'planned';
 
 @Component({
   selector: 'app-task-modal',
-  imports: [FormsModule, AsyncPipe, RepetitionFieldComponent],
+  imports: [FormsModule, AsyncPipe, RepetitionFieldComponent, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './task-modal.html',
   styleUrl: './task-modal.css',

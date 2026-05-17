@@ -2,9 +2,17 @@ import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { App } from './app';
 import { Auth } from '@services/auth';
+import { LanguageService } from '@services/language.service';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 const mockAuthService = {
   login: vi.fn(),
+};
+
+const mockLanguageService = {
+  initialize: vi.fn(),
+  language: vi.fn(() => 'en'),
+  setLanguage: vi.fn(),
 };
 
 describe('App', () => {
@@ -12,9 +20,10 @@ describe('App', () => {
     vi.clearAllMocks();
 
     await TestBed.configureTestingModule({
-      imports: [App],
+      imports: [App, getTranslocoTestingModule()],
       providers: [
-        { provide: Auth, useValue: mockAuthService }
+        { provide: Auth, useValue: mockAuthService },
+        { provide: LanguageService, useValue: mockLanguageService },
       ]
     })
     .overrideComponent(App, {

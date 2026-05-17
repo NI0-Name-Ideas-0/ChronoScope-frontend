@@ -1,0 +1,33 @@
+<div class="toast-body">
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+       stroke-width="1.5" stroke="currentColor" class="toast-icon" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="iconPath()" />
+  </svg>
+
+  <div class="toast-content">
+    @if (notification().title) {
+      <p class="toast-title">{{ notification().title }}</p>
+    }
+    <p class="toast-message">{{ notification().message }}</p>
+    @if (fieldErrors().length > 0) {
+      <ul class="toast-field-errors" role="list">
+        @for (fe of fieldErrors(); track fe.field) {
+          <li><span class="font-semibold">{{ fe.field }}</span>: {{ fe.message }}</li>
+        }
+      </ul>
+    }
+  </div>
+
+  @if (notification().dismissible !== false) {
+    <button
+      type="button"
+      class="toast-dismiss"
+      [attr.aria-label]="'NOTIFICATION_DISMISS' | transloco"
+      (click)="onDismiss()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+           stroke-width="1.5" stroke="currentColor" class="size-4" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+      </svg>
+    </button>
+  }
+</div>

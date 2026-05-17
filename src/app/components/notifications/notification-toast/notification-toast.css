@@ -1,0 +1,85 @@
+@reference "#styles.css";
+
+:host {
+  display: block;
+  animation: toast-slide-in 0.3s ease-out;
+}
+
+.toast-body {
+  @apply flex items-start gap-3 p-3.5 rounded-lg border shadow-lg backdrop-blur-sm;
+  @apply transition-all duration-200;
+}
+
+.toast-icon {
+  @apply size-5 shrink-0 mt-0.5;
+}
+
+.toast-content {
+  @apply flex-1 min-w-0;
+}
+
+.toast-title {
+  @apply text-sm font-semibold leading-tight;
+}
+
+.toast-message {
+  @apply text-sm leading-snug;
+}
+
+.toast-title + .toast-message {
+  @apply mt-0.5;
+}
+
+.toast-field-errors {
+  @apply mt-1.5 ml-0 list-disc list-inside text-xs leading-relaxed opacity-90;
+}
+
+.toast-field-errors li {
+  @apply py-0.5;
+}
+
+.toast-dismiss {
+  @apply shrink-0 rounded-md p-1 opacity-60 transition-opacity duration-150
+         hover:opacity-100 focus:opacity-100 focus:outline-2 focus:outline-offset-1;
+}
+
+/* ── Type variants ───────────────────────────────────────────── */
+:host(.toast-success) .toast-body {
+  @apply bg-success/10 border-success/30 text-success;
+}
+:host(.toast-success) .toast-dismiss {
+  @apply focus:outline-success;
+}
+
+:host(.toast-error) .toast-body {
+  @apply bg-error/10 border-error/30 text-error;
+}
+:host(.toast-error) .toast-dismiss {
+  @apply focus:outline-error;
+}
+
+:host(.toast-warning) .toast-body {
+  @apply bg-warning/10 border-warning/30 text-warning;
+}
+:host(.toast-warning) .toast-dismiss {
+  @apply focus:outline-warning;
+}
+
+:host(.toast-info) .toast-body {
+  @apply bg-info/10 border-info/30 text-info;
+}
+:host(.toast-info) .toast-dismiss {
+  @apply focus:outline-info;
+}
+
+/* ── Animation ───────────────────────────────────────────────── */
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

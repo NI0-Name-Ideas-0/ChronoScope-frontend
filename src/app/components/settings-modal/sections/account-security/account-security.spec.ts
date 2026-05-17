@@ -3,6 +3,7 @@ import { AccountSecuritySection } from './account-security';
 import { Auth } from '@services/auth';
 import { BehaviorSubject } from 'rxjs';
 import { IdentityResponse } from '../../../../../api/models';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 describe('AccountSecuritySection', () => {
   let component: AccountSecuritySection;
@@ -22,7 +23,7 @@ describe('AccountSecuritySection', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AccountSecuritySection],
+      imports: [AccountSecuritySection, getTranslocoTestingModule()],
       providers: [{ provide: Auth, useValue: mockAuth }],
     }).compileComponents();
 

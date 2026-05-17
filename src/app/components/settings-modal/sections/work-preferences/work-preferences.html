@@ -6,7 +6,7 @@
 
     <!-- Hours per Day Input -->
     <div class="flex items-center gap-3">
-      <span class="text-sm font-medium text-base-content/70 whitespace-nowrap">Available per day</span>
+      <span class="text-sm font-medium text-base-content/70 whitespace-nowrap">{{ 'SETTINGS_WORK_AVAILABLE_PER_DAY' | transloco }}</span>
       <div class="input input-bordered flex items-center gap-2 bg-base-100 w-24">
         <input
           type="number"
@@ -23,7 +23,7 @@
 
     <!-- Work Days Toggle Buttons -->
     <div class="flex items-center gap-3">
-      <span class="text-sm font-medium text-base-content/70 whitespace-nowrap">Work days</span>
+      <span class="text-sm font-medium text-base-content/70 whitespace-nowrap">{{ 'SETTINGS_WORK_WORK_DAYS' | transloco }}</span>
       <div class="flex gap-1">
         @for (day of dayNames; track $index) {
           <button
@@ -33,7 +33,7 @@
               : 'btn btn-xs btn-ghost border border-base-300 text-base-content/40'"
             (click)="toggleWorkDay($index)"
           >
-            {{ day }}
+            {{ day | transloco }}
           </button>
         }
       </div>
@@ -65,7 +65,7 @@
 
       <!-- Organizations Section -->
       <div>
-        <h3 class="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2.5">Organizations</h3>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-base-content/50 mb-2.5">{{ 'SETTINGS_WORK_ORGANIZATIONS' | transloco }}</h3>
         <div class="flex flex-col gap-2">
           @for (org of organizations(); track org.id) {
             <div
@@ -86,19 +86,19 @@
 
       <!-- Legend -->
       <div class="mt-auto pt-4 border-t border-base-300">
-        <h4 class="text-xs font-bold text-base-content/50 mb-2">Legend</h4>
+        <h4 class="text-xs font-bold text-base-content/50 mb-2">{{ 'SETTINGS_WORK_LEGEND' | transloco }}</h4>
         <div class="space-y-1.5 text-xs text-base-content/70">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-success"></span>
-            Within limit
+            {{ 'SETTINGS_WORK_WITHIN_LIMIT' | transloco }}
           </div>
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-warning"></span>
-            Near limit
+            {{ 'SETTINGS_WORK_NEAR_LIMIT' | transloco }}
           </div>
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-error"></span>
-            Overbooked
+            {{ 'SETTINGS_WORK_OVERBOOKED' | transloco }}
           </div>
         </div>
       </div>
@@ -114,7 +114,7 @@
       >
         <!-- Time label header cell -->
         <div class="border-r border-base-300 flex items-center justify-center text-xs font-bold text-base-content/40">
-          Time
+          {{ 'SETTINGS_WORK_TIME' | transloco }}
         </div>
         <!-- Day header cells -->
         @for (day of weekDays; track day.index) {
@@ -122,14 +122,14 @@
             class="py-3 text-center border-r border-base-300 relative"
             [class.opacity-40]="!workDays()[day.index]"
           >
-            <span class="block text-xs font-bold uppercase text-base-content/60">{{ day.short }}</span>
+            <span class="block text-xs font-bold uppercase text-base-content/60">{{ day.short | transloco }}</span>
             <span [class]="getDayColor(day.index)">
               {{ getDayHours(day.index) | number:'1.1-1' }}h
             </span>
             <!-- Off day indicator -->
             @if (!workDays()[day.index]) {
               <span class="absolute top-1 right-1 text-[9px] font-bold text-error uppercase tracking-wider">
-                Off
+                {{ 'SETTINGS_WORK_OFF' | transloco }}
               </span>
             }
           </div>
@@ -224,8 +224,8 @@
 
   <!-- Footer: Cancel and Save buttons -->
   <div class="flex items-center justify-end mt-4 pt-4 border-t border-base-300 shrink-0 gap-2">
-    <button type="button" (click)="onCancel()" class="btn btn-ghost btn-sm">Cancel</button>
-    <button type="button" (click)="onSave()" class="btn btn-primary btn-sm">Save</button>
+    <button type="button" (click)="onCancel()" class="btn btn-ghost btn-sm">{{ 'COMMON_CANCEL' | transloco }}</button>
+    <button type="button" (click)="onSave()" class="btn btn-primary btn-sm">{{ 'COMMON_SAVE' | transloco }}</button>
   </div>
 
 </div>

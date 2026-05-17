@@ -3,6 +3,7 @@ import { OAuthService } from 'angular-oauth2-oidc';
 
 import { Main } from './main';
 import { ViewService } from '@services/view.service';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 const mockOAuthService = {
   configure: vi.fn(),
@@ -21,7 +22,7 @@ describe('Main', () => {
   beforeEach(async () => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [Main],
+      imports: [Main, getTranslocoTestingModule()],
       providers: [
         { provide: OAuthService, useValue: mockOAuthService },
         ViewService,

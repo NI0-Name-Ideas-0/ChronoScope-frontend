@@ -18,6 +18,7 @@ import {
 import { Organization } from '../api/models';
 import { TimeSlot, COLOR_POOL } from '@app/model/work-preference.model';
 import { getOrganizationColors } from '../api/fn/identity/get-organization-colors';
+import { NotificationService } from './notification.service';
 
 /** Ordered mapping from dayIndex (0=Mon..6=Sun) to the Java DayOfWeek string */
 const DAY_OF_WEEK_NAMES = [
@@ -41,6 +42,7 @@ const MINUTES_PER_DAY = 24 * 60;
 export class WorkSlotPreferenceService {
   private api = inject(Api);
   private auth = inject(Auth);
+  private notificationService = inject(NotificationService);
   private preferencesChanged = new Subject<void>();
   preferencesChanged$ = this.preferencesChanged.asObservable();
 
@@ -106,6 +108,7 @@ export class WorkSlotPreferenceService {
       });
     }
 
+    this.notificationService.success('Work schedule saved');
     this.preferencesChanged.next();
   }
 

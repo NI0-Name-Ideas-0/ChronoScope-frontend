@@ -33,6 +33,7 @@ import {
 import { Auth } from './auth';
 import { rrulestr } from 'rrule';
 import { getOrganizationColors as getOrganizationColorsApi } from '../api/fn/identity/get-organization-colors';
+import { NotificationService } from './notification.service';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -48,6 +49,7 @@ export class TaskService {
   tasks$ = this.tasksSubject.asObservable();
 
   private authService = inject(Auth);
+  private notificationService = inject(NotificationService);
 
   constructor(private api: Api) {
     // Wait for auth to be ready before loading tasks
@@ -241,7 +243,7 @@ export class TaskService {
       });
       this.tasksSubject.next([...this.tasks.values()]);
     } catch (error) {
-      console.error('Error loading tasks from backend:', error);
+      // Error toast handled by HTTP error interceptor
     }
   }
 
@@ -261,6 +263,7 @@ export class TaskService {
 
     await this.planAndReload(request.organizationId, 'after task creation');
 
+    this.notificationService.success('Task created');
     return createdTask;
   }
 
@@ -282,6 +285,7 @@ export class TaskService {
     const updatedTask = await this.parseBlob<StaticTaskResponse | DynamicTaskResponse>(response);
     const organizationId = request.organizationId ?? updatedTask.organizationId ?? null;
     await this.planAndReload(organizationId, 'after task update');
+    this.notificationService.success('Task updated');
     return updatedTask;
   }
 
@@ -316,8 +320,7 @@ export class TaskService {
       };
       await this.api.invoke(planApi, planParams);
     } catch (error) {
-      console.error(`Error calling plan endpoint ${contextLabel}:`, error);
-      // Don't throw - planning failure shouldn't break the caller flow
+      // Error toast handled by HTTP error interceptor
     } finally {
       // Always reload tasks after planning, whether it succeeds or fails
       await this.loadTasks();
@@ -340,8 +343,7 @@ export class TaskService {
         }),
       );
     } catch (error) {
-      console.error(`Error calling plan endpoint ${contextLabel}:`, error);
-      // Don't throw - planning failure shouldn't break the caller flow
+      // Error toast handled by HTTP error interceptor
     } finally {
       // Always reload tasks after planning, whether it succeeds or fails
       await this.loadTasks();
@@ -403,6 +405,7 @@ export class TaskService {
     // Remove from local cache
     this.tasks.delete(id);
     this.tasksSubject.next([...this.tasks.values()]);
+    this.notificationService.success('Task deleted');
   }
 
   /**

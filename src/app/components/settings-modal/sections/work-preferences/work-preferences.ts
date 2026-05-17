@@ -2,6 +2,7 @@ import { Component, ChangeDetectionStrategy, signal, computed, inject, AfterView
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { output } from '@angular/core';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { Auth } from '@services/auth';
 import { Organization } from 'api/models';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
@@ -33,7 +34,7 @@ const DEFAULT_SCROLL_HOUR = 6;
 
 @Component({
   selector: 'app-settings-work-preferences',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: 'work-preferences.html',
   styleUrl: 'work-preferences.css',
@@ -96,8 +97,8 @@ export class WorkPreferencesSection implements AfterViewInit {
 
   /** Hour labels from 0 to 23 for the time column */
   hours = Array.from({ length: 24 }, (_, i) => i);
-  /** Short day names for the calendar header */
-  dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  /** Short day names as translation keys for the calendar header */
+  dayNames = ['WEEKDAY_MON', 'WEEKDAY_TUE', 'WEEKDAY_WED', 'WEEKDAY_THU', 'WEEKDAY_FRI', 'WEEKDAY_SAT', 'WEEKDAY_SUN'];
   /** Day metadata for the calendar grid */
   weekDays = Array.from({ length: 7 }, (_, i) => ({ index: i, short: this.dayNames[i] }));
 
@@ -163,7 +164,7 @@ export class WorkPreferencesSection implements AfterViewInit {
         slots: JSON.parse(JSON.stringify(this.slots())),
       };
     } catch (err) {
-      console.error('Failed to load work slot preferences:', err);
+      // Error toast handled by HTTP error interceptor
     }
   }
 
@@ -321,7 +322,7 @@ export class WorkPreferencesSection implements AfterViewInit {
       this.storeCurrentState();
       this.saved.emit(this.slots());
     } catch (err) {
-      console.error('Failed to save work slot preferences:', err);
+      // Error toast handled by HTTP error interceptor
     }
   }
 

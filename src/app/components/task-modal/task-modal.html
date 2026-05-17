@@ -4,7 +4,7 @@
     [class.task-backdrop--leaving]="isLeaving()"
     role="dialog"
     aria-modal="true"
-    aria-label="Create task"
+    [attr.aria-label]="'TASK_MODAL_CREATE_ARIA' | transloco"
     tabindex="-1"
     (mousedown)="onBackdropClick($event)"
     (keydown.escape)="close()"
@@ -29,14 +29,14 @@
             />
           </svg>
           <h2 class="text-base font-semibold text-base-content">
-            {{ isEditing ? 'Edit Task' : 'New Task' }}
+            {{ (isEditing ? 'TASK_MODAL_EDIT_TITLE' : 'TASK_MODAL_NEW_TITLE') | transloco }}
           </h2>
         </div>
         <button
           class="btn btn-ghost btn-sm btn-circle"
           type="button"
           (click)="close()"
-          aria-label="Close dialog"
+          [attr.aria-label]="'TASK_MODAL_CLOSE' | transloco"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -61,7 +61,7 @@
           [class.text-primary-content]="mode === 'static'"
           (click)="mode = 'static'"
         >
-          Static
+          {{ 'TASK_MODAL_MODE_STATIC' | transloco }}
         </button>
         <button
           type="button"
@@ -69,7 +69,7 @@
           [class.task-mode-btn--active]="mode === 'planned'"
           (click)="mode = 'planned'"
         >
-          Planned
+          {{ 'TASK_MODAL_MODE_PLANNED' | transloco }}
         </button>
       </div>
 
@@ -115,13 +115,13 @@
                   d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                 />
               </svg>
-              Title <span class="text-error">*</span>
+              {{ 'TASK_MODAL_TITLE_LABEL' | transloco }} <span class="text-error">*</span>
             </span>
           </label>
           <input
             type="text"
             class="input input-bordered w-full"
-            placeholder="Task title"
+            [placeholder]="'TASK_MODAL_TITLE_PLACEHOLDER' | transloco"
             [(ngModel)]="currentTask.title"
           />
         </div>
@@ -140,13 +140,13 @@
               >
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h12M4 18h8" />
               </svg>
-              Description
+              {{ 'TASK_MODAL_DESCRIPTION_LABEL' | transloco }}
             </span>
           </label>
           <textarea
             class="textarea textarea-bordered w-full resize-none"
             rows="3"
-            placeholder="Add a description..."
+            [placeholder]="'TASK_MODAL_DESCRIPTION_PLACEHOLDER' | transloco"
             [(ngModel)]="currentTask.description"
           ></textarea>
         </div>
@@ -171,7 +171,7 @@
                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                Account <span class="text-error">*</span>
+                {{ 'TASK_MODAL_ACCOUNT_LABEL' | transloco }} <span class="text-error">*</span>
               </span>
             </label>
             <select
@@ -199,7 +199,7 @@
                       d="M183.1 137.4C170.6 124.9 150.3 124.9 137.8 137.4C125.3 149.9 125.3 170.2 137.8 182.7L275.2 320L137.9 457.4C125.4 469.9 125.4 490.2 137.9 502.7C150.4 515.2 170.7 515.2 183.2 502.7L320.5 365.3L457.9 502.6C470.4 515.1 490.7 515.1 503.2 502.6C515.7 490.1 515.7 469.8 503.2 457.3L365.8 320L503.1 182.6C515.6 170.1 515.6 149.8 503.1 137.3C490.6 124.8 470.3 124.8 457.8 137.3L320.5 274.7L183.1 137.4z"
                     />
                   </svg>
-                  Blocker
+                  {{ 'TASK_MODAL_BLOCKER_LABEL' | transloco }}
                 </span>
               </label>
               <div>
@@ -235,7 +235,7 @@
                   d="M13 10V3L4 14h7v7l9-11h-7z"
                 />
               </svg>
-              Difficulty
+              {{ 'TASK_MODAL_DIFFICULTY_LABEL' | transloco }}
             </span>
           </label>
           <select class="select select-bordered w-full" [(ngModel)]="currentTask.difficulty">
@@ -313,7 +313,7 @@
                   d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"
                 />
               </svg>
-              Labels
+              {{ 'TASK_MODAL_LABELS_LABEL' | transloco }}
             </span>
           </label>
           @if (currentTask.labels.length > 0) {
@@ -350,7 +350,7 @@
           <input
             type="text"
             class="input input-bordered w-full"
-            placeholder="Type a label and press Enter"
+            [placeholder]="'TASK_MODAL_LABELS_PLACEHOLDER' | transloco"
             #labelInput
             (keydown.enter)="addLabel(labelInput.value); labelInput.value = ''"
             (keydown.comma)="addLabel(labelInput.value); labelInput.value = ''"
@@ -378,7 +378,7 @@
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                   </svg>
-                  Start Date <span class="text-error">*</span>
+                  {{ 'TASK_MODAL_START_DATE_LABEL' | transloco }} <span class="text-error">*</span>
                 </span>
               </label>
               <input
@@ -389,7 +389,7 @@
             </div>
             <div class="form-control flex-1">
               <label class="label">
-                <span class="task-field-label">Time</span>
+                <span class="task-field-label">{{ 'TASK_MODAL_TIME_LABEL' | transloco }}</span>
               </label>
               <input
                 type="time"
@@ -418,7 +418,7 @@
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                   </svg>
-                  End Date <span class="text-error">*</span>
+                  {{ 'TASK_MODAL_END_DATE_LABEL' | transloco }} <span class="text-error">*</span>
                 </span>
               </label>
               <input
@@ -429,7 +429,7 @@
             </div>
             <div class="form-control flex-1">
               <label class="label">
-                <span class="task-field-label">Time</span>
+                <span class="task-field-label">{{ 'TASK_MODAL_TIME_LABEL' | transloco }}</span>
               </label>
               <input
                 type="time"
@@ -458,7 +458,7 @@
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
-                Frequency
+                {{ 'TASK_MODAL_FREQUENCY_LABEL' | transloco }}
               </span>
             </label>
             <app-repetition-field
@@ -492,7 +492,7 @@
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                   </svg>
-                  Start Date <span class="text-error">*</span>
+                  {{ 'TASK_MODAL_START_DATE_LABEL' | transloco }} <span class="text-error">*</span>
                 </span>
               </label>
               <input
@@ -519,7 +519,7 @@
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
                   </svg>
-                  Due Date <span class="text-error">*</span>
+                  {{ 'TASK_MODAL_DUE_DATE_LABEL' | transloco }} <span class="text-error">*</span>
                 </span>
               </label>
               <input
@@ -550,7 +550,7 @@
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  Duration (minutes)
+                  {{ 'TASK_MODAL_DURATION_LABEL' | transloco }}
                 </span>
               </label>
               <input
@@ -577,7 +577,7 @@
                     d="M192 233.3C220.3 221 240 192.8 240 160C240 115.8 204.2 80 160 80C115.8 80 80 115.8 80 160C80 192.8 99.7 221 128 233.3L128 288L64 288C46.3 288 32 302.3 32 320C32 337.7 46.3 352 64 352L288 352L288 406.7C259.7 419 240 447.2 240 480C240 524.2 275.8 560 320 560C364.2 560 400 524.2 400 480C400 447.2 380.3 419 352 406.7L352 352L576 352C593.7 352 608 337.7 608 320C608 302.3 593.7 288 576 288L512 288L512 233.3C540.3 221 560 192.8 560 160C560 115.8 524.2 80 480 80C435.8 80 400 115.8 400 160C400 192.8 419.7 221 448 233.3L448 288L192 288L192 233.3z"
                   />
                 </svg>
-                Dependencies
+                {{ 'TASK_MODAL_DEPENDENCIES_LABEL' | transloco }}
               </span>
             </label>
             @if (tasks$ | async; as tasks) {
@@ -619,7 +619,7 @@
                 #dependencySelect
                 (change)="addDependency(dependencySelect.value); dependencySelect.value = ''"
               >
-                <option value="">Select a task</option>
+                <option value="">{{ 'TASK_MODAL_SELECT_TASK' | transloco }}</option>
                 @for (task of availableDependencyOptions(tasks); track task.id) {
                   <option [value]="task.id">{{ task.title }}</option>
                 }
@@ -647,7 +647,7 @@
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  Min Scope Duration (min)
+                  {{ 'TASK_MODAL_MIN_SCOPE_LABEL' | transloco }}
                 </span>
               </label>
               <input
@@ -675,7 +675,7 @@
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  Max Scope Duration (min)
+                  {{ 'TASK_MODAL_MAX_SCOPE_LABEL' | transloco }}
                 </span>
               </label>
               <input
@@ -698,14 +698,14 @@
             (click)="deleteTask()"
             [disabled]="isSaving()"
           >
-            Delete
+            {{ 'TASK_MODAL_DELETE' | transloco }}
           </button>
         } @else {
           <span></span>
         }
         <div class="flex gap-2">
           <button type="button" class="btn btn-ghost" (click)="close()" [disabled]="isSaving()">
-            Cancel
+            {{ 'COMMON_CANCEL' | transloco }}
           </button>
           <button
             type="button"
@@ -715,9 +715,9 @@
           >
             @if (isSaving()) {
               <span class="loading loading-spinner loading-sm"></span>
-              Saving...
+              {{ 'TASK_MODAL_SAVING' | transloco }}
             } @else {
-              {{ isEditing ? 'Update Task' : 'Create Task' }}
+              {{ (isEditing ? 'TASK_MODAL_UPDATE' : 'TASK_MODAL_CREATE') | transloco }}
             }
           </button>
         </div>

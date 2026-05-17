@@ -4,6 +4,7 @@ import { Auth } from '@services/auth';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
 import { TaskService } from '@services/task.service';
 import { TimeSlot } from '@app/model/work-preference.model';
+import { getTranslocoTestingModule } from 'test-utils/transloco-testing';
 
 describe('WorkPreferencesSection', () => {
   let component: WorkPreferencesSection;
@@ -48,7 +49,7 @@ describe('WorkPreferencesSection', () => {
     mockPreferenceService.loadWorkSettings.mockResolvedValue(null);
 
     await TestBed.configureTestingModule({
-      imports: [WorkPreferencesSection],
+      imports: [WorkPreferencesSection, getTranslocoTestingModule()],
       providers: [
         { provide: Auth, useValue: mockAuth },
         { provide: WorkSlotPreferenceService, useValue: mockPreferenceService },
@@ -208,7 +209,7 @@ describe('WorkPreferencesSection', () => {
 
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [WorkPreferencesSection],
+      imports: [WorkPreferencesSection, getTranslocoTestingModule()],
       providers: [
         { provide: Auth, useValue: mockAuth },
         { provide: WorkSlotPreferenceService, useValue: mockPreferenceService },
@@ -253,24 +254,20 @@ describe('WorkPreferencesSection', () => {
   });
 
   // --- Error handling ---
-  it('should log error when onSave fails', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('should not throw when onSave fails', async () => {
     mockPreferenceService.savePreferences.mockRejectedValue(new Error('Save failed'));
 
+    // Should not throw — error is silently caught, HTTP interceptor handles toasts
     await component.onSave();
-
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to save work slot preferences:', expect.any(Error));
-    consoleSpy.mockRestore();
   });
 
-  it('should log error when loading slots fails', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('should not throw when loading slots fails', async () => {
     mockPreferenceService.loadPreferences.mockRejectedValue(new Error('Load failed'));
     mockPreferenceService.loadOrganizationColorMap.mockResolvedValue({});
 
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [WorkPreferencesSection],
+      imports: [WorkPreferencesSection, getTranslocoTestingModule()],
       providers: [
         { provide: Auth, useValue: mockAuth },
         { provide: WorkSlotPreferenceService, useValue: mockPreferenceService },
@@ -284,6 +281,7 @@ describe('WorkPreferencesSection', () => {
     if (newComponent.calendarBody?.nativeElement) {
       newComponent.calendarBody.nativeElement.scrollTo = vi.fn();
     }
+    // Should not throw — error is silently caught, HTTP interceptor handles toasts
     await newFixture.whenStable();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
