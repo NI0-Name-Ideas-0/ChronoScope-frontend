@@ -8,6 +8,7 @@ export interface Notification {
   durationMs?: number;
   persistent?: boolean;
   dismissible?: boolean;
+  fieldErrors?: Array<{ field: string; message: string }>;
 }
 
 const DEFAULT_DURATION_MS = 5000;
