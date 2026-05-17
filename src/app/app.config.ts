@@ -1,6 +1,7 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { provideTransloco } from '@jsverse/transloco';
 
 import { routes } from './app.routes';
 
@@ -9,6 +10,7 @@ import { provideApiConfiguration } from '../api/api-configuration';
 import { environment } from '../environments/environment';
 import { oauthInterceptor } from './interceptors/oauth.interceptor';
 import { errorInterceptor } from './interceptors/error.interceptor';
+import { TranslocoHttpLoader } from './transloco-loader';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -21,6 +23,15 @@ export const appConfig: ApplicationConfig = {
         allowedUrls: ['https://chronoscope.ni0.team', 'http://localhost:8080'],
         sendAccessToken: true,
       },
+    }),
+    provideTransloco({
+      config: {
+        availableLangs: ['en', 'de'],
+        defaultLang: 'en',
+        reRenderOnLangChange: true,
+        prodMode: !isDevMode(),
+      },
+      loader: TranslocoHttpLoader,
     }),
   ],
 };
