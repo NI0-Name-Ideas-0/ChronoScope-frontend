@@ -10,7 +10,12 @@
     <p class="settings-card-desc">{{ 'SETTINGS_ORGANIZATIONS_YOUR_DESC' | transloco }}</p>
     <ul class="mt-4 space-y-3" aria-label="Organization list">
       @for (org of (authService.identity$ | async)?.organizations ; track org.id) {
-        <li class="flex p-3 rounded-xl bg-base-200/60 border border-base-300 justify-between items-center gap-3 relative">
+        <li
+          class="flex p-3 rounded-xl bg-base-200/60 border border-base-300 justify-between items-center gap-3 relative"
+          [class.org-manage-selectable]="isAdminOrganization(org.id)"
+          [class.org-manage-selected]="selectedAdminOrganizationId() === org.id"
+          (click)="selectOrganizationToManage(org.id)"
+        >
           <p class="font-medium text-base-content text-sm truncate">{{ org.name }}</p>
           <div class="flex items-center gap-3">
             @if ((authService.identity$ | async)?.adminOrganizations?.includes(org.id!)) {
@@ -54,13 +59,76 @@
   <div class="settings-card">
     <h3 class="settings-card-title">{{ 'SETTINGS_ORGANIZATIONS_MANAGE_TITLE' | transloco }}</h3>
     <p class="settings-card-desc">{{ 'SETTINGS_ORGANIZATIONS_MANAGE_DESC' | transloco }}</p>
-    <br>
-    <div class="tabs tabs-box">
-      @for (org of (authService.identity$ | async)?.organizations ; track org.id) {
-        @if ((authService.identity$ | async)?.adminOrganizations?.includes(org.id!)) {
-          <input type="radio" name="my_tabs_7" class="tab z-1" [aria-label]="org.name" />
-          <div class="tab-content border-base-300 bg-base-100 p-6">{{ 'SETTINGS_ORGANIZATIONS_MANAGE_CONTENT' | transloco:{ name: org.name } }}</div>
+    <div class="mt-4">
+      @if (selectedAdminOrganizationId()) {
+        <div class="flex gap-2">
+          <input
+            type="email"
+            class="input input-bordered w-full"
+            [placeholder]="'SETTINGS_ORGANIZATIONS_INVITE_PLACEHOLDER' | transloco"
+            [ngModel]="inviteEmail()"
+            (ngModelChange)="inviteEmail.set($event)"
+            (keyup.enter)="inviteMember()"
+          />
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="inviting() || !inviteEmail().trim()"
+            (click)="inviteMember()"
+          >
+            {{ 'SETTINGS_ORGANIZATIONS_INVITE_ACTION' | transloco }}
+          </button>
+        </div>
+
+        @if (outgoingInvitations().length > 0) {
+          <ul class="manage-list mt-3" aria-label="Outgoing organization invitations">
+            @for (invitation of outgoingInvitations(); track invitation.id) {
+              <li class="manage-list-item">
+                <span class="truncate">{{ invitation.email }}</span>
+                <div class="flex items-center gap-2">
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-outline"
+                    [disabled]="invitationActionId() === invitation.id"
+                    (click)="resendInvite(invitation)"
+                  >
+                    {{ 'SETTINGS_ORGANIZATIONS_RESEND' | transloco }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-xs btn-error btn-soft"
+                    [disabled]="invitationActionId() === invitation.id"
+                    (click)="cancelInvite(invitation)"
+                  >
+                    {{ 'SETTINGS_ORGANIZATIONS_CANCEL_INVITE' | transloco }}
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
         }
+
+        @if (loadingManagementData()) {
+          <p class="text-sm text-base-content/60 mt-3">{{ 'SETTINGS_ORGANIZATIONS_LOADING' | transloco }}</p>
+        } @else {
+          <ul class="manage-list mt-3" aria-label="Organization members">
+            @for (member of organizationMembers(); track member.id) {
+              <li class="manage-list-item">
+                <span class="truncate">{{ getMemberDisplayName(member) }} ({{ member.email }})</span>
+                <button
+                  type="button"
+                  class="btn btn-xs btn-error btn-soft"
+                  [disabled]="memberActionUserId() === member.id"
+                  (click)="kickMember(member)"
+                >
+                  {{ 'SETTINGS_ORGANIZATIONS_KICK' | transloco }}
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      } @else {
+        <p class="text-sm text-base-content/60 mt-3">{{ 'SETTINGS_ORGANIZATIONS_NO_ADMIN' | transloco }}</p>
       }
     </div>
   </div>

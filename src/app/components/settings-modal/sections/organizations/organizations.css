@@ -97,3 +97,19 @@
 .task-color-dot[data-color='PINK'] { --task-color-preview: #ec4899; }
 .task-color-dot[data-color='BROWN'] { --task-color-preview: #a16207; }
 .task-color-dot[data-color='GRAY'] { --task-color-preview: #6b7280; }
+
+.org-manage-selectable {
+  @apply cursor-pointer hover:border-primary/45 transition-colors;
+}
+
+.org-manage-selected {
+  @apply border-primary bg-primary/8;
+}
+
+.manage-list {
+  @apply space-y-2;
+}
+
+.manage-list-item {
+  @apply flex items-center justify-between gap-3 p-3 rounded-xl bg-base-200/60 border border-base-300 text-sm;
+}
