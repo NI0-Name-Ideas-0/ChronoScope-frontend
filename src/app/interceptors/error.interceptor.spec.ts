@@ -3,6 +3,7 @@ import { HttpClient, HttpContext, provideHttpClient, withInterceptors } from '@a
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { errorInterceptor, SKIP_ERROR_TOAST } from './error.interceptor';
 import { NotificationService } from '@services/notification.service';
+import { ChronoscopeError } from '@app/model/chronoscope-error.model';
 
 describe('errorInterceptor', () => {
   let http: HttpClient;
@@ -135,5 +136,123 @@ describe('errorInterceptor', () => {
     cases.forEach(({ expected }, i) => {
       expect(notifications[i].title).toBe(expected);
     });
+  });
+
+  it('should use errorCode-mapped title when ProblemDetail has errorCode in properties', () => {
+    http.get('/api/test').subscribe({ error: () => {} });
+    httpMock.expectOne('/api/test').flush(
+      {
+        detail: 'No available time slots',
+        title: 'Planning Failed',
+        status: 409,
+        type: 'urn:chronoscope:error:insufficient-slots',
+        properties: { errorCode: 'INSUFFICIENT_SLOTS' },
+      },
+      { status: 409, statusText: 'Conflict' },
+    );
+
+    const notifications = notificationService.notifications();
+    expect(notifications[0].title).toBe('Planning Failed');
+    expect(notifications[0].message).toBe('No available time slots');
+  });
+
+  it('should fall back to ProblemDetail title when errorCode is unknown', () => {
+    http.get('/api/test').subscribe({ error: () => {} });
+    httpMock.expectOne('/api/test').flush(
+      {
+        detail: 'Something weird',
+        title: 'Custom Error',
+        status: 400,
+        properties: { errorCode: 'UNKNOWN_CODE' },
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+
+    expect(notificationService.notifications()[0].title).toBe('Custom Error');
+  });
+
+  it('should parse fieldErrors from ProblemDetail properties and include in notification', () => {
+    http.get('/api/test').subscribe({ error: () => {} });
+    httpMock.expectOne('/api/test').flush(
+      {
+        detail: 'Request validation failed',
+        title: 'Validation Failed',
+        status: 400,
+        type: 'urn:chronoscope:error:validation-error',
+        properties: {
+          errorCode: 'VALIDATION_ERROR',
+          fieldErrors: [
+            { field: 'name', message: 'must not be blank' },
+            { field: 'dueDate', message: 'must be in the future' },
+          ],
+        },
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+
+    const notification = notificationService.notifications()[0];
+    expect(notification.fieldErrors).toBeDefined();
+    expect(notification.fieldErrors!.length).toBe(2);
+    expect(notification.fieldErrors![0].field).toBe('name');
+    expect(notification.fieldErrors![0].message).toBe('must not be blank');
+    expect(notification.fieldErrors![1].field).toBe('dueDate');
+  });
+
+  it('should re-throw ChronoscopeError with errorCode and typeUri for programmatic handling', () => {
+    let caughtError: unknown = null;
+    http.get('/api/test').subscribe({ error: (err) => (caughtError = err) });
+    httpMock.expectOne('/api/test').flush(
+      {
+        detail: 'Task not found',
+        title: 'Not Found',
+        status: 404,
+        type: 'urn:chronoscope:error:resource-not-found',
+        properties: { errorCode: 'RESOURCE_NOT_FOUND' },
+      },
+      { status: 404, statusText: 'Not Found' },
+    );
+
+    expect(caughtError).toBeInstanceOf(ChronoscopeError);
+    const err = caughtError as ChronoscopeError;
+    expect(err.errorCode).toBe('RESOURCE_NOT_FOUND');
+    expect(err.typeUri).toBe('urn:chronoscope:error:resource-not-found');
+    expect(err.status).toBe(404);
+    expect(err.detail).toBe('Task not found');
+  });
+
+  it('should still re-throw ChronoscopeError when SKIP_ERROR_TOAST is set', () => {
+    let caughtError: unknown = null;
+    const context = new HttpContext().set(SKIP_ERROR_TOAST, true);
+    http.get('/api/test', { context }).subscribe({ error: (err) => (caughtError = err) });
+    httpMock.expectOne('/api/test').flush(
+      {
+        detail: 'Forbidden resource',
+        title: 'Access Denied',
+        status: 403,
+        type: 'urn:chronoscope:error:access-denied',
+        properties: { errorCode: 'ACCESS_DENIED' },
+      },
+      { status: 403, statusText: 'Forbidden' },
+    );
+
+    expect(notificationService.notifications().length).toBe(0);
+    expect(caughtError).toBeInstanceOf(ChronoscopeError);
+    expect((caughtError as ChronoscopeError).errorCode).toBe('ACCESS_DENIED');
+  });
+
+  it('should not include fieldErrors in notification when ProblemDetail has no fieldErrors', () => {
+    http.get('/api/test').subscribe({ error: () => {} });
+    httpMock.expectOne('/api/test').flush(
+      {
+        detail: 'Task not found',
+        title: 'Not Found',
+        status: 404,
+        type: 'urn:chronoscope:error:resource-not-found',
+        properties: { errorCode: 'RESOURCE_NOT_FOUND' },
+      },
+      { status: 404, statusText: 'Not Found' },
+    );
+
+    expect(notificationService.notifications()[0].fieldErrors).toBeUndefined();
   });
 });
