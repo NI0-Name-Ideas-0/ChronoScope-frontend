@@ -33,6 +33,7 @@
   "SETTINGS_ACCOUNT_MERGE_DESC": "Link another account by entering its email address. Both accounts will be merged.",
   "SETTINGS_ACCOUNT_MERGE_PLACEHOLDER": "account@example.com",
   "SETTINGS_ACCOUNT_MERGE_BUTTON": "Send Merge Request",
+  "SETTINGS_ORGANIZATIONS_LOADING": "Loading...",
   "SETTINGS_ORGANIZATIONS_TITLE": "Organizations & Profiles",
   "SETTINGS_ORGANIZATIONS_DESC": "Manage your organization memberships and linked accounts.",
   "SETTINGS_ORGANIZATIONS_YOUR_TITLE": "Your Organizations",
