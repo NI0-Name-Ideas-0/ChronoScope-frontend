@@ -46,8 +46,11 @@ Plans:
 4. Form labels, validation error messages, and button text display in the active language
 5. No untranslated keys or placeholder text visible when browsing the full app in either language
 
-**Plans:**
-- (Not planned yet)
+**Plans:** 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Review and correct all EN and DE translations for natural language quality
+- [ ] 02-02-PLAN.md — Translation completeness audit and coverage verification
 
 **UI hint**: yes
 
