@@ -138,7 +138,7 @@ describe('errorInterceptor', () => {
     });
   });
 
-  it('should use errorCode-mapped title when ProblemDetail has errorCode in properties', () => {
+  it('should use errorCode-mapped title when ProblemDetail has errorCode at root', () => {
     http.get('/api/test').subscribe({ error: () => {} });
     httpMock.expectOne('/api/test').flush(
       {
@@ -146,7 +146,7 @@ describe('errorInterceptor', () => {
         title: 'Planning Failed',
         status: 409,
         type: 'urn:chronoscope:error:insufficient-slots',
-        properties: { errorCode: 'INSUFFICIENT_SLOTS' },
+        errorCode: 'INSUFFICIENT_SLOTS',
       },
       { status: 409, statusText: 'Conflict' },
     );
@@ -163,7 +163,7 @@ describe('errorInterceptor', () => {
         detail: 'Something weird',
         title: 'Custom Error',
         status: 400,
-        properties: { errorCode: 'UNKNOWN_CODE' },
+        errorCode: 'UNKNOWN_CODE',
       },
       { status: 400, statusText: 'Bad Request' },
     );
@@ -171,7 +171,7 @@ describe('errorInterceptor', () => {
     expect(notificationService.notifications()[0].title).toBe('Custom Error');
   });
 
-  it('should parse fieldErrors from ProblemDetail properties and include in notification', () => {
+  it('should parse fieldErrors from ProblemDetail root and include in notification', () => {
     http.get('/api/test').subscribe({ error: () => {} });
     httpMock.expectOne('/api/test').flush(
       {
@@ -179,13 +179,11 @@ describe('errorInterceptor', () => {
         title: 'Validation Failed',
         status: 400,
         type: 'urn:chronoscope:error:validation-error',
-        properties: {
-          errorCode: 'VALIDATION_ERROR',
-          fieldErrors: [
-            { field: 'name', message: 'must not be blank' },
-            { field: 'dueDate', message: 'must be in the future' },
-          ],
-        },
+        errorCode: 'VALIDATION_ERROR',
+        fieldErrors: [
+          { field: 'name', message: 'must not be blank' },
+          { field: 'dueDate', message: 'must be in the future' },
+        ],
       },
       { status: 400, statusText: 'Bad Request' },
     );
@@ -207,7 +205,7 @@ describe('errorInterceptor', () => {
         title: 'Not Found',
         status: 404,
         type: 'urn:chronoscope:error:resource-not-found',
-        properties: { errorCode: 'RESOURCE_NOT_FOUND' },
+        errorCode: 'RESOURCE_NOT_FOUND',
       },
       { status: 404, statusText: 'Not Found' },
     );
@@ -230,7 +228,7 @@ describe('errorInterceptor', () => {
         title: 'Access Denied',
         status: 403,
         type: 'urn:chronoscope:error:access-denied',
-        properties: { errorCode: 'ACCESS_DENIED' },
+        errorCode: 'ACCESS_DENIED',
       },
       { status: 403, statusText: 'Forbidden' },
     );
@@ -248,7 +246,7 @@ describe('errorInterceptor', () => {
         title: 'Not Found',
         status: 404,
         type: 'urn:chronoscope:error:resource-not-found',
-        properties: { errorCode: 'RESOURCE_NOT_FOUND' },
+        errorCode: 'RESOURCE_NOT_FOUND',
       },
       { status: 404, statusText: 'Not Found' },
     );
@@ -262,7 +260,7 @@ describe('errorInterceptor', () => {
       title: 'Account Not Found',
       status: 404,
       type: 'urn:chronoscope:error:account-not-found',
-      properties: { errorCode: 'ACCOUNT_NOT_FOUND' },
+      errorCode: 'ACCOUNT_NOT_FOUND',
     });
 
     let caughtError: unknown = null;
@@ -285,12 +283,10 @@ describe('errorInterceptor', () => {
       title: 'Validation Failed',
       status: 400,
       type: 'urn:chronoscope:error:validation-error',
-      properties: {
-        errorCode: 'VALIDATION_ERROR',
-        fieldErrors: [
-          { field: 'targetEmail', message: 'must be a valid email address' },
-        ],
-      },
+      errorCode: 'VALIDATION_ERROR',
+      fieldErrors: [
+        { field: 'targetEmail', message: 'must be a valid email address' },
+      ],
     });
 
     http.get('/api/test').subscribe({ error: () => {} });
