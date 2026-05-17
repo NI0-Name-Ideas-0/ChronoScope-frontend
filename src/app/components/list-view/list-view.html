@@ -142,37 +142,33 @@
           <div class="px-4 pb-4 space-y-1 task-scopes">
             @for (scope of getVisibleScopes($any(task)); track scope.start.getTime()) {
               <div
-                class="card bg-base-200 shadow-sm border border-base-300 p-3 flex items-center justify-between"
+                class="card bg-base-200 shadow-sm border border-base-300 py-1 px-2 flex flex-row items-center gap-2 whitespace-nowrap overflow-hidden"
                 [class.opacity-60]="scope.isFinished"
               >
-                <div class="flex items-center gap-3">
-                  <span class="text-sm font-medium">
-                    {{ scope.start | date: 'dd/MM/yyyy HH:mm' }} -
-                    {{ scope.end | date: 'HH:mm' }}
-                  </span>
-                  <span class="text-xs text-base-content/50">
-                    ({{ getScopeDurationMinutes(scope) }} min)
-                  </span>
-                  @if (scope.isFinished) {
-                    <span class="badge badge-success badge-sm">Done</span>
-                  }
-                </div>
-                <button
-                  class="btn btn-ghost btn-sm btn-circle"
-                  [class.text-warning]="!scope.isFinished"
-                  [class.text-success]="scope.isFinished"
-                  (click)="onMarkScopeDone($any(task), scope, $event)"
-                  [title]="scope.isFinished ? 'Mark as open' : 'Mark as done'"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
+                <span class="text-xs font-medium truncate min-w-0">
+                  {{ scope.start | date: 'dd.MM.yy HH:mm' }}–{{ scope.end | date: 'HH:mm' }}
+                </span>
+                <span class="text-xs text-base-content/50 shrink-0">
+                  {{ getScopeDurationMinutes(scope) }}m
+                </span>
+                @if (scope.isFinished) {
+                  <span class="badge badge-success badge-xs ml-auto shrink-0">Done</span>
+                } @else if (canMarkScopeDone($any(task), scope)) {
+                  <button
+                    class="btn btn-ghost btn-xs btn-circle text-warning ml-auto shrink-0"
+                    (click)="onMarkScopeDone($any(task), scope, $event)"
+                    title="Mark as done"
                   >
-                    <circle cx="12" cy="12" r="10" />
-                  </svg>
-                </button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-3 w-3"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                    </svg>
+                  </button>
+                }
               </div>
             }
           </div>

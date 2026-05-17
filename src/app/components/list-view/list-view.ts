@@ -56,11 +56,11 @@ export class ListView implements OnInit, OnDestroy {
       this.cdr.detectChanges();
     });
 
-    // Re-evaluate static task done-state every 30s so the UI updates
-    // automatically when a task's end time passes.
+    // Re-evaluate done-state every second so the UI updates
+    // automatically when a scope's end time passes.
     this.timeUpdateInterval = setInterval(() => {
       this.cdr.detectChanges();
-    }, 30000);
+    }, 1000);
   }
 
   ngOnDestroy(): void {
@@ -154,19 +154,22 @@ export class ListView implements OnInit, OnDestroy {
 
   /**
    * Returns the scopes to display for an AlgoTask.
-   * In 'today' view only scopes that fall on today are shown.
+   * All scopes are shown so the user sees the full history and future plan.
    */
   getVisibleScopes(task: AlgoTask): Scope[] {
-    if (this.activeFilter !== 'today') {
-      return task.scopes;
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return task.scopes.filter((scope) => {
-      const scopeDate = new Date(scope.start);
-      scopeDate.setHours(0, 0, 0, 0);
-      return scopeDate.getTime() === today.getTime();
-    });
+    return task.scopes;
+  }
+
+  /**
+   * Checks whether a scope can be marked as done.
+   * Requires the previous scope to be finished and the scope not to be finished already.
+   */
+  canMarkScopeDone(task: AlgoTask, scope: Scope): boolean {
+    if (scope.isFinished) return false;
+    const scopeIndex = task.scopes.indexOf(scope);
+    if (scopeIndex === -1) return false;
+    if (scopeIndex === 0) return true;
+    return task.scopes[scopeIndex - 1].isFinished;
   }
 
   //used by the Filter-Buttons to set the value
@@ -269,7 +272,9 @@ export class ListView implements OnInit, OnDestroy {
 
   onMarkScopeDone(task: AlgoTask, scope: Scope, event: Event) {
     event.stopPropagation();
-    scope.isFinished = !scope.isFinished;
+    if (!this.canMarkScopeDone(task, scope)) return;
+
+    scope.isFinished = true;
 
     // Derive task-level completion from all scopes
     task.isFinished = task.scopes.every((s) => s.isFinished);

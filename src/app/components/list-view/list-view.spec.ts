@@ -68,7 +68,7 @@ describe('ListView', () => {
 
   it('should mark scope done and update elapsed time', async () => {
     const task = createAlgoTask(1, 'Algo Task', [
-      new Scope(new Date(), new Date(Date.now() + 3600000)),
+      new Scope(new Date(Date.now() - 7200000), new Date(Date.now() - 3600000)),
     ]);
     mockTaskService.tasks$.next([task]);
     fixture.detectChanges();
