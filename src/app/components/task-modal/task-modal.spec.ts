@@ -830,6 +830,35 @@ describe('TaskModal', () => {
     expect(component.isOpen()).toBe(true);
   });
 
+  describe('syncRruleDtstart', () => {
+    it('should update DTSTART when start date changes', () => {
+      const originalRrule = 'DTSTART:20260420T090000Z\nRRULE:FREQ=DAILY;INTERVAL=1';
+      const newStart = new Date('2026-04-21T10:00:00Z');
+      const updated = (component as any).syncRruleDtstart(originalRrule, newStart);
+      expect(updated).toContain('DTSTART:20260421T100000Z');
+      expect(updated).toContain('FREQ=DAILY');
+    });
+
+    it('should preserve UNTIL when updating DTSTART', () => {
+      const originalRrule = 'DTSTART:20260420T090000Z\nRRULE:FREQ=DAILY;UNTIL=20260430T000000Z';
+      const newStart = new Date('2026-04-21T10:00:00Z');
+      const updated = (component as any).syncRruleDtstart(originalRrule, newStart);
+      expect(updated).toContain('DTSTART:20260421T100000Z');
+      expect(updated).toContain('UNTIL=20260430T000000Z');
+    });
+
+    it('should return empty string for empty rrule', () => {
+      const updated = (component as any).syncRruleDtstart('', new Date());
+      expect(updated).toBe('');
+    });
+
+    it('should return original for invalid rrule', () => {
+      const invalid = 'not-an-rrule';
+      const updated = (component as any).syncRruleDtstart(invalid, new Date());
+      expect(updated).toBe(invalid);
+    });
+  });
+
   // Template branch coverage tests
   describe('template branches', () => {
     it('should render error message when set', () => {

@@ -195,9 +195,9 @@ describe('RepetitionFieldComponent', () => {
 
       expect(component.endDateError).toBeNull();
       expect(emittedValue).toMatch(/FREQ=DAILY/);
-      const endDate = new Date('2026-05-01T00:00:00');
-      const untilUtc = endDate.toISOString().replace(/[-:]/g, '').slice(0, 15);
-      expect(emittedValue).toMatch(new RegExp(`UNTIL=${untilUtc}`));
+      // UNTIL should include the selected end date (2026-05-01) so that
+      // occurrences on the last day are still generated.
+      expect(emittedValue).toMatch(/UNTIL=20260501T/);
       expect(component.isOpen).toBe(false);
     });
 

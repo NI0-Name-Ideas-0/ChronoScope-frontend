@@ -6,6 +6,7 @@ import { StaticTask } from '@app/model/static-task';
 import { AlgoTask } from '@app/model/algo-task';
 import { Scope } from '@app/model/scope';
 import { Task } from '@app/model/task';
+import { RRule } from 'rrule';
 
 describe('ListView', () => {
   let component: ListView;
@@ -125,9 +126,52 @@ describe('ListView', () => {
 
     expect(fixture.nativeElement.textContent).toContain('No tasks found');
   });
+
+  it('should not mark recurring task as done when there are future occurrences', () => {
+    const pastStart = new Date(Date.now() - 86400000 * 2);
+    const pastEnd = new Date(Date.now() - 86400000);
+    const rule = new RRule({ freq: RRule.DAILY, dtstart: pastStart });
+    const task = new StaticTask(
+      1,
+      'Recurring Task',
+      'Description',
+      [],
+      new Scope(pastStart, pastEnd),
+      null,
+      'EASY',
+      false,
+      rule.toString(),
+    );
+    mockTaskService.tasks$.next([task]);
+    fixture.detectChanges();
+
+    expect(component.isTaskFinished(task)).toBe(false);
+  });
+
+  it('should mark recurring task as done when all occurrences are in the past', () => {
+    const pastStart = new Date(Date.now() - 86400000 * 5);
+    const pastEnd = new Date(Date.now() - 86400000 * 4);
+    const until = new Date(Date.now() - 86400000 * 2);
+    const rule = new RRule({ freq: RRule.DAILY, dtstart: pastStart, until });
+    const task = new StaticTask(
+      1,
+      'Expired Recurring',
+      'Description',
+      [],
+      new Scope(pastStart, pastEnd),
+      null,
+      'EASY',
+      false,
+      rule.toString(),
+    );
+    mockTaskService.tasks$.next([task]);
+    fixture.detectChanges();
+
+    expect(component.isTaskFinished(task)).toBe(true);
+  });
 });
 
-function createStaticTask(id: number, title: string, isFinished = false): Task {
+function createStaticTask(id: number, title: string, isFinished = false, rrule: string = ''): Task {
   const now = Date.now();
   const start = new Date(now - 86400000);
   const end = isFinished ? new Date(now - 3600000) : new Date(now + 3600000);
@@ -140,6 +184,7 @@ function createStaticTask(id: number, title: string, isFinished = false): Task {
     null,
     'EASY',
     isFinished,
+    rrule,
   );
 }
 

@@ -9,6 +9,7 @@ import { StaticTask } from '@app/model/static-task';
 import { AlgoTask } from '@app/model/algo-task';
 import { Scope } from '@app/model/scope';
 import { DynamicTaskUpdateRequest } from '../../../api/models';
+import { rrulestr } from 'rrule';
 
 @Component({
   selector: 'app-list-view',
@@ -235,6 +236,15 @@ export class ListView implements OnInit, OnDestroy {
       return task.scopes.length > 0 && task.scopes.every((s) => s.isFinished);
     }
     if (task instanceof StaticTask) {
+      if (task.rrule && task.rrule.trim()) {
+        try {
+          const rule = rrulestr(task.rrule);
+          const nextOccurrence = rule.after(new Date());
+          return nextOccurrence === null;
+        } catch {
+          return task.scope.end.getTime() < Date.now();
+        }
+      }
       return task.scope.end.getTime() < Date.now();
     }
     return task.isFinished;
