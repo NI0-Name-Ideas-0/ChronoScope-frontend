@@ -94,5 +94,15 @@ function fallbackMessage(error: HttpErrorResponse): string {
 }
 
 export function parseErrorBody(body: unknown, error: HttpErrorResponse): ChronoscopeError {
-  return new ChronoscopeError(error, body);
+  // Normalize: when responseType is 'text', the error body arrives as a raw JSON string
+  const normalized = typeof body === 'string' ? safeJsonParse(body) : body;
+  return new ChronoscopeError(error, normalized);
+}
+
+function safeJsonParse(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
 }

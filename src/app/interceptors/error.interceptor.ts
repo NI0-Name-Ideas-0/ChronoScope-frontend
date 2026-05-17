@@ -1,6 +1,6 @@
 import { HttpContextToken, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError } from 'rxjs';
+import { catchError, from, switchMap, throwError } from 'rxjs';
 import { NotificationService } from '@services/notification.service';
 import { ChronoscopeError, parseErrorBody } from '@app/model/chronoscope-error.model';
 
@@ -11,55 +11,42 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (!req.context.get(SKIP_ERROR_TOAST)) {
-        showErrorToast(notificationService, error);
+      const body = error.error;
+      const skipToast = req.context.get(SKIP_ERROR_TOAST);
+
+      // Blob bodies (responseType: 'blob') require async text extraction
+      if (body instanceof Blob) {
+        return from(body.text().catch(() => '')).pipe(
+          switchMap((text) => {
+            const chronoError = parseErrorBody(text, error);
+            if (!skipToast) {
+              showChronoErrorToast(notificationService, chronoError);
+            }
+            return throwError(() => chronoError);
+          }),
+        );
       }
 
-      const body = error.error;
-      if (body instanceof Blob) {
-        return throwError(() => error);
+      // String/object bodies (responseType: 'text' or 'json') — parseErrorBody handles both
+      const chronoError = parseErrorBody(body, error);
+      if (!skipToast) {
+        showChronoErrorToast(notificationService, chronoError);
       }
-      return throwError(() => parseErrorBody(body, error));
+      return throwError(() => chronoError);
     }),
   );
 };
 
-function showErrorToast(notificationService: NotificationService, error: HttpErrorResponse): void {
-  if (error.status === 0) {
+function showChronoErrorToast(notificationService: NotificationService, chronoError: ChronoscopeError): void {
+  if (chronoError.status === 0) {
     notificationService.error('Unable to reach the server. Please check your connection.', {
       title: 'Connection Error',
     });
     return;
   }
 
-  const body = error.error;
-
-  if (body instanceof Blob) {
-    body.text().then((text) => {
-      const parsed = tryParseJson(text);
-      const chronoError = parseErrorBody(parsed, error);
-      notificationService.error(chronoError.message, {
-        title: chronoError.title,
-        fieldErrors: chronoError.fieldErrors,
-      });
-    }).catch(() => {
-      const chronoError = parseErrorBody(undefined, error);
-      notificationService.error(chronoError.message, { title: chronoError.title });
-    });
-    return;
-  }
-
-  const chronoError = parseErrorBody(body, error);
   notificationService.error(chronoError.message, {
     title: chronoError.title,
     fieldErrors: chronoError.fieldErrors,
   });
-}
-
-function tryParseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
 }
