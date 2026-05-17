@@ -70,8 +70,11 @@ Plans:
 3. On app startup, the language loads from the backend preference and applies before the user interacts
 4. If no backend preference is set, the app defaults to English
 
-**Plans:**
-- (Not planned yet)
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Create LanguageService with signal state, localStorage cache, backend sync, and app startup initialization
+- [ ] 03-02-PLAN.md — Add language selector dropdown to Appearance & Language settings section
 
 **UI hint**: yes
 
