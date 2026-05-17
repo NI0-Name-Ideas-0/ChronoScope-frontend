@@ -22,7 +22,7 @@
     <button
       type="button"
       class="toast-dismiss"
-      aria-label="Dismiss notification"
+      [attr.aria-label]="'NOTIFICATION_DISMISS' | transloco"
       (click)="onDismiss()">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
            stroke-width="1.5" stroke="currentColor" class="size-4" aria-hidden="true">

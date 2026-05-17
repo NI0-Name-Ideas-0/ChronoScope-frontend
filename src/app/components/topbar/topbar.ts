@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { UpcomingBadge } from './upcoming-badge/upcoming-badge';
 import { ViewService } from '@services/view.service';
 import { TaskService } from '@services/task.service';
@@ -17,7 +18,7 @@ interface PreviewItem {
 
 @Component({
   selector: 'app-topbar',
-  imports: [UpcomingBadge, CommonModule],
+  imports: [UpcomingBadge, CommonModule, TranslocoPipe],
   templateUrl: './topbar.html',
   styleUrl: './topbar.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
