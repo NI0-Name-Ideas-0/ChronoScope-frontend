@@ -7,7 +7,10 @@ import { OAuthService } from 'angular-oauth2-oidc';
 import { Api } from '../../../api/api';
 import { TaskModalService } from '@services/task-modal.service';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
+import { LanguageService } from '@services/language.service';
 import { of } from 'rxjs';
+import { signal } from '@angular/core';
+import { getTranslocoTestingModule } from '@test-utils/transloco-testing';
 
 const mockOAuthService = {
   configure: vi.fn(),
@@ -41,6 +44,12 @@ const mockApi = {
   invoke: vi.fn(),
 };
 
+const mockLanguageService = {
+  language: signal('en' as const),
+  initialize: vi.fn(),
+  setLanguage: vi.fn(),
+};
+
 describe('CalendarView', () => {
   let component: CalendarView;
   let fixture: ComponentFixture<CalendarView>;
@@ -48,7 +57,7 @@ describe('CalendarView', () => {
   beforeEach(async () => {
     TestBed.resetTestingModule();
     await TestBed.configureTestingModule({
-      imports: [CalendarView],
+      imports: [CalendarView, getTranslocoTestingModule()],
       providers: [
         ViewService,
         { provide: OAuthService, useValue: mockOAuthService },
@@ -57,6 +66,7 @@ describe('CalendarView', () => {
         { provide: TaskModalService, useValue: mockTaskModalService },
         { provide: WorkSlotPreferenceService, useValue: mockWorkSlotPreferenceService },
         { provide: Api, useValue: mockApi },
+        { provide: LanguageService, useValue: mockLanguageService },
       ],
     }).compileComponents();
 

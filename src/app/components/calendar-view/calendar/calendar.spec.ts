@@ -7,10 +7,13 @@ import { OAuthService } from 'angular-oauth2-oidc';
 import { Api } from '@api/api';
 import { Auth } from '@services/auth';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
+import { LanguageService } from '@services/language.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { Task } from '@app/model/task';
 import { StaticTask } from '@app/model/static-task';
 import { Scope } from '@app/model/scope';
+import { signal } from '@angular/core';
+import { getTranslocoTestingModule } from '@test-utils/transloco-testing';
 
 class MockTaskService {
   tasks$ = new BehaviorSubject<Task[]>([]);
@@ -57,6 +60,12 @@ describe('Calendar', () => {
     preferencesChanged$: of(undefined),
   };
 
+  const mockLanguageService = {
+    language: signal('en' as const),
+    initialize: vi.fn(),
+    setLanguage: vi.fn(),
+  };
+
   const createMockCalendarRef = () => {
     const events: Array<{ remove: ReturnType<typeof vi.fn> }> = [];
     const api = {
@@ -76,7 +85,7 @@ describe('Calendar', () => {
     TestBed.resetTestingModule();
 
     await TestBed.configureTestingModule({
-      imports: [Calendar],
+      imports: [Calendar, getTranslocoTestingModule()],
       providers: [
         ViewService,
         { provide: TaskService, useClass: MockTaskService },
@@ -85,6 +94,7 @@ describe('Calendar', () => {
         { provide: Api, useValue: mockApi },
         { provide: Auth, useValue: mockAuth },
         { provide: WorkSlotPreferenceService, useValue: mockWorkSlotPreferenceService },
+        { provide: LanguageService, useValue: mockLanguageService },
       ],
     }).compileComponents();
 
