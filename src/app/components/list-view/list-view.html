@@ -128,9 +128,8 @@
               <button
                 class="btn btn-ghost btn-sm btn-circle text-error"
                 (click)="onDelete(task, $event)"
-                [title]="
-                  task.isFinished ? ('LIST_MARK_OPEN' | transloco) : ('LIST_MARK_DONE' | transloco)
-                "
+                title="Delete task"
+                aria-label="Delete task"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
