@@ -102,7 +102,12 @@
           <!-- Right: due date + actions -->
           <div class="shrink-0 flex flex-col items-end justify-between gap-2">
             <span class="text-xs text-base-content/50 whitespace-nowrap">
-              {{ 'LIST_DUE_DATE' | transloco }} {{ getTaskDueDate(task) | date: 'dd/MM/yyyy' }}
+              {{ 'LIST_DUE_DATE' | transloco }}
+              {{
+                ($any(task).occurrenceEnd ??
+                  $any(task).occurrenceDate ??
+                  getTaskDueDate(task) | date: 'dd/MM/yyyy')
+              }}
             </span>
             <div class="flex items-center gap-1">
               @if (isAlgoTask(task)) {
