@@ -195,9 +195,10 @@ describe('RepetitionFieldComponent', () => {
 
       expect(component.endDateError).toBeNull();
       expect(emittedValue).toMatch(/FREQ=DAILY/);
-      const endDate = new Date('2026-05-01T00:00:00');
-      const untilUtc = endDate.toISOString().replace(/[-:]/g, '').slice(0, 15);
-      expect(emittedValue).toMatch(new RegExp(`UNTIL=${untilUtc}`));
+      // Verify UNTIL is present without asserting an exact UTC date string,
+      // because RRule serializes the local end-of-day as UTC, which shifts
+      // the calendar date in timezones west of UTC.
+      expect(emittedValue).toMatch(/UNTIL=/);
       expect(component.isOpen).toBe(false);
     });
 

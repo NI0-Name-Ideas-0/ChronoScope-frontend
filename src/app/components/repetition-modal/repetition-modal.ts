@@ -158,7 +158,9 @@ export class RepetitionFieldComponent {
       dtstart: this.dtstart,
     };
     if (this.endDate) {
-      ruleOptions.until = this.endDate;
+      const until = new Date(this.endDate);
+      until.setHours(23, 59, 59, 999);
+      ruleOptions.until = until;
     }
     const rule = new RRule(ruleOptions);
 

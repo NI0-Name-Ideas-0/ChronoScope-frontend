@@ -413,23 +413,10 @@ export class TaskService {
   }
 
   /**
-   * Loads completion state from localStorage.
-   */
-  private loadCompletionState(): Record<number, { isFinished: boolean; scopes: boolean[] }> {
-    try {
-      return JSON.parse(localStorage.getItem('chronoscope-completion') || '{}');
-    } catch {
-      return {};
-    }
-  }
-
-  /**
-   * Saves completion state to localStorage.
+   * Notifies subscribers that task data may have changed.
+   * (Local persistence for dynamic tasks is handled via the backend elapsed field.)
    */
   saveTaskCompletion(taskId: number, isFinished: boolean, scopeStates?: boolean[]): void {
-    const state = this.loadCompletionState();
-    state[taskId] = { isFinished, scopes: scopeStates || [] };
-    localStorage.setItem('chronoscope-completion', JSON.stringify(state));
     this.tasksSubject.next([...this.tasks.values()]);
   }
 
@@ -438,37 +425,43 @@ export class TaskService {
    */
   private convertApiTaskToModel(apiTask: StaticTaskResponse | DynamicTaskResponse): Task {
     const isStatic = apiTask.type === 'static';
-    const completionState =
-      apiTask.id !== undefined ? this.loadCompletionState()[apiTask.id] : undefined;
 
     if (isStatic) {
       const staticTask = apiTask as StaticTaskResponse;
+      const scopeEnd = new Date(staticTask.endAt!);
+      const isFinished = scopeEnd.getTime() < Date.now();
       return new StaticTask(
         staticTask.id!,
         staticTask.name!,
         staticTask.description || '',
         (staticTask.labels as any)?.map((l: any) => l.name || l) || [],
-        new Scope(new Date(staticTask.startAt!), new Date(staticTask.endAt!)),
+        new Scope(new Date(staticTask.startAt!), scopeEnd),
         staticTask.organizationId || null,
         staticTask.difficulty!,
-        completionState?.isFinished ?? false,
+        isFinished,
         this.normalizeTaskColor(staticTask.color),
         staticTask.rrule || '',
         Boolean(staticTask.isBlocker),
       );
     } else {
       const dynamicTask = apiTask as DynamicTaskResponse;
-      const scopes = (dynamicTask.scopes || [])
+      const rawScopes = (dynamicTask.scopes || [])
         .filter((scope) => scope.startAt && scope.endAt)
-        .map((scope, index) => {
-          return new Scope(
-            new Date(scope.startAt!),
-            new Date(scope.endAt!),
-            completionState?.scopes?.[index] ?? false,
-          );
-        });
+        .map((scope) => new Scope(new Date(scope.startAt!), new Date(scope.endAt!)));
+
+      // Sort chronologically and derive done-state from the backend's elapsed time.
+      const scopes = rawScopes.sort((a, b) => a.start.getTime() - b.start.getTime());
+      const elapsedMinutes = this.parseDurationToMinutes(dynamicTask.elapsed, 0);
+      let accumulatedMinutes = 0;
+      for (const scope of scopes) {
+        const durationMinutes = Math.round((scope.end.getTime() - scope.start.getTime()) / 60000);
+        accumulatedMinutes += durationMinutes;
+        scope.isFinished = accumulatedMinutes <= elapsedMinutes;
+      }
 
       const allScopesDone = scopes.length > 0 && scopes.every((s) => s.isFinished);
+      const isFinished =
+        allScopesDone || elapsedMinutes >= this.parseDurationToMinutes(dynamicTask.duration, 0);
       return new AlgoTask(
         dynamicTask.id!,
         dynamicTask.name!,
@@ -482,7 +475,7 @@ export class TaskService {
         dynamicTask.organizationId || null,
         scopes,
         dynamicTask.difficulty!,
-        completionState?.isFinished ?? allScopesDone,
+        isFinished,
         this.normalizeTaskColor(dynamicTask.color),
         this.parseDurationToMinutes(dynamicTask.minScopeDuration, 30),
         this.parseDurationToMinutes(dynamicTask.maxScopeDuration, 120),
@@ -516,7 +509,8 @@ export class TaskService {
               classNames: ['fc-event--task'],
               ...(this.resolveTaskColor(task) !== 'UNSET'
                 ? {
-                    backgroundColor: this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
+                    backgroundColor:
+                      this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
                     borderColor: this.getTaskColorMix(this.resolveTaskColor(task), 35) ?? undefined,
                   }
                 : {}),

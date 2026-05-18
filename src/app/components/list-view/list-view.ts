@@ -1,7 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 import { TaskService } from '@services/task.service';
 import { TaskModalService } from '@services/task-modal.service';
 import { ViewService } from '@services/view.service';
@@ -10,6 +11,7 @@ import { StaticTask } from '@app/model/static-task';
 import { AlgoTask } from '@app/model/algo-task';
 import { Scope } from '@app/model/scope';
 import { DynamicTaskUpdateRequest } from '../../../api/models';
+import { rrulestr } from 'rrule';
 
 @Component({
   selector: 'app-list-view',
@@ -18,7 +20,7 @@ import { DynamicTaskUpdateRequest } from '../../../api/models';
   templateUrl: 'list-view.html',
   styleUrl: 'list-view.css',
 })
-export class ListView implements OnInit {
+export class ListView implements OnInit, OnDestroy {
   constructor(
     private taskService: TaskService,
     private taskModalService: TaskModalService,
@@ -26,6 +28,8 @@ export class ListView implements OnInit {
   ) {}
 
   private viewService = inject(ViewService);
+  private timeUpdateInterval: ReturnType<typeof setInterval> | null = null;
+  private tasksSubscription: Subscription | null = null;
 
   tasks: Task[] = [];
   activeFilter: 'all' | 'todo' | 'today' | 'done' = 'today';
@@ -50,18 +54,49 @@ export class ListView implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.taskService.tasks$.subscribe((tasks) => {
+    this.tasksSubscription = this.taskService.tasks$.subscribe((tasks) => {
       this.tasks = tasks;
       this.cdr.detectChanges();
     });
+
+    // Re-evaluate done-state every second so the UI updates
+    // automatically when a scope's end time passes.
+    this.timeUpdateInterval = setInterval(() => {
+      this.cdr.detectChanges();
+    }, 1000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.timeUpdateInterval) {
+      clearInterval(this.timeUpdateInterval);
+    }
+    this.tasksSubscription?.unsubscribe();
   }
 
   /**
-   * Helper method to get the end/due date of a task
-   * Works for both StaticTask and AlgoTask
+   * Helper method to get the end/due date of a task.
+   * For recurring StaticTasks, returns the current or next occurrence end date
+   * so the list row shows a relevant due date instead of the original scope end.
    */
   getTaskDueDate(task: Task): Date {
     if (task instanceof StaticTask) {
+      if (task.rrule && task.rrule.trim()) {
+        try {
+          const rule = rrulestr(task.rrule);
+          const now = new Date();
+          const durationMs = Math.max(0, task.scope.end.getTime() - task.scope.start.getTime());
+          const lastOccurrence = rule.before(now, true);
+          if (lastOccurrence && lastOccurrence.getTime() + durationMs > now.getTime()) {
+            return new Date(lastOccurrence.getTime() + durationMs);
+          }
+          const nextOccurrence = rule.after(now);
+          if (nextOccurrence) {
+            return new Date(nextOccurrence.getTime() + durationMs);
+          }
+        } catch {
+          // fall through to default
+        }
+      }
       return task.scope.end;
     } else if (task instanceof AlgoTask) {
       return task.dueDate;
@@ -153,19 +188,23 @@ export class ListView implements OnInit {
 
   /**
    * Returns the scopes to display for an AlgoTask.
-   * In 'today' view only scopes that fall on today are shown.
+   * All scopes are shown so the user sees the full history and future plan.
    */
   getVisibleScopes(task: AlgoTask): Scope[] {
-    if (this.activeFilter !== 'today') {
-      return task.scopes;
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return task.scopes.filter((scope) => {
-      const scopeDate = new Date(scope.start);
-      scopeDate.setHours(0, 0, 0, 0);
-      return scopeDate.getTime() === today.getTime();
-    });
+    return task.scopes;
+  }
+
+  /**
+   * Checks whether a scope can be marked as done.
+   * Requires the previous scope to be finished and the scope not to be finished already.
+   */
+  canMarkScopeDone(task: AlgoTask, scope: Scope): boolean {
+    if (scope.isFinished) return false;
+    const scopeIndex = task.scopes.indexOf(scope);
+    if (scopeIndex === -1) return false;
+    if (scope.start.getTime() > Date.now()) return false;
+    if (scopeIndex === 0) return true;
+    return task.scopes[scopeIndex - 1].isFinished;
   }
 
   //used by the Filter-Buttons to set the value
@@ -205,6 +244,21 @@ export class ListView implements OnInit {
         today.setHours(0, 0, 0, 0);
         result = result.filter((task) => {
           if (task instanceof StaticTask) {
+            if (task.rrule && task.rrule.trim()) {
+              try {
+                const rule = rrulestr(task.rrule);
+                const todayStart = new Date();
+                todayStart.setHours(0, 0, 0, 0);
+                const todayEnd = new Date();
+                todayEnd.setHours(23, 59, 59, 999);
+                const occurrences = rule.between(todayStart, todayEnd, true);
+                return occurrences.length > 0;
+              } catch {
+                const due = new Date(task.scope.end);
+                due.setHours(0, 0, 0, 0);
+                return due.getTime() === today.getTime();
+              }
+            }
             const due = new Date(task.scope.end);
             due.setHours(0, 0, 0, 0);
             return due.getTime() === today.getTime();
@@ -228,10 +282,39 @@ export class ListView implements OnInit {
   /**
    * Checks if a task is finished.
    * For AlgoTasks, returns true only when ALL scopes are finished.
+   * For StaticTasks, returns true when the end date/time is in the past.
    */
   isTaskFinished(task: Task): boolean {
     if (task instanceof AlgoTask) {
-      return task.scopes.length > 0 && task.scopes.every((s) => s.isFinished);
+      return (
+        task.elapsedMinutes >= task.duration ||
+        (task.scopes.length > 0 && task.scopes.every((s) => s.isFinished))
+      );
+    }
+    if (task instanceof StaticTask) {
+      const now = Date.now();
+      if (task.rrule && task.rrule.trim()) {
+        try {
+          const rule = rrulestr(task.rrule);
+          const durationMs = Math.max(0, task.scope.end.getTime() - task.scope.start.getTime());
+          const currentTime = new Date(now);
+          const lastOccurrence = rule.before(currentTime, true);
+
+          if (
+            lastOccurrence !== null &&
+            lastOccurrence.getTime() <= now &&
+            lastOccurrence.getTime() + durationMs > now
+          ) {
+            return false;
+          }
+
+          const nextOccurrence = rule.after(currentTime);
+          return nextOccurrence === null;
+        } catch {
+          return task.scope.end.getTime() < now;
+        }
+      }
+      return task.scope.end.getTime() < now;
     }
     return task.isFinished;
   }
@@ -253,28 +336,20 @@ export class ListView implements OnInit {
     });
   }
 
-  onMarkDone(task: Task, event: Event) {
-    event.stopPropagation();
-    task.isFinished = !task.isFinished;
-    this.taskService.saveTaskCompletion(task.id, task.isFinished);
-    this.cdr.detectChanges();
-  }
-
   onMarkScopeDone(task: AlgoTask, scope: Scope, event: Event) {
     event.stopPropagation();
-    scope.isFinished = !scope.isFinished;
+    if (!this.canMarkScopeDone(task, scope)) return;
+
+    const wasFinished = scope.isFinished;
+    scope.isFinished = true;
+    const wasTaskFinished = task.isFinished;
 
     // Derive task-level completion from all scopes
     task.isFinished = task.scopes.every((s) => s.isFinished);
 
-    // Persist completion state locally so it survives reloads
-    this.taskService.saveTaskCompletion(
-      task.id,
-      task.isFinished,
-      task.scopes.map((s) => s.isFinished),
-    );
-
-    // Calculate elapsed time from finished scopes and send to backend
+    // Calculate elapsed time from finished scopes and send to backend.
+    // The backend stores elapsed time; on the next reload done-states are
+    // derived from that elapsed value.
     const elapsedMinutes = this.calculateElapsedMinutes(task);
     const updateRequest: DynamicTaskUpdateRequest = {
       type: 'dynamic',
@@ -282,7 +357,13 @@ export class ListView implements OnInit {
     };
     this.taskService
       .updateTask(task.id, updateRequest)
-      .catch((error) => console.error('Error updating elapsed time:', error));
+      .catch((error) => {
+        console.error('Error updating elapsed time:', error);
+        // Rollback optimistic mutation on failure
+        scope.isFinished = wasFinished;
+        task.isFinished = wasTaskFinished;
+        this.cdr.detectChanges();
+      });
 
     this.cdr.detectChanges();
   }

@@ -9,6 +9,7 @@ import { Auth } from '@services/auth';
 import { Task, TaskColor } from '@app/model/task';
 import { AlgoTask } from '@app/model/algo-task';
 import { RepetitionFieldComponent } from '../repetition-modal/repetition-modal';
+import { RRule, rrulestr } from 'rrule';
 import {
   StaticTaskCreateRequest,
   DynamicTaskCreateRequest,
@@ -393,6 +394,9 @@ export class TaskModal {
         const t = this.staticTask;
         const startDate = this.stringDateToDate(t.startDate, t.startTime);
         const endDate = this.stringDateToDate(t.endDate, t.endTime);
+        // Keep rrule DTSTART in sync with the task start date so occurrences
+        // reflect the updated time when the user changes start/end dates.
+        const rrule = this.syncRruleDtstart(t.rrule, startDate);
         if (this.isEditing && this.editingTask) {
           const request: StaticTaskUpdateRequest = {
             type: 'static',
@@ -404,7 +408,7 @@ export class TaskModal {
             organizationId: t.organizationId,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),
-            rrule: t.rrule,
+            rrule,
             isBlocker: t.isBlocker,
           };
           await this.taskService.updateTask(this.editingTask.id!, request);
@@ -419,7 +423,7 @@ export class TaskModal {
             organizationId: t.organizationId,
             startAt: this.dateToISOString(startDate),
             endAt: this.dateToISOString(endDate),
-            rrule: t.rrule,
+            rrule,
             isBlocker: t.isBlocker,
           };
           await this.taskService.createTask(request);
@@ -519,6 +523,22 @@ export class TaskModal {
   onRruleChange(rrule: string) {
     this.staticTask.rrule = rrule;
     this.cdr.markForCheck();
+  }
+
+  /**
+   * Updates the DTSTART of an existing rrule to match a new start date/time.
+   * This ensures that when a user changes the task's start/end dates, the
+   * recurrence rule occurrences shift accordingly.
+   */
+  private syncRruleDtstart(rrule: string, newDtstart: Date): string {
+    if (!rrule || !rrule.trim()) return rrule;
+    try {
+      const rule = rrulestr(rrule);
+      const newRule = new RRule({ ...rule.origOptions, dtstart: newDtstart });
+      return newRule.toString();
+    } catch {
+      return rrule;
+    }
   }
 
   getTaskStartDate(): Date {

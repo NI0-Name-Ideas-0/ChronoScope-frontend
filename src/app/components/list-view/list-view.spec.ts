@@ -7,6 +7,7 @@ import { StaticTask } from '@app/model/static-task';
 import { AlgoTask } from '@app/model/algo-task';
 import { Scope } from '@app/model/scope';
 import { Task } from '@app/model/task';
+import { RRule } from 'rrule';
 
 describe('ListView', () => {
   let component: ListView;
@@ -51,19 +52,6 @@ describe('ListView', () => {
     expect(fixture.nativeElement.textContent).toContain('Task 1');
   });
 
-  it('should toggle static task done state', () => {
-    const task = createStaticTask(1, 'Task 1');
-    mockTaskService.tasks$.next([task]);
-    fixture.detectChanges();
-
-    const button = fixture.nativeElement.querySelector('button[title="Mark as done"]');
-    button.click();
-    fixture.detectChanges();
-
-    expect(task.isFinished).toBe(true);
-    expect(mockTaskService.saveTaskCompletion).toHaveBeenCalledWith(1, true);
-  });
-
   it('should expand algo task and render scopes', () => {
     const task = createAlgoTask(1, 'Algo Task', [
       new Scope(new Date(), new Date(Date.now() + 3600000)),
@@ -71,19 +59,19 @@ describe('ListView', () => {
     mockTaskService.tasks$.next([task]);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.ml-4')).toBeFalsy();
+    expect(fixture.nativeElement.querySelector('.task-scopes')).toBeFalsy();
 
     const expandButton = fixture.nativeElement.querySelector('button[title="Expand"]');
     expandButton.click();
     fixture.detectChanges();
 
     expect(component.isExpanded(task)).toBe(true);
-    expect(fixture.nativeElement.querySelector('.ml-4')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.task-scopes')).toBeTruthy();
   });
 
   it('should mark scope done and update elapsed time', async () => {
     const task = createAlgoTask(1, 'Algo Task', [
-      new Scope(new Date(), new Date(Date.now() + 3600000)),
+      new Scope(new Date(Date.now() - 7200000), new Date(Date.now() - 3600000)),
     ]);
     mockTaskService.tasks$.next([task]);
     fixture.detectChanges();
@@ -91,12 +79,11 @@ describe('ListView', () => {
     fixture.nativeElement.querySelector('button[title="Expand"]').click();
     fixture.detectChanges();
 
-    const scopeButton = fixture.nativeElement.querySelector('.ml-4 button[title="Mark as done"]');
+    const scopeButton = fixture.nativeElement.querySelector('.task-scopes button[title="Mark as done"]');
     scopeButton.click();
     fixture.detectChanges();
 
     expect((task as AlgoTask).scopes[0].isFinished).toBe(true);
-    expect(mockTaskService.saveTaskCompletion).toHaveBeenCalledWith(1, true, [true]);
     expect(mockTaskService.updateTask).toHaveBeenCalledWith(1, {
       type: 'dynamic',
       elapsed: 'PT60M',
@@ -113,7 +100,7 @@ describe('ListView', () => {
     expect(fixture.nativeElement.querySelector('progress')).toBeTruthy();
   });
 
-  it('should apply task-done class when static task is finished', () => {
+  it('should apply task-done class when static task end date is in the past', () => {
     const task = createStaticTask(1, 'Done Task', true);
     mockTaskService.tasks$.next([task]);
     fixture.detectChanges();
@@ -123,7 +110,7 @@ describe('ListView', () => {
   });
 
   it('should filter by done status', () => {
-    const open = createStaticTask(1, 'Open');
+    const open = createStaticTask(1, 'Open', false);
     const done = createStaticTask(2, 'Done', true);
     mockTaskService.tasks$.next([open, done]);
     fixture.detectChanges();
@@ -142,32 +129,67 @@ describe('ListView', () => {
     expect(fixture.nativeElement.textContent).toContain('No tasks found');
   });
 
-  it('should stop event propagation when clicking mark done', () => {
-    const task = createStaticTask(1, 'Task 1');
+  it('should not mark recurring task as done when there are future occurrences', () => {
+    const pastStart = new Date(Date.now() - 86400000 * 2);
+    const pastEnd = new Date(Date.now() - 86400000);
+    const rule = new RRule({ freq: RRule.DAILY, dtstart: pastStart });
+    const task = new StaticTask(
+      1,
+      'Recurring Task',
+      'Description',
+      [],
+      new Scope(pastStart, pastEnd),
+      null,
+      'EASY',
+      false,
+      'UNSET',
+      rule.toString(),
+    );
     mockTaskService.tasks$.next([task]);
     fixture.detectChanges();
 
-    const card = fixture.nativeElement.querySelector('.card');
-    const cardClickSpy = vi.fn();
-    card.addEventListener('click', cardClickSpy);
+    expect(component.isTaskFinished(task)).toBe(false);
+  });
 
-    fixture.nativeElement.querySelector('button[title="Mark as done"]').click();
+  it('should mark recurring task as done when all occurrences are in the past', () => {
+    const pastStart = new Date(Date.now() - 86400000 * 5);
+    const pastEnd = new Date(Date.now() - 86400000 * 4);
+    const until = new Date(Date.now() - 86400000 * 2);
+    const rule = new RRule({ freq: RRule.DAILY, dtstart: pastStart, until });
+    const task = new StaticTask(
+      1,
+      'Expired Recurring',
+      'Description',
+      [],
+      new Scope(pastStart, pastEnd),
+      null,
+      'EASY',
+      false,
+      'UNSET',
+      rule.toString(),
+    );
+    mockTaskService.tasks$.next([task]);
+    fixture.detectChanges();
 
-    expect(cardClickSpy).not.toHaveBeenCalled();
+    expect(component.isTaskFinished(task)).toBe(true);
   });
 });
 
-function createStaticTask(id: number, title: string, isFinished = false): Task {
+function createStaticTask(id: number, title: string, isFinished = false, rrule: string = ''): Task {
+  const now = Date.now();
+  const start = new Date(now - 86400000);
+  const end = isFinished ? new Date(now - 3600000) : new Date(now + 3600000);
   return new StaticTask(
     id,
     title,
     'Description',
     [],
-    new Scope(new Date(), new Date()),
+    new Scope(start, end),
     null,
     'EASY',
     isFinished,
     'UNSET',
+    rrule,
   );
 }
 
