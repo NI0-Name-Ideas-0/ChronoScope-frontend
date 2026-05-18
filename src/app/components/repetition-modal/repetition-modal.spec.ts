@@ -195,9 +195,19 @@ describe('RepetitionFieldComponent', () => {
 
       expect(component.endDateError).toBeNull();
       expect(emittedValue).toMatch(/FREQ=DAILY/);
-      // UNTIL should include the selected end date (2026-05-01) so that
-      // occurrences on the last day are still generated.
-      expect(emittedValue).toMatch(/UNTIL=20260501T/);
+      // Parse the emitted rule instead of asserting on its UTC serialization.
+      // The selected local end date should be represented as local 23:59:59
+      // so that occurrences on 2026-05-01 are still generated in every timezone.
+      const rule = RRule.fromString(emittedValue!);
+      const until = rule.options.until;
+
+      expect(until).toBeDefined();
+      expect(until?.getFullYear()).toBe(2026);
+      expect(until?.getMonth()).toBe(4);
+      expect(until?.getDate()).toBe(1);
+      expect(until?.getHours()).toBe(23);
+      expect(until?.getMinutes()).toBe(59);
+      expect(until?.getSeconds()).toBe(59);
       expect(component.isOpen).toBe(false);
     });
 
