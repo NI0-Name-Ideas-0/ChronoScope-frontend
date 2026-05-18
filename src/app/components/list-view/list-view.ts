@@ -223,6 +223,21 @@ export class ListView implements OnInit, OnDestroy {
         today.setHours(0, 0, 0, 0);
         result = result.filter((task) => {
           if (task instanceof StaticTask) {
+            if (task.rrule && task.rrule.trim()) {
+              try {
+                const rule = rrulestr(task.rrule);
+                const todayStart = new Date();
+                todayStart.setHours(0, 0, 0, 0);
+                const todayEnd = new Date();
+                todayEnd.setHours(23, 59, 59, 999);
+                const occurrences = rule.between(todayStart, todayEnd, true);
+                return occurrences.length > 0;
+              } catch {
+                const due = new Date(task.scope.end);
+                due.setHours(0, 0, 0, 0);
+                return due.getTime() === today.getTime();
+              }
+            }
             const due = new Date(task.scope.end);
             due.setHours(0, 0, 0, 0);
             return due.getTime() === today.getTime();

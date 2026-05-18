@@ -142,6 +142,7 @@ describe('ListView', () => {
       null,
       'EASY',
       false,
+      'UNSET',
       rule.toString(),
     );
     mockTaskService.tasks$.next([task]);
@@ -164,6 +165,7 @@ describe('ListView', () => {
       null,
       'EASY',
       false,
+      'UNSET',
       rule.toString(),
     );
     mockTaskService.tasks$.next([task]);
@@ -186,8 +188,8 @@ function createStaticTask(id: number, title: string, isFinished = false, rrule: 
     null,
     'EASY',
     isFinished,
-    rrule,
     'UNSET',
+    rrule,
   );
 }
 
