@@ -103,11 +103,7 @@
           <div class="shrink-0 flex flex-col items-end justify-between gap-2">
             <span class="text-xs text-base-content/50 whitespace-nowrap">
               {{ 'LIST_DUE_DATE' | transloco }}
-              {{
-                ($any(task).occurrenceEnd ??
-                  $any(task).occurrenceDate ??
-                  getTaskDueDate(task) | date: 'dd/MM/yyyy')
-              }}
+              {{ getTaskDueDate(task) | date: 'dd/MM/yyyy' }}
             </span>
             <div class="flex items-center gap-1">
               @if (isAlgoTask(task)) {
@@ -128,8 +124,8 @@
               <button
                 class="btn btn-ghost btn-sm btn-circle text-error"
                 (click)="onDelete(task, $event)"
-                title="Delete task"
-                aria-label="Delete task"
+                [title]="'LIST_DELETE' | transloco"
+                [attr.aria-label]="'LIST_DELETE' | transloco"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

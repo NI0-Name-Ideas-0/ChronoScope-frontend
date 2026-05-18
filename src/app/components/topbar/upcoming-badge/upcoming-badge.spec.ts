@@ -7,7 +7,7 @@ import { getTranslocoTestingModule } from '@test-utils/transloco-testing';
 import { AlgoTask } from '@app/model/algo-task';
 import { StaticTask } from '@app/model/static-task';
 import { Scope } from '@app/model/scope';
-import { Task } from '@app/model/task';
+import { Task, TaskColor } from '@app/model/task';
 
 class MockTaskService {
   tasks$ = new BehaviorSubject<Task[]>([]);
@@ -21,6 +21,44 @@ class MockTaskService {
 class MockAuth {
   authReady$ = of(false);
   identity$ = of(null);
+}
+
+function makeAlgoTask(overrides: Partial<{
+  id: number;
+  title: string;
+  description: string;
+  startDate: Date;
+  dueDate: Date;
+  duration: number;
+  elapsedMinutes: number;
+  dependencies: number[];
+  labels: string[];
+  organizationId: string | null;
+  scopes: Scope[];
+  difficulty: string;
+  isFinished: boolean;
+  color: TaskColor;
+  minScopeMinutes: number;
+  maxScopeMinutes: number;
+}> = {}): AlgoTask {
+  return new AlgoTask(
+    overrides.id ?? 1,
+    overrides.title ?? 'Task',
+    overrides.description ?? '',
+    overrides.startDate ?? new Date('2026-05-01'),
+    overrides.dueDate ?? new Date('2026-05-20'),
+    overrides.duration ?? 120,
+    overrides.elapsedMinutes ?? 0,
+    overrides.dependencies ?? [],
+    overrides.labels ?? [],
+    overrides.organizationId ?? null,
+    overrides.scopes ?? [],
+    overrides.difficulty ?? 'EASY',
+    overrides.isFinished ?? false,
+    overrides.color ?? 'UNSET',
+    overrides.minScopeMinutes ?? 30,
+    overrides.maxScopeMinutes ?? 120,
+  );
 }
 
 describe('UpcomingBadge', () => {
@@ -98,24 +136,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T13:00:00Z'),
         new Date('2026-05-17T14:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Algo Upcoming',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Algo Upcoming',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
       expect(component.currentEntry()?.task.title).toBe('Algo Upcoming');
       expect(component.currentEntry()?.state).toBe('upcoming');
@@ -128,24 +152,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T11:00:00Z'),
         new Date('2026-05-17T13:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Algo Active',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Algo Active',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
       expect(component.currentEntry()?.state).toBe('active');
     });
@@ -156,24 +166,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T09:00:00Z'),
         new Date('2026-05-17T10:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Algo Overdue',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Algo Overdue',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
       expect(component.currentEntry()?.state).toBe('overdue');
     });
@@ -190,24 +186,11 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T12:30:00Z'),
         new Date('2026-05-17T13:30:00Z'),
       );
-      const dynamicTask = new AlgoTask(
-        2,
-        'Dynamic',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [dynamicScope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const dynamicTask = makeAlgoTask({
+        id: 2,
+        title: 'Dynamic',
+        scopes: [dynamicScope]
+      });
 
       taskService.tasks$.next([staticTask, dynamicTask]);
       expect(component.currentEntry()?.task.title).toBe('Dynamic');
@@ -225,24 +208,11 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T13:00:00Z'),
         new Date('2026-05-17T14:00:00Z'),
       );
-      const dynamicTask = new AlgoTask(
-        2,
-        'Dynamic',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [dynamicScope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const dynamicTask = makeAlgoTask({
+        id: 2,
+        title: 'Dynamic',
+        scopes: [dynamicScope]
+      });
 
       taskService.tasks$.next([dynamicTask, staticTask]);
       expect(component.currentEntry()?.task.title).toBe('Static');
@@ -263,24 +233,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T13:00:00Z'),
         new Date('2026-05-17T14:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Upcoming Dynamic',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Upcoming Dynamic',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
       expect(component.badgeText()).toBe('Upcoming Dynamic');
       expect(component.badgeStatusClass()).toBe('badge-info');
@@ -292,24 +248,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T09:00:00Z'),
         new Date('2026-05-17T10:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Overdue Task',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Overdue Task',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
       expect(component.badgeStatusClass()).toBe('badge-error');
     });
@@ -320,24 +262,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T11:00:00Z'),
         new Date('2026-05-17T13:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Active Task',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Active Task',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
       expect(component.badgeStatusClass()).toBe('badge-success');
     });
@@ -350,24 +278,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T13:00:00Z'),
         new Date('2026-05-17T14:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Upcoming',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Upcoming',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
       expect(component.showCheckmark()).toBe(false);
       expect(component.showOverdueAction()).toBe(false);
@@ -379,24 +293,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T11:00:00Z'),
         new Date('2026-05-17T13:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Active',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Active',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
       expect(component.showCheckmark()).toBe(true);
       expect(component.showOverdueAction()).toBe(false);
@@ -408,24 +308,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T09:00:00Z'),
         new Date('2026-05-17T10:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Overdue',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Overdue',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
       expect(component.showCheckmark()).toBe(true);
       expect(component.showOverdueAction()).toBe(true);
@@ -451,24 +337,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T09:00:00Z'),
         new Date('2026-05-17T10:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Overdue',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Overdue',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
 
       component.openOverdueModal();
@@ -489,24 +361,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T11:00:00Z'),
         new Date('2026-05-17T12:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Active',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Active',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
 
       await component.markScopeDone();
@@ -556,24 +414,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T11:00:00Z'),
         new Date('2026-05-17T12:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Multi',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope1, scope2],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Multi',
+        scopes: [scope1, scope2]
+      });
       taskService.tasks$.next([task]);
 
       await component.markScopeDone();
@@ -597,24 +441,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T09:00:00Z'),
         new Date('2026-05-17T10:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Overdue',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Overdue',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
 
       component.additionalMinutes.set(30);
@@ -639,24 +469,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T09:00:00Z'),
         new Date('2026-05-17T10:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Overdue',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Overdue',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
 
       component.additionalMinutes.set(999);
@@ -677,24 +493,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T09:00:00Z'),
         new Date('2026-05-17T10:00:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Overdue',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Overdue',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
 
       component.additionalMinutes.set(-5);
@@ -739,24 +541,10 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T11:00:00Z'),
         new Date('2026-05-17T12:30:00Z'),
       );
-      const task = new AlgoTask(
-        1,
-        'Active',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Active',
+        scopes: [scope]
+      });
       taskService.tasks$.next([task]);
 
       expect(component.currentScopeMinutes()).toBe(90);
@@ -767,56 +555,26 @@ describe('UpcomingBadge', () => {
 
   describe('getPendingScopes', () => {
     it('should return all scopes when none are finished', () => {
-      const task = new AlgoTask(
-        1,
-        'Task',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [
+      const task = makeAlgoTask({
+        scopes: [
           new Scope(new Date('2026-05-17T10:00:00Z'), new Date('2026-05-17T11:00:00Z')),
           new Scope(new Date('2026-05-17T11:00:00Z'), new Date('2026-05-17T12:00:00Z')),
           new Scope(new Date('2026-05-17T12:00:00Z'), new Date('2026-05-17T13:00:00Z')),
-        ],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+        ]
+      });
 
       const pending = (component as any).getPendingScopes(task);
       expect(pending.length).toBe(3);
     });
 
     it('should return scopes from first unfinished', () => {
-      const task = new AlgoTask(
-        1,
-        'Task',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [
+      const task = makeAlgoTask({
+        scopes: [
           new Scope(new Date('2026-05-17T10:00:00Z'), new Date('2026-05-17T11:00:00Z'), true),
           new Scope(new Date('2026-05-17T11:00:00Z'), new Date('2026-05-17T12:00:00Z')),
           new Scope(new Date('2026-05-17T12:00:00Z'), new Date('2026-05-17T13:00:00Z')),
-        ],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+        ]
+      });
 
       const pending = (component as any).getPendingScopes(task);
       expect(pending.length).toBe(2);
@@ -824,51 +582,19 @@ describe('UpcomingBadge', () => {
     });
 
     it('should return empty array when all scopes are finished', () => {
-      const task = new AlgoTask(
-        1,
-        'Task',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [
+      const task = makeAlgoTask({
+        scopes: [
           new Scope(new Date('2026-05-17T10:00:00Z'), new Date('2026-05-17T11:00:00Z'), true),
           new Scope(new Date('2026-05-17T11:00:00Z'), new Date('2026-05-17T12:00:00Z'), true),
-        ],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+        ]
+      });
 
       const pending = (component as any).getPendingScopes(task);
       expect(pending.length).toBe(0);
     });
 
     it('should return empty array when task has no scopes', () => {
-      const task = new AlgoTask(
-        1,
-        'Task',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask();
       const pending = (component as any).getPendingScopes(task);
       expect(pending.length).toBe(0);
     });
@@ -877,24 +603,11 @@ describe('UpcomingBadge', () => {
   describe('edge cases', () => {
     it('should handle all tasks finished', () => {
       (component as any).now.set(fixedNow);
-      const task = new AlgoTask(
-        1,
-        'Finished',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [new Scope(new Date('2026-05-17T10:00:00Z'), new Date('2026-05-17T11:00:00Z'), true)],
-        'EASY',
-        true,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Finished',
+        scopes: [new Scope(new Date('2026-05-17T10:00:00Z'), new Date('2026-05-17T11:00:00Z'), true)],
+        isFinished: true
+      });
       taskService.tasks$.next([task]);
       expect(component.currentEntry()).toBeNull();
     });
@@ -905,24 +618,10 @@ describe('UpcomingBadge', () => {
         new Scope(new Date('2026-05-17T13:00:00Z'), new Date('2026-05-17T14:00:00Z')),
         new Scope(new Date('2026-05-17T15:00:00Z'), new Date('2026-05-17T16:00:00Z')),
       ];
-      const task = new AlgoTask(
-        1,
-        'Multi',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        scopes,
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Multi',
+        scopes: scopes
+      });
       taskService.tasks$.next([task]);
       expect(component.currentEntry()?.scope.start.getTime()).toBe(scopes[0].start.getTime());
     });
@@ -933,24 +632,10 @@ describe('UpcomingBadge', () => {
         new Scope(new Date('2026-05-17T10:00:00Z'), new Date('2026-05-17T11:00:00Z'), true),
         new Scope(new Date('2026-05-17T13:00:00Z'), new Date('2026-05-17T14:00:00Z')),
       ];
-      const task = new AlgoTask(
-        1,
-        'Partial',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        scopes,
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Partial',
+        scopes: scopes
+      });
       taskService.tasks$.next([task]);
       expect(component.currentEntry()?.scope.start.getTime()).toBe(scopes[1].start.getTime());
       expect(component.currentEntry()?.state).toBe('upcoming');
@@ -962,24 +647,10 @@ describe('UpcomingBadge', () => {
         new Scope(new Date('2026-05-17T10:00:00Z'), new Date('2026-05-17T11:00:00Z'), true),
         new Scope(new Date('2026-05-17T11:00:00Z'), new Date('2026-05-17T13:00:00Z')),
       ];
-      const task = new AlgoTask(
-        1,
-        'Partial Active',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        scopes,
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Partial Active',
+        scopes: scopes
+      });
       taskService.tasks$.next([task]);
       expect(component.currentEntry()?.scope.start.getTime()).toBe(scopes[1].start.getTime());
       expect(component.currentEntry()?.state).toBe('active');
@@ -991,24 +662,10 @@ describe('UpcomingBadge', () => {
         new Scope(new Date('2026-05-17T08:00:00Z'), new Date('2026-05-17T09:00:00Z'), true),
         new Scope(new Date('2026-05-17T09:00:00Z'), new Date('2026-05-17T10:00:00Z')),
       ];
-      const task = new AlgoTask(
-        1,
-        'Partial Overdue',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        scopes,
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task = makeAlgoTask({
+        title: 'Partial Overdue',
+        scopes: scopes
+      });
       taskService.tasks$.next([task]);
       expect(component.currentEntry()?.scope.start.getTime()).toBe(scopes[1].start.getTime());
       expect(component.currentEntry()?.state).toBe('overdue');
@@ -1020,47 +677,20 @@ describe('UpcomingBadge', () => {
         new Date('2026-05-17T13:00:00Z'),
         new Date('2026-05-17T14:00:00Z'),
       );
-      const task1 = new AlgoTask(
-        1,
-        'Later',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope1],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task1 = makeAlgoTask({
+        title: 'Later',
+        scopes: [scope1]
+      });
 
       const scope2 = new Scope(
         new Date('2026-05-17T12:30:00Z'),
         new Date('2026-05-17T13:30:00Z'),
       );
-      const task2 = new AlgoTask(
-        2,
-        'Earlier',
-        '',
-        new Date('2026-05-01'),
-        new Date('2026-05-20'),
-        120,
-        0,
-        [],
-        [],
-        null,
-        [scope2],
-        'EASY',
-        false,
-        'UNSET',
-        30,
-        120,
-      );
+      const task2 = makeAlgoTask({
+        id: 2,
+        title: 'Earlier',
+        scopes: [scope2]
+      });
 
       taskService.tasks$.next([task1, task2]);
       expect(component.currentEntry()?.task.title).toBe('Earlier');

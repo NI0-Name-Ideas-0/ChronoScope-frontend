@@ -223,7 +223,10 @@ describe('Calendar', () => {
     it('should clear existing events and add task events', async () => {
       const mockCalendarRef = createMockCalendarRef();
       Object.defineProperty(component, 'calendarRef', { value: mockCalendarRef, writable: true });
-      mockTaskService.getAllCalendarEvents.mockReturnValue([{ id: 'evt-1', title: 'Task Event' }]);
+      component.tasks = [
+        new StaticTask(1, 'Task 1', '', [], new Scope(new Date(), new Date()), null, 'easy', false, 'UNSET'),
+      ];
+      mockTaskService.toCalendarEvents.mockReturnValue([{ id: 'evt-1', title: 'Task Event' }]);
       mockWorkSlotPreferenceService.loadPreferences.mockResolvedValue([]);
 
       await (component as any).renderCalendarEvents();
@@ -236,7 +239,8 @@ describe('Calendar', () => {
     it('should add work slot events after loading preferences', async () => {
       const mockCalendarRef = createMockCalendarRef();
       Object.defineProperty(component, 'calendarRef', { value: mockCalendarRef, writable: true });
-      mockTaskService.getAllCalendarEvents.mockReturnValue([]);
+      component.tasks = [];
+      mockTaskService.toCalendarEvents.mockReturnValue([]);
       mockWorkSlotPreferenceService.loadPreferences.mockResolvedValue([
         { id: 1, dayIndex: 0, startHour: 9, durationHours: 2, colorClass: 'primary' },
       ]);
@@ -261,7 +265,8 @@ describe('Calendar', () => {
       Object.defineProperty(component, 'calendarRef', { value: mockCalendarRef, writable: true });
       const existingEvent = { remove: vi.fn() };
       mockCalendarRef.getApi().getEvents().push(existingEvent);
-      mockTaskService.getAllCalendarEvents.mockReturnValue([]);
+      component.tasks = [];
+      mockTaskService.toCalendarEvents.mockReturnValue([]);
       mockWorkSlotPreferenceService.loadPreferences.mockResolvedValue([]);
 
       await (component as any).renderCalendarEvents();
@@ -273,8 +278,9 @@ describe('Calendar', () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const mockCalendarRef = createMockCalendarRef();
       Object.defineProperty(component, 'calendarRef', { value: mockCalendarRef, writable: true });
+      component.tasks = [];
+      mockTaskService.toCalendarEvents.mockReturnValue([]);
       mockWorkSlotPreferenceService.loadPreferences.mockRejectedValue(new Error('load failed'));
-      mockTaskService.getAllCalendarEvents.mockReturnValue([]);
 
       await (component as any).renderCalendarEvents();
 

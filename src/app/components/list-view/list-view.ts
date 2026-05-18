@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angula
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { Subscription } from 'rxjs';
 import { TaskService } from '@services/task.service';
 import { TaskModalService } from '@services/task-modal.service';
 import { ViewService } from '@services/view.service';
@@ -28,6 +29,7 @@ export class ListView implements OnInit, OnDestroy {
 
   private viewService = inject(ViewService);
   private timeUpdateInterval: ReturnType<typeof setInterval> | null = null;
+  private tasksSubscription: Subscription | null = null;
 
   tasks: Task[] = [];
   activeFilter: 'all' | 'todo' | 'today' | 'done' = 'today';
@@ -52,7 +54,7 @@ export class ListView implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    this.taskService.tasks$.subscribe((tasks) => {
+    this.tasksSubscription = this.taskService.tasks$.subscribe((tasks) => {
       this.tasks = tasks;
       this.cdr.detectChanges();
     });
@@ -68,14 +70,33 @@ export class ListView implements OnInit, OnDestroy {
     if (this.timeUpdateInterval) {
       clearInterval(this.timeUpdateInterval);
     }
+    this.tasksSubscription?.unsubscribe();
   }
 
   /**
-   * Helper method to get the end/due date of a task
-   * Works for both StaticTask and AlgoTask
+   * Helper method to get the end/due date of a task.
+   * For recurring StaticTasks, returns the current or next occurrence end date
+   * so the list row shows a relevant due date instead of the original scope end.
    */
   getTaskDueDate(task: Task): Date {
     if (task instanceof StaticTask) {
+      if (task.rrule && task.rrule.trim()) {
+        try {
+          const rule = rrulestr(task.rrule);
+          const now = new Date();
+          const durationMs = Math.max(0, task.scope.end.getTime() - task.scope.start.getTime());
+          const lastOccurrence = rule.before(now, true);
+          if (lastOccurrence && lastOccurrence.getTime() + durationMs > now.getTime()) {
+            return new Date(lastOccurrence.getTime() + durationMs);
+          }
+          const nextOccurrence = rule.after(now);
+          if (nextOccurrence) {
+            return new Date(nextOccurrence.getTime() + durationMs);
+          }
+        } catch {
+          // fall through to default
+        }
+      }
       return task.scope.end;
     } else if (task instanceof AlgoTask) {
       return task.dueDate;
@@ -319,7 +340,9 @@ export class ListView implements OnInit, OnDestroy {
     event.stopPropagation();
     if (!this.canMarkScopeDone(task, scope)) return;
 
+    const wasFinished = scope.isFinished;
     scope.isFinished = true;
+    const wasTaskFinished = task.isFinished;
 
     // Derive task-level completion from all scopes
     task.isFinished = task.scopes.every((s) => s.isFinished);
@@ -334,7 +357,13 @@ export class ListView implements OnInit, OnDestroy {
     };
     this.taskService
       .updateTask(task.id, updateRequest)
-      .catch((error) => console.error('Error updating elapsed time:', error));
+      .catch((error) => {
+        console.error('Error updating elapsed time:', error);
+        // Rollback optimistic mutation on failure
+        scope.isFinished = wasFinished;
+        task.isFinished = wasTaskFinished;
+        this.cdr.detectChanges();
+      });
 
     this.cdr.detectChanges();
   }

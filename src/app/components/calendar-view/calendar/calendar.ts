@@ -111,7 +111,8 @@ export class Calendar implements OnChanges {
         console.error('Error fetching task:', error);
       }
     });
-    this.taskService.tasks$.subscribe(() => {
+    this.taskService.tasks$.subscribe((tasks) => {
+      this.tasks = tasks;
       this.renderCalendarEvents();
     });
 
@@ -132,7 +133,7 @@ export class Calendar implements OnChanges {
     const api = this.calendarRef.getApi();
     api.getEvents().forEach((e) => e.remove());
 
-    const taskEvents = this.taskService.getAllCalendarEvents();
+    const taskEvents = this.getFilteredEvents();
     taskEvents.forEach((event) => api.addEvent(event));
 
     try {

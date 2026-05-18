@@ -128,12 +128,12 @@ describe('TaskService', () => {
 
   describe('saveTaskCompletion', () => {
     it('should notify subscribers without writing to localStorage', () => {
-      let emitted = false;
+      let emissionCount = 0;
       service.tasks$.subscribe(() => {
-        emitted = true;
+        emissionCount++;
       });
       service.saveTaskCompletion(1, true, [true, false]);
-      expect(emitted).toBe(true);
+      expect(emissionCount).toBe(2); // initial value + saveTaskCompletion emission
       expect(store['chronoscope-completion']).toBeUndefined();
     });
   });
