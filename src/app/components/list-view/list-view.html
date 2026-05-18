@@ -121,7 +121,9 @@
                 ></progress>
               }
               @if (isStaticTask(task) && isTaskFinished(task)) {
-                <span class="badge badge-success badge-sm">Done</span>
+                <span class="badge badge-success badge-sm">{{
+                  'LIST_DONE_BADGE' | transloco
+                }}</span>
               }
               <button
                 class="btn btn-ghost btn-sm btn-circle text-error"
