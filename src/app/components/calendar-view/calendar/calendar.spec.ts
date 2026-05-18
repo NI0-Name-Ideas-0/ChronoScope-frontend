@@ -54,6 +54,7 @@ describe('Calendar', () => {
     authReady$: {
       subscribe: vi.fn(),
     },
+    isAuthReady: vi.fn().mockReturnValue(true),
     getAccounts: vi.fn().mockReturnValue([]),
     getIdentityData: vi.fn().mockReturnValue({ organizations: [] }),
   };

@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
+import { of } from 'rxjs';
 import { LanguageService } from './language.service';
+import { Auth } from './auth';
 import { Api } from '../api/api';
 import { getSettings, updateSettings } from '../api/functions';
 
@@ -37,6 +39,7 @@ describe('LanguageService', () => {
         LanguageService,
         { provide: TranslocoService, useValue: mockTransloco },
         { provide: Api, useValue: mockApi },
+        { provide: Auth, useValue: { authReady$: of(true) } },
         { provide: PLATFORM_ID, useValue: platformId },
       ],
     }).compileComponents();
