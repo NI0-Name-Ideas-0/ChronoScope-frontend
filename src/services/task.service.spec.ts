@@ -629,4 +629,250 @@ describe('TaskService', () => {
       expect(events[2].id).toBe('2-' + new Date('2026-05-02T10:00:00Z').getTime());
     });
   });
+
+  describe('normalizeTaskColor', () => {
+    it('should return UNSET for empty or invalid colors', () => {
+      expect((service as any).normalizeTaskColor(undefined)).toBe('UNSET');
+      expect((service as any).normalizeTaskColor('')).toBe('UNSET');
+      expect((service as any).normalizeTaskColor('invalid')).toBe('UNSET');
+    });
+
+    it('should normalize valid colors to uppercase', () => {
+      expect((service as any).normalizeTaskColor('blue')).toBe('BLUE');
+      expect((service as any).normalizeTaskColor('RED')).toBe('RED');
+    });
+  });
+
+  describe('resolveTaskColor', () => {
+    it('should use task color when set', () => {
+      const task = new StaticTask(1, 'T', '', [], new Scope(new Date(), new Date()), 'org-1', 'EASY', false, 'RED', '');
+      expect((service as any).resolveTaskColor(task)).toBe('RED');
+    });
+
+    it('should fallback to organization color', () => {
+      const task = new StaticTask(1, 'T', '', [], new Scope(new Date(), new Date()), 'org-1', 'EASY', false, 'UNSET', '');
+      // organizationColors loaded from backend
+      expect((service as any).resolveTaskColor(task)).toBe('UNSET');
+    });
+
+    it('should fallback to index-based color for known org', () => {
+      const mockAuth = TestBed.inject(Auth);
+      (mockAuth as any).getIdentityData = vi.fn().mockReturnValue({
+        organizations: [{ id: 'org-1', name: 'Test' }],
+      });
+      const task = new StaticTask(1, 'T', '', [], new Scope(new Date(), new Date()), 'org-1', 'EASY', false, 'UNSET', '');
+      expect((service as any).resolveTaskColor(task)).toBe('BLUE');
+    });
+
+    it('should return UNSET when org is not found', () => {
+      const task = new StaticTask(1, 'T', '', [], new Scope(new Date(), new Date()), 'unknown', 'EASY', false, 'UNSET', '');
+      expect((service as any).resolveTaskColor(task)).toBe('UNSET');
+    });
+  });
+
+  describe('getOrganizationFallbackColor', () => {
+    it('should return UNSET for null organizationId', () => {
+      expect(service.getOrganizationFallbackColor(null)).toBe('UNSET');
+      expect(service.getOrganizationFallbackColor(undefined)).toBe('UNSET');
+    });
+
+    it('should return UNSET for unknown org', () => {
+      expect(service.getOrganizationFallbackColor('unknown')).toBe('UNSET');
+    });
+
+    it('should return index-based color for known org', () => {
+      const mockAuth = TestBed.inject(Auth);
+      (mockAuth as any).getIdentityData = vi.fn().mockReturnValue({
+        organizations: [{ id: 'org-1', name: 'Test' }],
+      });
+      expect(service.getOrganizationFallbackColor('org-1')).toBe('BLUE');
+    });
+  });
+
+  describe('getTaskColorMix', () => {
+    it('should return null for UNSET color', () => {
+      expect(service.getTaskColorMix('UNSET', 50)).toBeNull();
+    });
+
+    it('should clamp percent between 0 and 100', () => {
+      const result = service.getTaskColorMix('RED', -10);
+      expect(result).toContain('0%');
+      const result2 = service.getTaskColorMix('RED', 150);
+      expect(result2).toContain('100%');
+    });
+
+    it('should return color-mix string for valid color', () => {
+      const result = service.getTaskColorMix('BLUE', 35);
+      expect(result).toContain('color-mix');
+      expect(result).toContain('35%');
+    });
+  });
+
+  describe('getEffectiveTaskColor', () => {
+    it('should delegate to resolveTaskColor', () => {
+      const task = new StaticTask(1, 'T', '', [], new Scope(new Date(), new Date()), null, 'EASY', false, 'GREEN', '');
+      expect(service.getEffectiveTaskColor(task)).toBe('GREEN');
+    });
+  });
+
+  describe('getAllTasks', () => {
+    it('should return all cached tasks', async () => {
+      const staticTaskResponse = {
+        type: 'static',
+        id: 1,
+        name: 'Task',
+        description: 'Desc',
+        startAt: '2026-05-01T10:00:00Z',
+        endAt: '2026-05-01T11:00:00Z',
+        difficulty: 'EASY',
+        organizationId: null,
+        labels: [],
+        rrule: '',
+      };
+
+      mockApi.invoke.mockResolvedValue(createBlobResponse([staticTaskResponse]));
+      await service.loadTasks();
+
+      const tasks = service.getAllTasks();
+      expect(tasks.length).toBe(1);
+      expect(tasks[0].id).toBe(1);
+    });
+  });
+
+  describe('planTasks', () => {
+    it('should warn and load tasks when no organizations exist', async () => {
+      const mockAuth = TestBed.inject(Auth);
+      (mockAuth as any).getIdentityData = vi.fn().mockReturnValue({ organizations: [] });
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await service.planTasks();
+
+      expect(warnSpy).toHaveBeenCalledWith('Skipping manual plan: no organization IDs available.');
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe('toCalendarEvents', () => {
+    it('should return rrule event for recurring StaticTask', () => {
+      const scope = new Scope(new Date('2026-05-01T10:00:00Z'), new Date('2026-05-01T11:00:00Z'));
+      const task = new StaticTask(
+        3,
+        'Recurring',
+        'Desc',
+        [],
+        scope,
+        null,
+        'EASY',
+        false,
+        'UNSET',
+        'FREQ=DAILY;DTSTART=20260501T100000Z',
+      );
+
+      const events = service.toCalendarEvents(task);
+      expect(events.length).toBe(1);
+      expect((events[0] as any).rrule).toBe('FREQ=DAILY;DTSTART=20260501T100000Z');
+      expect((events[0] as any).duration).toEqual({ hours: 1, minutes: 0 });
+    });
+
+    it('should apply color to calendar events when task has a color', () => {
+      const scope = new Scope(new Date('2026-05-01T10:00:00Z'), new Date('2026-05-01T11:00:00Z'));
+      const task = new StaticTask(1, 'Colored', 'Desc', [], scope, null, 'EASY', false, 'BLUE', '');
+
+      const events = service.toCalendarEvents(task);
+      expect(events.length).toBe(1);
+      expect((events[0] as any).backgroundColor).toBeDefined();
+    });
+
+    it('should return AlgoTask scopes with isDone and color', () => {
+      const scope = new Scope(new Date('2026-05-01T10:00:00Z'), new Date('2026-05-01T11:00:00Z'), true);
+      const task = new AlgoTask(2, 'Algo', 'Desc', new Date(), new Date(), 60, 60, [], [], null, [scope], 'EASY', true, 'UNSET', 30, 120);
+
+      const events = service.toCalendarEvents(task);
+      expect(events.length).toBe(1);
+      expect((events[0] as any).extendedProps.isDone).toBe(true);
+      expect((events[0] as any).extendedProps.color).toBe('UNSET');
+    });
+  });
+
+  describe('convertApiTaskToModel', () => {
+    it('should handle dynamic task with no scopes', async () => {
+      const dynamicTaskResponse = {
+        type: 'dynamic',
+        id: 77,
+        name: 'No Scopes',
+        description: 'Desc',
+        startAt: '2026-05-01T00:00:00Z',
+        endAt: '2026-05-05T00:00:00Z',
+        duration: 'PT2H',
+        elapsed: 'PT0M',
+        difficulty: 'MEDIUM',
+        organizationId: null,
+        labels: [],
+        dependencies: [],
+        scopes: [],
+        minScopeDuration: 'PT30M',
+        maxScopeDuration: 'PT2H',
+      };
+
+      mockApi.invoke.mockResolvedValue(createBlobResponse([dynamicTaskResponse]));
+      await service.loadTasks();
+
+      const tasks = service.getAllTasks();
+      expect(tasks.length).toBe(1);
+      const algoTask = tasks[0] as AlgoTask;
+      expect(algoTask.scopes.length).toBe(0);
+      expect(algoTask.isFinished).toBe(false);
+    });
+
+    it('should mark all scopes done when elapsed equals total duration', async () => {
+      const dynamicTaskResponse = {
+        type: 'dynamic',
+        id: 77,
+        name: 'All Done',
+        description: 'Desc',
+        startAt: '2026-05-01T00:00:00Z',
+        endAt: '2026-05-05T00:00:00Z',
+        duration: 'PT2H',
+        elapsed: 'PT2H',
+        difficulty: 'MEDIUM',
+        organizationId: null,
+        labels: [],
+        dependencies: [],
+        scopes: [
+          { startAt: '2026-05-01T10:00:00Z', endAt: '2026-05-01T11:00:00Z' },
+          { startAt: '2026-05-02T10:00:00Z', endAt: '2026-05-02T11:00:00Z' },
+        ],
+        minScopeDuration: 'PT30M',
+        maxScopeDuration: 'PT2H',
+      };
+
+      mockApi.invoke.mockResolvedValue(createBlobResponse([dynamicTaskResponse]));
+      await service.loadTasks();
+
+      const algoTask = service.getAllTasks()[0] as AlgoTask;
+      expect(algoTask.scopes.every((s) => s.isFinished)).toBe(true);
+      expect(algoTask.isFinished).toBe(true);
+    });
+
+    it('should handle static task with rrule', async () => {
+      const staticTaskResponse = {
+        type: 'static',
+        id: 42,
+        name: 'Recurring',
+        description: 'Desc',
+        startAt: '2026-05-01T10:00:00Z',
+        endAt: '2026-05-01T11:00:00Z',
+        difficulty: 'EASY',
+        organizationId: null,
+        labels: [],
+        rrule: 'FREQ=DAILY;DTSTART=20260501T100000Z',
+      };
+
+      mockApi.invoke.mockResolvedValue(createBlobResponse([staticTaskResponse]));
+      await service.loadTasks();
+
+      const task = service.getAllTasks()[0] as StaticTask;
+      expect(task.rrule).toBe('FREQ=DAILY;DTSTART=20260501T100000Z');
+    });
+  });
 });
