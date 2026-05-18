@@ -271,16 +271,29 @@ export class ListView implements OnInit, OnDestroy {
       );
     }
     if (task instanceof StaticTask) {
+      const now = Date.now();
       if (task.rrule && task.rrule.trim()) {
         try {
           const rule = rrulestr(task.rrule);
-          const nextOccurrence = rule.after(new Date());
+          const durationMs = Math.max(0, task.scope.end.getTime() - task.scope.start.getTime());
+          const currentTime = new Date(now);
+          const lastOccurrence = rule.before(currentTime, true);
+
+          if (
+            lastOccurrence !== null &&
+            lastOccurrence.getTime() <= now &&
+            lastOccurrence.getTime() + durationMs > now
+          ) {
+            return false;
+          }
+
+          const nextOccurrence = rule.after(currentTime);
           return nextOccurrence === null;
         } catch {
-          return task.scope.end.getTime() < Date.now();
+          return task.scope.end.getTime() < now;
         }
       }
-      return task.scope.end.getTime() < Date.now();
+      return task.scope.end.getTime() < now;
     }
     return task.isFinished;
   }
