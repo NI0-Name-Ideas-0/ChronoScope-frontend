@@ -20,6 +20,7 @@ import { TaskService } from '@services/task.service';
 import { TaskModalService } from '@services/task-modal.service';
 import { ViewService } from '@services/view.service';
 import rrulePlugin from '@fullcalendar/rrule';
+import { Auth } from '@services/auth';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
 import { TimeSlot } from '@app/model/work-preference.model';
 import { Task, TaskColor } from '@app/model/task';
@@ -38,6 +39,7 @@ export class Calendar implements OnChanges {
 
   private viewService = inject(ViewService);
   private languageService = inject(LanguageService);
+  private authService = inject(Auth);
 
   // Workaround for FullCalendar bug #4591 — explicit buttonText per locale
   private static readonly BUTTON_TEXT: Record<AppLocale, { today: string; month: string; week: string }> = {
@@ -136,12 +138,14 @@ export class Calendar implements OnChanges {
     const taskEvents = this.getFilteredEvents();
     taskEvents.forEach((event) => api.addEvent(event));
 
-    try {
-      const workSlots = await this.workSlotPreferenceService.loadPreferences();
-      const workSlotEvents = this.mapWorkSlotsToEvents(workSlots);
-      workSlotEvents.forEach((event) => api.addEvent(event));
-    } catch (error) {
-      console.error('Error loading work slot preferences for calendar:', error);
+    if (this.authService.isAuthReady()) {
+      try {
+        const workSlots = await this.workSlotPreferenceService.loadPreferences();
+        const workSlotEvents = this.mapWorkSlotsToEvents(workSlots);
+        workSlotEvents.forEach((event) => api.addEvent(event));
+      } catch (error) {
+        console.error('Error loading work slot preferences for calendar:', error);
+      }
     }
   }
 

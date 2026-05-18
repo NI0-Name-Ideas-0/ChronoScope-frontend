@@ -7,7 +7,7 @@ import {
   confirmAccountLink as confirmAccountLinkApi,
   getIdentity,
   GetIdentity$Params,
-  requestAccountLink, 
+  requestAccountLink,
   RequestAccountLink$Params
 } from '../api/functions';
 import {
@@ -27,6 +27,10 @@ export class Auth {
 
   private authReady = new BehaviorSubject<boolean>(false);
   authReady$ = this.authReady.asObservable();
+
+  isAuthReady(): boolean {
+    return this.authReady.getValue();
+  }
 
   constructor(
     private oauthService: OAuthService,
@@ -127,7 +131,7 @@ export class Auth {
       throw error;
     }
   }
-   
+
   /*
    * Confirms the account linkage
    * @param request The request containing the token

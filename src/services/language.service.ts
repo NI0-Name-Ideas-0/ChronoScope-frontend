@@ -1,9 +1,11 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
+import { filter, take } from 'rxjs';
 import { Api } from '../api/api';
 import { getSettings, updateSettings } from '../api/functions';
 import { SettingsResponse } from '../api/models';
+import { Auth } from './auth';
 
 export type AppLocale = 'en' | 'de';
 
@@ -16,6 +18,7 @@ export class LanguageService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly transloco = inject(TranslocoService);
   private readonly api = inject(Api);
+  private readonly auth = inject(Auth);
 
   readonly language = signal<AppLocale>('en');
 
@@ -28,7 +31,12 @@ export class LanguageService {
     this.language.set(locale);
     this.transloco.setActiveLang(locale);
 
-    this.syncFromBackend();
+    // Only sync with backend once authentication is established to avoid
+    // unauthenticated requests during the OAuth callback redirect flow.
+    this.auth.authReady$.pipe(
+      filter((ready) => ready),
+      take(1),
+    ).subscribe(() => this.syncFromBackend());
   }
 
   setLanguage(lang: AppLocale): void {

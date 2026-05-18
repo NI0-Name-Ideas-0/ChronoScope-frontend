@@ -23,6 +23,7 @@ const mockAuth = {
   identity$: of(null),
   getIdentityData: vi.fn().mockReturnValue({ organizations: [] }),
   authReady$: of(true),
+  isAuthReady: vi.fn().mockReturnValue(true),
 };
 
 const mockTaskService = {
