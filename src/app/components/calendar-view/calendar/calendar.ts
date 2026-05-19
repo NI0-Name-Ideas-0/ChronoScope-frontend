@@ -93,6 +93,7 @@ export class Calendar implements OnChanges {
         center: 'title',
         end: 'today prev,next',
       },
+      slotEventOverlap: false,
       eventOrder: 'displayOrder',
       eventContent: this.eventContentCallback,
       eventDidMount: (arg) => this.applyEventColor(arg),
@@ -258,9 +259,11 @@ export class Calendar implements OnChanges {
     const isMonthView = viewType.startsWith('dayGrid');
 
     const container = document.createElement('div');
-    container.className = isMonthView
-      ? 'fc-task-content fc-task-content--month'
-      : 'fc-task-content';
+    const classNames = ['fc-task-content'];
+    if (isMonthView) {
+      classNames.push('fc-task-content--month');
+    }
+    container.className = classNames.join(' ');
     const icon = document.createElement('span');
     icon.className = 'fc-task-icon';
     icon.innerHTML = this.getIconSvg(iconType);
@@ -289,6 +292,7 @@ export class Calendar implements OnChanges {
 
     return { domNodes: [container] };
   }
+
 
   private applyEventColor(arg: any): void {
     if (arg?.event?.extendedProps?.['isWorkSlot']) {
