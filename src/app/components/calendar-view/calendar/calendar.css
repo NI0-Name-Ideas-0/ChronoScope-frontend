@@ -214,6 +214,10 @@
   border-left: 3px solid color-mix(in srgb, var(--color-secondary) 70%, black);
 }
 
+:host ::ng-deep .fc .fc-timegrid-slot {
+  height: 2.75rem;
+}
+
 /* ─── Phase 4: Grid & Cells ───────────────────────────────────────────────── */
 
 /* Day header cells */
@@ -333,6 +337,9 @@
   line-height: 1.1;
   border-radius: 0.4rem;
   padding: 0.1rem 0.35rem;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 :host ::ng-deep .fc .fc-event {
@@ -367,6 +374,21 @@
   display: inline-flex;
   align-items: center;
   flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:host ::ng-deep .fc .fc-timegrid-event .fc-task-content {
+  align-items: center;
+}
+
+:host ::ng-deep .fc .fc-timegrid-event .fc-task-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
 }
 
 :host ::ng-deep .fc .fc-task-done {
