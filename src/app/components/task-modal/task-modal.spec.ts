@@ -994,6 +994,24 @@ describe('TaskModal', () => {
       expect(fixture.nativeElement.textContent).toContain('Blocker');
     });
 
+    it('should disable mode toggle buttons when editing', () => {
+      const task: StaticTaskResponse = {
+        type: 'static',
+        id: 1,
+        name: 'Edit Me',
+        startAt: '2024-01-01T09:00:00Z',
+        endAt: '2024-01-01T10:00:00Z',
+      };
+      openSubject.next({ task });
+      fixture.detectChanges();
+
+      const buttons = fixture.nativeElement.querySelectorAll('.task-mode-btn');
+      expect(buttons.length).toBeGreaterThanOrEqual(2);
+      buttons.forEach((button: HTMLButtonElement) => {
+        expect(button.disabled).toBe(true);
+      });
+    });
+
     it('should render isEditing header and delete button', () => {
       const task: StaticTaskResponse = {
         type: 'static',

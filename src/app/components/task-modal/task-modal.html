@@ -59,6 +59,9 @@
           class="task-mode-btn"
           [class.task-mode-btn--active]="mode === 'static'"
           [class.text-primary-content]="mode === 'static'"
+          [class.task-mode-btn--disabled]="isEditing"
+          [disabled]="isEditing"
+          [attr.aria-disabled]="isEditing"
           (click)="mode = 'static'"
         >
           {{ 'TASK_MODAL_MODE_STATIC' | transloco }}
@@ -67,6 +70,9 @@
           type="button"
           class="task-mode-btn"
           [class.task-mode-btn--active]="mode === 'planned'"
+          [class.task-mode-btn--disabled]="isEditing"
+          [disabled]="isEditing"
+          [attr.aria-disabled]="isEditing"
           (click)="mode = 'planned'"
         >
           {{ 'TASK_MODAL_MODE_PLANNED' | transloco }}

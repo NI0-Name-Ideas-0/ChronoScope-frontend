@@ -50,6 +50,10 @@
   @apply bg-primary text-primary-content hover:bg-primary hover:text-primary-content;
 }
 
+.task-mode-btn--disabled {
+  @apply cursor-not-allowed opacity-60;
+}
+
 /* ── Field label ──────────────────────────────────────────────────────────── */
 .task-field-label {
   @apply inline-flex items-center gap-1.5 text-sm font-medium;
