@@ -150,6 +150,19 @@ const en: Record<string, string> = {
   ERROR_FALLBACK_REQUEST: 'Request Error',
   ERROR_FALLBACK_GENERIC: 'Error',
   ERROR_FALLBACK_MESSAGE: 'An unexpected error occurred',
+  VALIDATION_REQUIRED: 'This field is required',
+  VALIDATION_EMAIL: 'Please enter a valid email address',
+  VALIDATION_MIN_LENGTH: 'Must be at least {{requiredLength}} characters',
+  VALIDATION_MAX_LENGTH: 'Must be no more than {{requiredLength}} characters',
+  VALIDATION_MIN: 'Must be at least {{min}}',
+  VALIDATION_MAX: 'Must be no more than {{max}}',
+  VALIDATION_PATTERN: 'Invalid format',
+  VALIDATION_DATE_AFTER: 'End date must be after start date',
+  VALIDATION_DURATION_MIN: 'Duration must be at least {{min}} minutes',
+  VALIDATION_POSITIVE_INTEGER: 'Must be a positive whole number',
+  VALIDATION_SCOPE_MIN_MAX: 'Min scope must not exceed max scope',
+  VALIDATION_SCOPE_MAX_LIMIT: 'Max scope must not exceed {{max}} minutes',
+  VALIDATION_GENERIC: 'This field is invalid',
 };
 
 /**

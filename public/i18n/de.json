@@ -150,5 +150,18 @@
   "ERROR_FALLBACK_UNAUTHORIZED": "Nicht autorisiert",
   "ERROR_FALLBACK_REQUEST": "Anfragefehler",
   "ERROR_FALLBACK_GENERIC": "Fehler",
-  "ERROR_FALLBACK_MESSAGE": "Ein unerwarteter Fehler ist aufgetreten"
+  "ERROR_FALLBACK_MESSAGE": "Ein unerwarteter Fehler ist aufgetreten",
+  "VALIDATION_REQUIRED": "Dieses Feld ist erforderlich",
+  "VALIDATION_EMAIL": "Bitte eine gültige E-Mail-Adresse eingeben",
+  "VALIDATION_MIN_LENGTH": "Muss mindestens {{requiredLength}} Zeichen lang sein",
+  "VALIDATION_MAX_LENGTH": "Darf höchstens {{requiredLength}} Zeichen lang sein",
+  "VALIDATION_MIN": "Muss mindestens {{min}} betragen",
+  "VALIDATION_MAX": "Darf höchstens {{max}} betragen",
+  "VALIDATION_PATTERN": "Ungültiges Format",
+  "VALIDATION_DATE_AFTER": "Enddatum muss nach dem Startdatum liegen",
+  "VALIDATION_DURATION_MIN": "Dauer muss mindestens {{min}} Minuten betragen",
+  "VALIDATION_POSITIVE_INTEGER": "Muss eine positive ganze Zahl sein",
+  "VALIDATION_SCOPE_MIN_MAX": "Min. Umfang darf Max. Umfang nicht überschreiten",
+  "VALIDATION_SCOPE_MAX_LIMIT": "Max. Umfang darf {{max}} Minuten nicht überschreiten",
+  "VALIDATION_GENERIC": "Dieses Feld ist ungültig"
 }
