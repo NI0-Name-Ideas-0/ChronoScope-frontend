@@ -8,6 +8,7 @@ import { Organization } from 'api/models';
 import { WorkSlotPreferenceService } from '@services/work-slot-preference.service';
 import { TimeSlot } from '@app/model/work-preference.model';
 import { TaskColor } from '@app/model/task';
+import { FormFieldComponent } from '@app/components/shared/form-field/form-field';
 import { TaskService } from '@services/task.service';
 
 /** View-model for organizations shown in the sidebar */
@@ -34,7 +35,7 @@ const DEFAULT_SCROLL_HOUR = 6;
 
 @Component({
   selector: 'app-settings-work-preferences',
-  imports: [CommonModule, FormsModule, TranslocoPipe],
+  imports: [CommonModule, FormsModule, TranslocoPipe, FormFieldComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: 'work-preferences.html',
   styleUrl: 'work-preferences.css',
@@ -64,6 +65,8 @@ export class WorkPreferencesSection implements AfterViewInit {
   hoursPerDay = signal(DEFAULT_HOURS_PER_DAY);
   /** Which days of the week are work days (Mon-Sun) */
   workDays = signal<boolean[]>([true, true, true, true, true, false, false]);
+  /** Tracks whether the save button was pressed (for submit-reveal validation) */
+  formSubmitted = signal(false);
 
   // --- Data ---
 
@@ -317,9 +320,13 @@ export class WorkPreferencesSection implements AfterViewInit {
 
   /** Save button handler: persist slots to backend, store baseline and emit saved event */
   async onSave(): Promise<void> {
+    this.formSubmitted.set(true);
+    const hours = this.hoursPerDay();
+    if (hours < 0.5 || hours > 24 || isNaN(hours)) return;
     try {
-      await this.preferenceService.savePreferences(this.slots(), this.hoursPerDay(), this.workDays());
+      await this.preferenceService.savePreferences(this.slots(), hours, this.workDays());
       this.storeCurrentState();
+      this.formSubmitted.set(false);
       this.saved.emit(this.slots());
     } catch (err) {
       // Error toast handled by HTTP error interceptor
