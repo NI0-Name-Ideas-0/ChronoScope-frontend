@@ -271,6 +271,7 @@ describe('TaskService', () => {
 
       mockApi.invoke
         .mockResolvedValueOnce(createBlobResponse(updatedResponse))
+        .mockResolvedValueOnce(createBlobResponse([]))
         .mockResolvedValueOnce(createBlobResponse([updatedResponse]));
 
       let tasks: unknown[] = [];

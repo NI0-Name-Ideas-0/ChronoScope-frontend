@@ -299,21 +299,18 @@ export class TaskModal {
   }
 
   get isOrganizationDisabled(): boolean {
-    return this.isEditing || (this.mode === 'static' && this.staticTask.isBlocker);
+    return this.mode === 'static' && this.staticTask.isBlocker === true;
   }
 
   onBlockerToggle(isBlocker: boolean): void {
-    if (!isBlocker) {
+    if (isBlocker) {
+      if (this.staticTask.organizationId) {
+        this.staticTask.organizationId = undefined;
+      }
+      this.staticTask.color = 'GRAY';
+      this.cdr.markForCheck();
       return;
     }
-
-    if (this.staticTask.organizationId) {
-      this.staticTask.organizationId = undefined;
-      this.cdr.markForCheck();
-    }
-
-    this.staticTask.color = 'GRAY';
-    this.cdr.markForCheck();
   }
 
   getDifficultyLabel(value: number): string {

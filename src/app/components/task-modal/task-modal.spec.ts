@@ -382,6 +382,7 @@ describe('TaskModal', () => {
     expect(component.staticTask.organizationId).toBe('org-1');
   });
 
+
   it('should add and remove dependencies', () => {
     component.dynamicTask = component.emptyDynamicTask();
 
@@ -404,8 +405,42 @@ describe('TaskModal', () => {
 
   it('should filter available dependency options', () => {
     const tasks: Task[] = [
-      new AlgoTask(1, 'Algo 1', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
-      new AlgoTask(2, 'Algo 2', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
+      new AlgoTask(
+        1,
+        'Algo 1',
+        '',
+        new Date(),
+        new Date(),
+        60,
+        0,
+        [],
+        [],
+        null,
+        [],
+        'EASY',
+        false,
+        'UNSET',
+        30,
+        120,
+      ),
+      new AlgoTask(
+        2,
+        'Algo 2',
+        '',
+        new Date(),
+        new Date(),
+        60,
+        0,
+        [],
+        [],
+        null,
+        [],
+        'EASY',
+        false,
+        'UNSET',
+        30,
+        120,
+      ),
     ];
 
     component.dynamicTask = { ...component.emptyDynamicTask(), dependencies: [1] };
@@ -417,8 +452,42 @@ describe('TaskModal', () => {
 
   it('should exclude current editing task from available dependencies', () => {
     const tasks: Task[] = [
-      new AlgoTask(1, 'Algo 1', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
-      new AlgoTask(10, 'Current', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
+      new AlgoTask(
+        1,
+        'Algo 1',
+        '',
+        new Date(),
+        new Date(),
+        60,
+        0,
+        [],
+        [],
+        null,
+        [],
+        'EASY',
+        false,
+        'UNSET',
+        30,
+        120,
+      ),
+      new AlgoTask(
+        10,
+        'Current',
+        '',
+        new Date(),
+        new Date(),
+        60,
+        0,
+        [],
+        [],
+        null,
+        [],
+        'EASY',
+        false,
+        'UNSET',
+        30,
+        120,
+      ),
     ];
 
     component.editingTask = { id: 10, type: 'dynamic' } as DynamicTaskResponse;
@@ -431,7 +500,24 @@ describe('TaskModal', () => {
 
   it('should get dependency label when task is found', () => {
     const tasks: Task[] = [
-      new AlgoTask(1, 'Found Task', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
+      new AlgoTask(
+        1,
+        'Found Task',
+        '',
+        new Date(),
+        new Date(),
+        60,
+        0,
+        [],
+        [],
+        null,
+        [],
+        'EASY',
+        false,
+        'UNSET',
+        30,
+        120,
+      ),
     ];
 
     expect(component.getDependencyLabel(1, tasks)).toBe('Found Task');
@@ -467,7 +553,7 @@ describe('TaskModal', () => {
     expect(component.isOrganizationDisabled).toBe(false);
 
     component.editingTask = { id: 1, type: 'static' } as StaticTaskResponse;
-    expect(component.isOrganizationDisabled).toBe(true);
+    expect(component.isOrganizationDisabled).toBe(false);
 
     component.editingTask = null;
     component.staticTask.isBlocker = true;
@@ -714,7 +800,9 @@ describe('TaskModal', () => {
 
     await component.submit();
 
-    expect(component.errorMessage()).toBe('Failed to save task. Please check your input and try again.');
+    expect(component.errorMessage()).toBe(
+      'Failed to save task. Please check your input and try again.',
+    );
   });
 
   it('should set generic error message when error is not an Error instance', async () => {
@@ -731,7 +819,9 @@ describe('TaskModal', () => {
 
     await component.submit();
 
-    expect(component.errorMessage()).toBe('Failed to save task. Please check your input and try again.');
+    expect(component.errorMessage()).toBe(
+      'Failed to save task. Please check your input and try again.',
+    );
   });
 
   it('should not delete task when not editing', async () => {
@@ -803,8 +893,12 @@ describe('TaskModal', () => {
       endTime: '16:45',
     };
 
-    expect(component.getTaskStartDate().toISOString()).toBe(new Date('2024-06-15T14:30').toISOString());
-    expect(component.getTaskEndDate().toISOString()).toBe(new Date('2024-06-16T16:45').toISOString());
+    expect(component.getTaskStartDate().toISOString()).toBe(
+      new Date('2024-06-15T14:30').toISOString(),
+    );
+    expect(component.getTaskEndDate().toISOString()).toBe(
+      new Date('2024-06-16T16:45').toISOString(),
+    );
   });
 
   it('should close modal on backdrop click', () => {
@@ -884,7 +978,8 @@ describe('TaskModal', () => {
 
       const inputs = fixture.nativeElement.querySelectorAll('input');
       const hasDueDate = Array.from(inputs).some(
-        (input: any) => input.getAttribute('ng-reflect-model') === '2024-01-02' || input.value === '2024-01-02',
+        (input: any) =>
+          input.getAttribute('ng-reflect-model') === '2024-01-02' || input.value === '2024-01-02',
       );
       // Due date input exists in planned mode
       expect(fixture.nativeElement.textContent).toContain('Due Date');
@@ -897,6 +992,24 @@ describe('TaskModal', () => {
 
       expect(fixture.nativeElement.textContent).toContain('End Date');
       expect(fixture.nativeElement.textContent).toContain('Blocker');
+    });
+
+    it('should disable mode toggle buttons when editing', () => {
+      const task: StaticTaskResponse = {
+        type: 'static',
+        id: 1,
+        name: 'Edit Me',
+        startAt: '2024-01-01T09:00:00Z',
+        endAt: '2024-01-01T10:00:00Z',
+      };
+      openSubject.next({ task });
+      fixture.detectChanges();
+
+      const buttons = fixture.nativeElement.querySelectorAll('.task-mode-btn');
+      expect(buttons.length).toBeGreaterThanOrEqual(2);
+      buttons.forEach((button: HTMLButtonElement) => {
+        expect(button.disabled).toBe(true);
+      });
     });
 
     it('should render isEditing header and delete button', () => {
@@ -939,7 +1052,24 @@ describe('TaskModal', () => {
         dependencies: [1],
       };
       mockTaskService.tasks$.next([
-        new AlgoTask(1, 'Dep Task', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
+        new AlgoTask(
+          1,
+          'Dep Task',
+          '',
+          new Date(),
+          new Date(),
+          60,
+          0,
+          [],
+          [],
+          null,
+          [],
+          'EASY',
+          false,
+          'UNSET',
+          30,
+          120,
+        ),
       ]);
       fixture.detectChanges();
 
@@ -950,7 +1080,24 @@ describe('TaskModal', () => {
       openSubject.next({});
       component.mode = 'planned';
       mockTaskService.tasks$.next([
-        new AlgoTask(1, 'Option 1', '', new Date(), new Date(), 60, 0, [], [], null, [], 'EASY', false, 'UNSET', 30, 120),
+        new AlgoTask(
+          1,
+          'Option 1',
+          '',
+          new Date(),
+          new Date(),
+          60,
+          0,
+          [],
+          [],
+          null,
+          [],
+          'EASY',
+          false,
+          'UNSET',
+          30,
+          120,
+        ),
       ]);
       fixture.detectChanges();
 
