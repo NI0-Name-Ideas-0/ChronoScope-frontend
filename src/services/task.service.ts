@@ -263,7 +263,7 @@ export class TaskService {
     const response = await this.api.invoke(createTaskApi, params);
     const createdTask = await this.parseBlob<StaticTaskResponse | DynamicTaskResponse>(response);
 
-    await this.planAndReload(request.organizationId, 'after task creation');
+    await this.planAndReload(request.organizationId);
 
     this.notificationService.success(this.translocoService.translate('TOAST_TASK_CREATED'));
     return createdTask;
@@ -286,7 +286,7 @@ export class TaskService {
     const response = await this.api.invoke(updateTaskApi, params);
     const updatedTask = await this.parseBlob<StaticTaskResponse | DynamicTaskResponse>(response);
     const organizationId = request.organizationId ?? updatedTask.organizationId ?? null;
-    await this.planAndReload(organizationId, 'after task update');
+    await this.planAndReload(organizationId);
     this.notificationService.success(this.translocoService.translate('TOAST_TASK_UPDATED'));
     return updatedTask;
   }
@@ -306,16 +306,7 @@ export class TaskService {
     await this.planOrganizationsAndReload(organizationIds, 'manual plan');
   }
 
-  private async planAndReload(
-    organizationId?: string | null,
-    contextLabel: string = 'planning',
-  ): Promise<void> {
-    if (!organizationId) {
-      console.warn(`Skipping plan endpoint ${contextLabel}: missing organizationId.`);
-      await this.loadTasks();
-      return;
-    }
-
+  private async planAndReload(organizationId?: string | null): Promise<void> {
     try {
       const planParams: Plan$Params = {
         body: { organizationId: organizationId ?? undefined },
