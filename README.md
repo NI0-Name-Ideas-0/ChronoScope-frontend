@@ -1,59 +1,102 @@
-# ChronoScopeFrontend
+# ChronoScope Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.2.
+A modern, browser-based task planning application that supports structured task management, scheduling, and dependency handling. Built with Angular 21, Tailwind CSS, and DaisyUI.
 
-## Development server
+## Features
 
-To start a local development server, run:
+- **Calendar View** — Visualize tasks on a weekly/daily calendar powered by FullCalendar
+- **List View** — Manage tasks in a structured list with filtering and sorting
+- **Task Scheduling** — Create one-off and recurring tasks with RRule support
+- **Organization-Based Planning** — Assign tasks to organizations and configure time slot preferences for intelligent scheduling
+- **Dark & Light Themes** — Full theme support with system preference detection
+- **Internationalization** — Multi-language support via Transloco
+- **OAuth2/OIDC Authentication** — Secure login via OpenID Connect
 
-```bash
-ng serve
-```
+## Tech Stack
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+| Layer | Technology |
+|-------|-----------|
+| Framework | Angular 21 |
+| Language | TypeScript 5.9 |
+| Styling | Tailwind CSS 4 + DaisyUI 5 |
+| State | Angular Signals |
+| Auth | angular-oauth2-oidc |
+| Calendar | FullCalendar 6 |
+| i18n | @jsverse/transloco |
+| Testing | Vitest + jsdom |
+| API Client | ng-openapi-gen (auto-generated) |
+| Package Manager | pnpm 10 |
 
-## Code scaffolding
+## Prerequisites
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+- [Node.js](https://nodejs.org/) v20+
+- [pnpm](https://pnpm.io/) v10+
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Getting Started
 
 ```bash
-ng test
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm start
 ```
 
-## Running end-to-end tests
+Open [http://localhost:4200](http://localhost:4200) in your browser. The app reloads automatically on file changes.
 
-For end-to-end (e2e) testing, run:
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `pnpm start` | Start dev server |
+| `pnpm build` | Production build → `dist/` |
+| `pnpm test` | Run unit tests (single run) |
+| `pnpm test:coverage` | Run tests with coverage report |
+| `pnpm watch` | Build in watch mode (development) |
+
+## Project Structure
+
+```
+src/
+├── api/              # Auto-generated API client (ng-openapi-gen)
+├── app/
+│   ├── components/   # UI components
+│   │   ├── calendar-view/   # FullCalendar-based schedule view
+│   │   ├── list-view/       # Task list with filtering
+│   │   ├── task-modal/      # Task create/edit dialog
+│   │   ├── settings-modal/  # User settings
+│   │   ├── navbar/          # Side navigation
+│   │   ├── topbar/          # Top bar with actions
+│   │   ├── notifications/   # Notification display
+│   │   └── shared/          # Reusable UI primitives
+│   ├── interceptors/ # HTTP interceptors
+│   └── model/        # Domain models (Task, Scope, etc.)
+├── environments/     # Environment configs
+├── pipes/            # Custom pipes
+├── services/         # Application services (auth, tasks, themes, etc.)
+└── styles.css        # Global styles
+```
+
+## Development
+
+### Code Style
+
+- Standalone components (Angular 21 default)
+- OnPush change detection
+- Signal-based state management
+- Reactive forms over template-driven
+- Native control flow (`@if`, `@for`, `@switch`)
+
+### Generating API Client
+
+The API client in `src/api/` is auto-generated from an OpenAPI spec using `ng-openapi-gen`. Do not edit these files manually.
+
+### Adding a New Component
 
 ```bash
-ng e2e
+ng generate component components/my-component
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## License
 
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
