@@ -23,13 +23,26 @@
     <h3 class="settings-card-title">{{ 'SETTINGS_ACCOUNT_MERGE_TITLE' | transloco }}</h3>
     <p class="settings-card-desc">{{ 'SETTINGS_ACCOUNT_MERGE_DESC' | transloco }}</p>
     <div class="mt-4 flex flex-col sm:flex-row gap-3">
-      <input
-        type="email"
-        [(ngModel)]="mergeEmail"
-        class="input input-bordered flex-1 bg-base-100"
-        [placeholder]="'SETTINGS_ACCOUNT_MERGE_PLACEHOLDER' | transloco"
-        aria-label="Email address to merge"
-      />
+      <div class="flex-1">
+        <app-form-field
+          [control]="emailCtrl"
+          [formSubmitted]="mergeSubmitted()"
+          [errorMap]="{ email: 'VALIDATION_EMAIL' }"
+          fieldId="merge-email"
+        >
+          <input
+            type="email"
+            [(ngModel)]="mergeEmail"
+            #emailCtrl="ngModel"
+            required
+            email
+            class="input input-bordered w-full bg-base-100"
+            [class.input-error]="emailCtrl.invalid && (emailCtrl.touched || mergeSubmitted())"
+            [placeholder]="'SETTINGS_ACCOUNT_MERGE_PLACEHOLDER' | transloco"
+            aria-label="Email address to merge"
+          />
+        </app-form-field>
+      </div>
       <button class="btn btn-outline btn-sm self-start sm:self-auto" type="button" (click)="requestLinkEmail()">
         {{ 'SETTINGS_ACCOUNT_MERGE_BUTTON' | transloco }}
       </button>

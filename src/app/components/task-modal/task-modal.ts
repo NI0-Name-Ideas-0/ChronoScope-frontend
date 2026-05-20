@@ -9,6 +9,7 @@ import { Auth } from '@services/auth';
 import { Task, TaskColor } from '@app/model/task';
 import { AlgoTask } from '@app/model/algo-task';
 import { RepetitionFieldComponent } from '../repetition-modal/repetition-modal';
+import { FormFieldComponent } from '../shared/form-field/form-field';
 import { RRule, rrulestr } from 'rrule';
 import {
   StaticTaskCreateRequest,
@@ -74,7 +75,7 @@ type TaskMode = 'static' | 'planned';
 
 @Component({
   selector: 'app-task-modal',
-  imports: [FormsModule, AsyncPipe, RepetitionFieldComponent, TranslocoPipe],
+  imports: [FormsModule, AsyncPipe, RepetitionFieldComponent, TranslocoPipe, FormFieldComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './task-modal.html',
   styleUrl: './task-modal.css',
@@ -84,6 +85,7 @@ export class TaskModal {
   isLeaving = signal(false);
   isSaving = signal(false);
   errorMessage = signal<string | null>(null);
+  formSubmitted = signal(false);
   mode: TaskMode = 'static';
 
   editingTask: StaticTaskResponse | DynamicTaskResponse | null = null;
@@ -115,6 +117,7 @@ export class TaskModal {
         this.mode = 'static';
       }
       this.errorMessage.set(null);
+      this.formSubmitted.set(false);
       this.isOpen.set(true);
       this.cdr.markForCheck();
     });
@@ -366,21 +369,52 @@ export class TaskModal {
 
     if (this.mode === 'static') {
       const t = this.staticTask;
+      if (!t.isBlocker && !t.organizationId) return false;
       if (!t.startDate || !t.endDate) return false;
       if (t.startDate > t.endDate) return false;
       if (t.startDate === t.endDate && t.startTime > t.endTime) return false;
     } else {
       const t = this.dynamicTask;
+      if (!t.organizationId) return false;
       if (!t.startDate || !t.dueDate) return false;
       if (t.startDate > t.dueDate) return false;
-      if (t.duration < 15 || t.minScopeDuration < 15) return false;
-      if (t.maxScopeDuration < t.minScopeDuration) return false;
+      if (t.duration < 15) return false;
+      if (!Number.isInteger(t.minScopeDuration) || t.minScopeDuration < 1) return false;
+      if (!Number.isInteger(t.maxScopeDuration) || t.maxScopeDuration < 1) return false;
+      if (t.minScopeDuration > t.maxScopeDuration) return false;
+      if (t.maxScopeDuration > 240) return false;
     }
 
     return true;
   }
 
+  get hasDateOrderError(): boolean {
+    if (this.mode === 'static') {
+      const t = this.staticTask;
+      if (!t.startDate || !t.endDate) return false;
+      return t.startDate > t.endDate || (t.startDate === t.endDate && t.startTime > t.endTime);
+    } else {
+      const t = this.dynamicTask;
+      if (!t.startDate || !t.dueDate) return false;
+      return t.startDate > t.dueDate;
+    }
+  }
+
+  get hasScopeMinMaxError(): boolean {
+    if (this.mode !== 'planned') return false;
+    const t = this.dynamicTask;
+    return t.minScopeDuration > t.maxScopeDuration;
+  }
+
+  get hasScopeMaxLimitError(): boolean {
+    if (this.mode !== 'planned') return false;
+    return this.dynamicTask.maxScopeDuration > 240;
+  }
+
   async submit(): Promise<void> {
+    this.formSubmitted.set(true);
+    this.cdr.markForCheck();
+
     if (!this.isValid) return;
 
     this.isSaving.set(true);

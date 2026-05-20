@@ -190,6 +190,7 @@ describe('TaskModal', () => {
       endDate: '2024-01-01',
       startTime: '09:00',
       endTime: '10:00',
+      organizationId: 'org-1',
     };
 
     expect(component.isValid).toBe(true);
@@ -297,6 +298,7 @@ describe('TaskModal', () => {
       duration: 60,
       minScopeDuration: 30,
       maxScopeDuration: 120,
+      organizationId: 'org-1',
     };
 
     expect(component.isValid).toBe(true);
@@ -621,6 +623,7 @@ describe('TaskModal', () => {
       startAt: '2024-01-01T09:00:00Z',
       endAt: '2024-01-01T10:00:00Z',
       difficulty: 'EASY',
+      organizationId: 'org-1',
     };
 
     openSubject.next({ task });
@@ -690,6 +693,7 @@ describe('TaskModal', () => {
       endAt: '2024-01-10T00:00:00Z',
       duration: 'PT60M',
       difficulty: 'MEDIUM',
+      organizationId: 'org-1',
     };
 
     openSubject.next({ task });
@@ -727,6 +731,7 @@ describe('TaskModal', () => {
       endDate: '2024-01-01',
       startTime: '09:00',
       endTime: '10:00',
+      organizationId: 'org-1',
     };
 
     await component.submit();
@@ -745,6 +750,7 @@ describe('TaskModal', () => {
       endDate: '2024-01-01',
       startTime: '09:00',
       endTime: '10:00',
+      organizationId: 'org-1',
     };
 
     await component.submit();
@@ -762,6 +768,7 @@ describe('TaskModal', () => {
       endDate: '2024-01-01',
       startTime: '09:00',
       endTime: '10:00',
+      organizationId: 'org-1',
     };
 
     await component.submit();
@@ -779,6 +786,7 @@ describe('TaskModal', () => {
       endDate: '2024-01-01',
       startTime: '09:00',
       endTime: '10:00',
+      organizationId: 'org-1',
     };
 
     await component.submit();
@@ -796,6 +804,7 @@ describe('TaskModal', () => {
       endDate: '2024-01-01',
       startTime: '09:00',
       endTime: '10:00',
+      organizationId: 'org-1',
     };
 
     await component.submit();
@@ -815,6 +824,7 @@ describe('TaskModal', () => {
       endDate: '2024-01-01',
       startTime: '09:00',
       endTime: '10:00',
+      organizationId: 'org-1',
     };
 
     await component.submit();

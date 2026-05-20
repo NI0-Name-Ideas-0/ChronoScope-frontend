@@ -1,0 +1,27 @@
+<div class="form-control w-full">
+  @if (label()) {
+    <label class="label">
+      <span class="label-text">
+        {{ label() | transloco }}
+        @if (required()) {
+          <span class="text-error" aria-hidden="true">*</span>
+        }
+      </span>
+    </label>
+  }
+
+  <ng-content></ng-content>
+
+  @if (shouldShowError && errorTranslationKey) {
+    <div
+      class="label"
+      [attr.id]="errorId || null"
+      role="alert"
+      aria-live="polite"
+    >
+      <span class="label-text-alt text-error text-xs">
+        {{ errorTranslationKey | transloco: errorParams }}
+      </span>
+    </div>
+  }
+</div>
